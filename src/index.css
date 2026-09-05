@@ -1073,6 +1073,11 @@ button {
   overflow: hidden;
   border: 1px solid var(--border);
   background: #070c1c;
+  touch-action: none; /* we handle drag/zoom ourselves — stop the browser's own pan/scroll gestures from fighting us */
+}
+
+.map-panel.is-interacting {
+  user-select: none;
 }
 
 .map-viewport {
@@ -1081,20 +1086,28 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s ease;
   transform-origin: center center;
+  cursor: grab;
+  transition: transform 0.15s ease-out;
+}
+
+.map-viewport.is-dragging {
+  cursor: grabbing;
+  transition: none;
 }
 
 .world-svg {
   width: 100%;
   height: 100%;
   display: block;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .map-empty-note {
   position: absolute;
   left: 50%;
-  bottom: 20px;
+  top: 18px;
   transform: translateX(-50%);
   background: #05070fcc;
   border: 1px solid var(--card-border);
@@ -1105,6 +1118,23 @@ button {
   backdrop-filter: blur(8px);
   white-space: nowrap;
   z-index: 3;
+  pointer-events: none;
+}
+
+.map-hint {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  background: #05070fcc;
+  border: 1px solid var(--card-border);
+  color: var(--text-faint);
+  font-size: 11.5px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+  white-space: nowrap;
+  z-index: 3;
+  pointer-events: none;
 }
 
 .map-zoom-controls {
@@ -1133,12 +1163,16 @@ button {
   transition: background 0.15s ease;
 }
 
-.map-zoom-controls button:first-child {
+.map-zoom-controls button:not(:last-child) {
   border-bottom: 1px solid var(--card-border);
 }
 
 .map-zoom-controls button:hover {
   background: #ffffff14;
+}
+
+.map-zoom-reset {
+  color: var(--text-dim) !important;
 }
 
 .map-compass {
@@ -1166,6 +1200,14 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: grab;
+  transform-origin: center center;
+  transition: transform 0.15s ease-out;
+}
+
+.globe3d-wrap.is-dragging {
+  cursor: grabbing;
+  transition: none;
 }
 
 .globe3d-halo {
@@ -1196,6 +1238,12 @@ button {
   height: 100%;
   display: flex;
   animation: globe-spin 22s linear infinite;
+}
+
+/* once the user grabs the globe, we take over rotation with an inline
+   transform driven by drag position, so the ambient CSS animation stops */
+.globe3d-surface.manual {
+  animation: none;
 }
 
 .globe3d-surface .world-svg {

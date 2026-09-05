@@ -1,5 +1,17 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Navbar from '../components/Navbar.jsx'
+
+/* ---------- pan/zoom tuning ---------- */
+
+const MIN_ZOOM_2D = 0.6
+const MAX_ZOOM_2D = 3
+const MIN_ZOOM_3D = 0.6
+const MAX_ZOOM_3D = 2.2
+const ROTATE_SENSITIVITY = 0.35 // degrees rotated per pixel dragged
+
+function clampNum(v, min, max) {
+  return Math.min(max, Math.max(min, v))
+}
 
 /* ---------- constants ---------- */
 
@@ -118,6 +130,15 @@ function ZoomOutIcon() {
   )
 }
 
+function ResetViewIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+      <path d="M4 12a8 8 0 1 1 2.6 5.9" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      <path d="M4 17v-4.5h4.5" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 function CompassRoseIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -189,14 +210,24 @@ function WorldMap2D() {
   )
 }
 
-/* ---------- rotating 3D globe ---------- */
+/* ---------- rotating 3D globe (draggable to rotate, scroll/buttons to zoom) ---------- */
 
-function Globe3D() {
+function Globe3D({ rotation, manualRotate, zoom, dragging, onPointerDown, onPointerMove, onPointerUp }) {
   return (
-    <div className="globe3d-wrap">
+    <div
+      className={`globe3d-wrap${dragging ? ' is-dragging' : ''}`}
+      style={{ transform: `scale(${zoom})` }}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+    >
       <div className="globe3d-halo" />
       <div className="globe3d-sphere">
-        <div className="globe3d-surface">
+        <div
+          className={`globe3d-surface${manualRotate ? ' manual' : ''}`}
+          style={manualRotate ? { transform: `translateX(${(rotation / 360) * 50}%)` } : undefined}
+        >
           <WorldMap2D />
           <WorldMap2D />
         </div>
@@ -308,8 +339,247 @@ export default function Explore({ events = [] }) {
   const [activeCategory, setActiveCategory] = useState('Events')
   const [search, setSearch] = useState('')
   const [filterOpen, setFilterOpen] = useState(false)
-  const [zoom, setZoom] = useState(1)
   const [range, setRange] = useState([MIN_YEAR, MAX_YEAR])
+
+  // -- 2D map: zoom + pan --
+  const [zoom, setZoom] = useState(1)
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const [isPanning, setIsPanning] = useState(false)
+  const panDrag = useRef(null) // { startX, startY, startPan, pointerId }
+  const activePointers = useRef(new Map()) // pointerId -> { x, y } (for two-finger pinch)
+  const pinchState = useRef(null) // { startDist, startZoom, startPan }
+
+  // -- 3D globe: rotation + zoom --
+  const [rotation, setRotation] = useState(0)
+  const [zoom3d, setZoom3d] = useState(1)
+  const [manualRotate, setManualRotate] = useState(false)
+  const [isRotating, setIsRotating] = useState(false)
+  const rotateDrag = useRef(null) // { startX, startRotation, pointerId }
+
+  const panelRef = useRef(null)
+
+  function clampPan(next, z) {
+    const el = panelRef.current
+    if (!el) return next
+    const rect = el.getBoundingClientRect()
+    const maxX = Math.max(0, (rect.width * (z - 1)) / 2)
+    const maxY = Math.max(0, (rect.height * (z - 1)) / 2)
+    return {
+      x: clampNum(next.x, -maxX, maxX),
+      y: clampNum(next.y, -maxY, maxY),
+    }
+  }
+
+  // Zooms the 2D map while keeping the point under (clientX, clientY) fixed
+  // on screen -- this is what makes scroll-to-zoom and the +/- buttons feel
+  // natural instead of always re-centering on the middle of the panel.
+  function zoomAtPoint(nextZoomRaw, clientX, clientY) {
+    const nextZoom = clampNum(nextZoomRaw, MIN_ZOOM_2D, MAX_ZOOM_2D)
+    const el = panelRef.current
+    if (!el) {
+      setZoom(nextZoom)
+      return
+    }
+    const rect = el.getBoundingClientRect()
+    const cx = rect.width / 2
+    const cy = rect.height / 2
+    const mx = clientX - rect.left
+    const my = clientY - rect.top
+    const ratio = nextZoom / zoom
+
+    setPan((prev) => {
+      const raw = {
+        x: (mx - cx) * (1 - ratio) + prev.x * ratio,
+        y: (my - cy) * (1 - ratio) + prev.y * ratio,
+      }
+      return clampPan(raw, nextZoom)
+    })
+    setZoom(nextZoom)
+  }
+
+  // Same anchored-zoom math as zoomAtPoint, but computed fresh from a fixed
+  // "base" zoom/pan snapshot rather than the latest state -- used while a
+  // two-finger pinch gesture is in progress so each move event is anchored
+  // consistently to the moment the pinch started, instead of compounding
+  // rounding drift frame over frame.
+  function anchoredPanFrom(baseZoom, basePan, nextZoom, clientX, clientY) {
+    const el = panelRef.current
+    if (!el) return basePan
+    const rect = el.getBoundingClientRect()
+    const cx = rect.width / 2
+    const cy = rect.height / 2
+    const mx = clientX - rect.left
+    const my = clientY - rect.top
+    const ratio = nextZoom / baseZoom
+    return {
+      x: (mx - cx) * (1 - ratio) + basePan.x * ratio,
+      y: (my - cy) * (1 - ratio) + basePan.y * ratio,
+    }
+  }
+
+  function resetView() {
+    if (mode === '2D') {
+      setZoom(1)
+      setPan({ x: 0, y: 0 })
+    } else {
+      setZoom3d(1)
+      setRotation(0)
+      setManualRotate(false)
+    }
+  }
+
+  function zoomButton(direction) {
+    const el = panelRef.current
+    if (mode === '2D') {
+      const step = direction * 0.3
+      if (el) {
+        const rect = el.getBoundingClientRect()
+        zoomAtPoint(zoom + step, rect.left + rect.width / 2, rect.top + rect.height / 2)
+      } else {
+        setZoom((z) => clampNum(z + step, MIN_ZOOM_2D, MAX_ZOOM_2D))
+      }
+    } else {
+      setZoom3d((z) => clampNum(+(z + direction * 0.2).toFixed(2), MIN_ZOOM_3D, MAX_ZOOM_3D))
+    }
+  }
+
+  // -- 2D drag-to-pan + two-finger pinch-to-zoom handlers --
+  function handlePanPointerDown(e) {
+    if (e.button !== undefined && e.button !== 0) return
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+    activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+    if (activePointers.current.size >= 2) {
+      // A second finger just touched down -- switch from panning to pinching.
+      panDrag.current = null
+      setIsPanning(false)
+      const pts = Array.from(activePointers.current.values()).slice(0, 2)
+      const startDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y)
+      pinchState.current = { startDist, startZoom: zoom, startPan: pan }
+    } else {
+      setIsPanning(true)
+      panDrag.current = { startX: e.clientX, startY: e.clientY, startPan: pan, pointerId: e.pointerId }
+    }
+  }
+
+  function handlePanPointerMove(e) {
+    if (!activePointers.current.has(e.pointerId)) return
+    activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+    if (pinchState.current && activePointers.current.size >= 2) {
+      const pts = Array.from(activePointers.current.values()).slice(0, 2)
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y)
+      const { startDist, startZoom, startPan } = pinchState.current
+      if (startDist === 0) return
+      const nextZoom = clampNum(startZoom * (dist / startDist), MIN_ZOOM_2D, MAX_ZOOM_2D)
+      const midX = (pts[0].x + pts[1].x) / 2
+      const midY = (pts[0].y + pts[1].y) / 2
+      const nextPan = anchoredPanFrom(startZoom, startPan, nextZoom, midX, midY)
+      setZoom(nextZoom)
+      setPan(clampPan(nextPan, nextZoom))
+      return
+    }
+
+    if (!panDrag.current) return
+    const { startX, startY, startPan } = panDrag.current
+    const next = { x: startPan.x + (e.clientX - startX), y: startPan.y + (e.clientY - startY) }
+    setPan(clampPan(next, zoom))
+  }
+
+  function handlePanPointerUp(e) {
+    activePointers.current.delete(e.pointerId)
+    try {
+      e.currentTarget.releasePointerCapture?.(e.pointerId)
+    } catch {
+      /* no-op */
+    }
+
+    if (activePointers.current.size < 2) {
+      pinchState.current = null
+    }
+
+    if (activePointers.current.size === 0) {
+      panDrag.current = null
+      setIsPanning(false)
+    } else if (activePointers.current.size === 1) {
+      // Lifted one of two pinch fingers -- resume single-finger panning
+      // from wherever the remaining finger currently is.
+      const [[pointerId, pos]] = Array.from(activePointers.current.entries())
+      panDrag.current = { startX: pos.x, startY: pos.y, startPan: pan, pointerId }
+      setIsPanning(true)
+    }
+  }
+
+  function handleMapDoubleClick(e) {
+    if (mode !== '2D') return
+    zoomAtPoint(zoom + 0.6, e.clientX, e.clientY)
+  }
+
+  // -- 3D drag-to-rotate handlers --
+  function handleRotatePointerDown(e) {
+    if (e.button !== undefined && e.button !== 0) return
+    setManualRotate(true)
+    setIsRotating(true)
+    rotateDrag.current = { startX: e.clientX, startRotation: rotation, pointerId: e.pointerId }
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+  }
+
+  function handleRotatePointerMove(e) {
+    if (!rotateDrag.current) return
+    const { startX, startRotation } = rotateDrag.current
+    setRotation(startRotation + (e.clientX - startX) * ROTATE_SENSITIVITY)
+  }
+
+  function handleRotatePointerUp(e) {
+    if (rotateDrag.current) {
+      try {
+        e.currentTarget.releasePointerCapture?.(rotateDrag.current.pointerId)
+      } catch {
+        /* no-op */
+      }
+    }
+    rotateDrag.current = null
+    setIsRotating(false)
+  }
+
+  // Native (non-passive) wheel listener. For the 2D map we deliberately do
+  // NOT zoom on a plain scroll -- only a trackpad pinch gesture (which the
+  // browser reports as a wheel event with ctrlKey set) zooms, so normal
+  // scrolling behaves like normal scrolling. The 3D globe still zooms on
+  // any scroll since it has no competing "scroll the page" expectation.
+  useEffect(() => {
+    const el = panelRef.current
+    if (!el) return undefined
+
+    function onWheel(e) {
+      if (mode === '2D') {
+        if (!e.ctrlKey) return // let the page scroll normally
+        e.preventDefault()
+        const factor = Math.exp(-e.deltaY * 0.012)
+        zoomAtPoint(zoom * factor, e.clientX, e.clientY)
+        return
+      }
+      e.preventDefault()
+      const factor = Math.exp(-e.deltaY * 0.0016)
+      setZoom3d((z) => clampNum(+(z * factor).toFixed(3), MIN_ZOOM_3D, MAX_ZOOM_3D))
+    }
+
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [mode, zoom])
+
+  // Re-clamp pan if the panel is resized (e.g. window resize) so the map
+  // never ends up stranded out of view.
+  useEffect(() => {
+    const el = panelRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return undefined
+    const observer = new ResizeObserver(() => {
+      setPan((prev) => clampPan(prev, zoom))
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoom])
 
   const filteredEvents = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -411,13 +681,35 @@ export default function Explore({ events = [] }) {
           ))}
         </aside>
 
-        <div className="map-panel">
-          <div
-            className="map-viewport"
-            style={mode === '2D' ? { transform: `scale(${zoom})` } : undefined}
-          >
-            {mode === '2D' ? <WorldMap2D /> : <Globe3D />}
-          </div>
+        <div
+          className={`map-panel${mode === '2D' && isPanning ? ' is-interacting' : ''}${mode === '3D' && isRotating ? ' is-interacting' : ''}`}
+          ref={panelRef}
+        >
+          {mode === '2D' ? (
+            <div
+              className={`map-viewport${isPanning ? ' is-dragging' : ''}`}
+              style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
+              onPointerDown={handlePanPointerDown}
+              onPointerMove={handlePanPointerMove}
+              onPointerUp={handlePanPointerUp}
+              onPointerCancel={handlePanPointerUp}
+              onDoubleClick={handleMapDoubleClick}
+            >
+              <WorldMap2D />
+            </div>
+          ) : (
+            <div className="map-viewport">
+              <Globe3D
+                rotation={rotation}
+                manualRotate={manualRotate}
+                zoom={zoom3d}
+                dragging={isRotating}
+                onPointerDown={handleRotatePointerDown}
+                onPointerMove={handleRotatePointerMove}
+                onPointerUp={handleRotatePointerUp}
+              />
+            </div>
+          )}
 
           {filteredEvents.length === 0 && (
             <div className="map-empty-note">
@@ -425,16 +717,21 @@ export default function Explore({ events = [] }) {
             </div>
           )}
 
-          {mode === '2D' && (
-            <div className="map-zoom-controls">
-              <button type="button" onClick={() => setZoom((z) => Math.min(2.5, +(z + 0.2).toFixed(2)))} aria-label="Zoom in">
-                <ZoomInIcon />
-              </button>
-              <button type="button" onClick={() => setZoom((z) => Math.max(0.6, +(z - 0.2).toFixed(2)))} aria-label="Zoom out">
-                <ZoomOutIcon />
-              </button>
-            </div>
-          )}
+          <div className="map-hint">
+            {mode === '2D' ? 'Drag to pan · Pinch or +/- to zoom · Double-click to zoom in' : 'Drag to rotate · Scroll or +/- to zoom'}
+          </div>
+
+          <div className="map-zoom-controls">
+            <button type="button" onClick={() => zoomButton(1)} aria-label="Zoom in">
+              <ZoomInIcon />
+            </button>
+            <button type="button" onClick={() => zoomButton(-1)} aria-label="Zoom out">
+              <ZoomOutIcon />
+            </button>
+            <button type="button" onClick={resetView} aria-label="Reset view" className="map-zoom-reset">
+              <ResetViewIcon />
+            </button>
+          </div>
 
           <div className="map-compass">
             <CompassRoseIcon />
