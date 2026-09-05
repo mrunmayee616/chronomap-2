@@ -16,10 +16,10 @@ export default function Navbar({ active = 'Home' }) {
 
       <div className="nav-links">
         {NAV_ITEMS.map((item) =>
-          item === 'Home' ? (
+          item === 'Home' || item === 'Explore' ? (
             <Link
               key={item}
-              to="/"
+              to={item === 'Home' ? '/' : '/explore'}
               className={item === active ? 'active' : ''}
             >
               {item}
