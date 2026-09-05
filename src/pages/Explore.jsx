@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import * as THREE from 'three'
 import Navbar from '../components/Navbar.jsx'
 
 /* ---------- pan/zoom tuning ---------- */
@@ -7,7 +8,10 @@ const MIN_ZOOM_2D = 0.6
 const MAX_ZOOM_2D = 3
 const MIN_ZOOM_3D = 0.6
 const MAX_ZOOM_3D = 2.2
-const ROTATE_SENSITIVITY = 0.35 // degrees rotated per pixel dragged
+const ROTATE_SENSITIVITY = 0.35 // degrees of spin (left/right) per pixel dragged
+const TILT_SENSITIVITY = 0.35 // degrees of tilt (up/down) per pixel dragged
+const MIN_TILT = -80 // clamped so the camera never whips straight through a pole
+const MAX_TILT = 80
 
 function clampNum(v, min, max) {
   return Math.min(max, Math.max(min, v))
@@ -162,7 +166,130 @@ function pct(y) {
   return ((y - MIN_YEAR) / (MAX_YEAR - MIN_YEAR)) * 100
 }
 
-/* ---------- simplified world map (2D) ---------- */
+/* ---------- real-world coastline data (equirectangular) ----------
+   Traced from actual longitude/latitude coordinates rather than made-up
+   shapes, so both the 2D map and the 3D globe show recognizable real
+   continents. These are hand-simplified (10-30 points per landmass) for
+   a clean stylized look, not survey-grade GIS data. */
+
+function projectLonLat(lon, lat) {
+  const x = ((lon + 180) / 360) * 1000
+  const y = ((90 - lat) / 180) * 500
+  return [Number(x.toFixed(1)), Number(y.toFixed(1))]
+}
+
+// Turns the same coordinate list into a smooth closed curve (quadratic
+// Bezier through each point's midpoint) instead of a hard-cornered
+// straight-line polygon. At low zoom the difference is subtle, but it's
+// what keeps coastlines -- especially narrow stretches like the Central
+// American isthmus -- from looking like jagged, self-crossing shapes once
+// you zoom in.
+function pathFromLonLat(points) {
+  const pts = points.map(([lon, lat]) => projectLonLat(lon, lat))
+  const n = pts.length
+  const midpoint = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
+
+  const start = midpoint(pts[n - 1], pts[0])
+  let d = `M ${start[0]} ${start[1]} `
+  for (let i = 0; i < n; i++) {
+    const curr = pts[i]
+    const next = pts[(i + 1) % n]
+    const m = midpoint(curr, next)
+    d += `Q ${curr[0]} ${curr[1]} ${m[0]} ${m[1]} `
+  }
+  return `${d}Z`
+}
+
+const WORLD_LANDMASSES = [
+  // North America (Alaska -> Arctic Canada -> east coast -> Gulf ->
+  // Central America -> Pacific coast -> back to Alaska)
+  [
+    [-168, 65], [-155, 71], [-130, 70], [-95, 68], [-75, 62], [-65, 60],
+    [-55, 51], [-63, 45], [-70, 41], [-74, 40], [-76, 37], [-80, 32],
+    [-80, 25], [-83, 30], [-90, 29], [-97, 26], [-97, 21], [-90, 16],
+    [-84, 10], [-79, 8], [-83, 9], [-87, 13], [-92, 15], [-105, 20],
+    [-112, 24], [-117, 32], [-122, 37], [-124, 46], [-130, 54],
+    [-140, 60], [-152, 58], [-165, 65],
+  ],
+  // Greenland
+  [
+    [-73, 60], [-55, 60], [-42, 61], [-22, 70], [-25, 78], [-45, 83],
+    [-65, 80], [-73, 70],
+  ],
+  // South America
+  [
+    [-77, 8], [-72, 11], [-61, 10], [-51, 1], [-35, -6], [-40, -14],
+    [-43, -23], [-48, -27], [-53, -34], [-58, -38], [-62, -42],
+    [-68, -52], [-70, -55], [-73, -50], [-72, -42], [-71, -33],
+    [-70, -20], [-77, -12], [-80, -3], [-79, 2],
+  ],
+  // Europe (mainland, folding in a rough Italy notch)
+  [
+    [-9, 38], [-9, 43], [-2, 47], [5, 51], [8, 54], [10, 57], [13, 55],
+    [18, 54], [20, 60], [24, 65], [30, 60], [30, 50], [28, 44],
+    [23, 42], [20, 39], [18, 40], [13, 45], [12, 42], [16, 38],
+    [10, 44], [3, 43], [0, 39], [-5, 36],
+  ],
+  // British Isles
+  [
+    [-8, 51], [-10, 54], [-6, 55], [-5, 58], [-2, 58], [0, 53], [1, 51],
+    [-3, 50],
+  ],
+  // Scandinavia
+  [
+    [5, 58], [5, 62], [8, 66], [15, 69], [25, 70], [28, 65], [23, 60],
+    [18, 59], [11, 59],
+  ],
+  // Africa
+  [
+    [-17, 21], [-17, 14], [-10, 6], [2, 6], [9, 4], [9, -1], [12, -6],
+    [13, -12], [14, -22], [18, -34], [26, -33], [33, -28], [35, -20],
+    [40, -11], [42, 0], [51, 10], [45, 12], [43, 12], [37, 18],
+    [35, 28], [32, 31], [25, 32], [10, 37], [2, 36], [-6, 35], [-9, 30],
+  ],
+  // Madagascar
+  [[44, -25], [43, -20], [48, -13], [50, -16], [47, -25]],
+  // Arabian Peninsula
+  [
+    [36, 30], [43, 30], [48, 30], [56, 26], [58, 22], [53, 17],
+    [44, 13], [39, 20], [35, 28],
+  ],
+  // Indian subcontinent
+  [
+    [68, 24], [70, 21], [73, 15], [77, 8], [80, 13], [85, 20], [88, 22],
+    [92, 22], [88, 27], [77, 30], [70, 28],
+  ],
+  // Main Asian landmass (Turkey -> Siberia -> Far East -> SE Asia -> back through Iran)
+  [
+    [27, 40], [35, 42], [40, 47], [48, 46], [60, 55], [70, 65],
+    [100, 73], [140, 73], [170, 68], [163, 60], [155, 53], [140, 46],
+    [131, 43], [129, 35], [122, 31], [114, 22], [108, 16], [103, 8],
+    [98, 8], [94, 16], [92, 22], [80, 30], [60, 37], [48, 38],
+    [44, 37], [36, 37],
+  ],
+  // Japan
+  [[130, 31], [133, 34], [140, 36], [142, 40], [141, 45], [139, 41], [135, 35]],
+  // Sumatra
+  [[96, 5], [106, -6], [102, -4], [95, 4]],
+  // Borneo
+  [[109, 4], [119, 4], [117, -4], [109, -1]],
+  // Philippines
+  [[120, 19], [122, 10], [126, 8], [124, 17]],
+  // New Guinea
+  [[131, -1], [151, -10], [141, -9], [131, -3]],
+  // Australia
+  [
+    [113, -22], [122, -18], [131, -12], [137, -12], [142, -11],
+    [145, -17], [151, -24], [153, -30], [150, -37], [140, -38],
+    [135, -32], [129, -32], [115, -34], [113, -26],
+  ],
+  // New Zealand
+  [[173, -41], [178, -38], [177, -35], [172, -41], [166, -46], [169, -46]],
+]
+
+const CONTINENT_PATHS = WORLD_LANDMASSES.map(pathFromLonLat)
+
+/* ---------- world map (2D), traced from real coastlines ---------- */
 
 function WorldMap2D() {
   return (
@@ -191,49 +318,209 @@ function WorldMap2D() {
         ))}
       </g>
 
-      {/* simplified continents (stylised, low-poly) */}
-      <g fill="url(#land)" stroke="#00000030" strokeWidth="1.5" strokeLinejoin="round">
-        {/* North America */}
-        <path d="M95 95 L175 70 L235 90 L255 140 L230 175 L245 210 L205 245 L175 235 L150 260 L110 235 L120 190 L90 165 L100 130 Z" />
-        {/* South America */}
-        <path d="M215 280 L255 270 L275 310 L265 370 L245 430 L215 425 L205 360 L190 320 Z" />
-        {/* Europe */}
-        <path d="M470 95 L525 80 L560 100 L545 130 L565 150 L530 175 L495 165 L480 135 Z" />
-        {/* Africa */}
-        <path d="M480 190 L545 180 L575 220 L565 280 L540 350 L505 400 L470 370 L460 300 L470 240 Z" />
-        {/* Asia */}
-        <path d="M575 85 L680 70 L780 95 L840 130 L820 175 L860 210 L820 250 L760 240 L720 270 L670 245 L640 200 L600 210 L575 165 L595 130 Z" />
-        {/* Australia */}
-        <path d="M800 340 L865 330 L900 360 L885 400 L830 405 L795 375 Z" />
+      {/* polar ice caps */}
+      <rect x="0" y="0" width="1000" height="14" fill="#e8f0f8" opacity="0.65" />
+      <rect x="0" y="486" width="1000" height="14" fill="#e8f0f8" opacity="0.8" />
+
+      {/* real-world continents, traced from lon/lat */}
+      <g fill="url(#land)" stroke="#00000030" strokeWidth="1.2" strokeLinejoin="round">
+        {CONTINENT_PATHS.map((d, i) => (
+          <path key={i} d={d} />
+        ))}
       </g>
     </svg>
   )
 }
 
-/* ---------- rotating 3D globe (draggable to rotate, scroll/buttons to zoom) ---------- */
+/* ---------- equirectangular world texture (shared look with the 2D map) ---------- */
 
-function Globe3D({ rotation, manualRotate, zoom, dragging, onPointerDown, onPointerMove, onPointerUp }) {
+function buildGlobeTextureCanvas() {
+  const canvas = document.createElement('canvas')
+  canvas.width = 2048
+  canvas.height = 1024
+  const ctx = canvas.getContext('2d')
+  const sx = canvas.width / 1000
+  const sy = canvas.height / 500
+
+  ctx.save()
+  ctx.scale(sx, sy)
+
+  const oceanGrad = ctx.createRadialGradient(500, 190, 50, 500, 190, 750)
+  oceanGrad.addColorStop(0, '#132043')
+  oceanGrad.addColorStop(0.55, '#0c1730')
+  oceanGrad.addColorStop(1, '#070c1c')
+  ctx.fillStyle = oceanGrad
+  ctx.fillRect(0, 0, 1000, 500)
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)'
+  ctx.lineWidth = 1
+  for (let i = 0; i < 9; i++) {
+    ctx.beginPath()
+    ctx.moveTo((i + 1) * 100, 0)
+    ctx.lineTo((i + 1) * 100, 500)
+    ctx.stroke()
+  }
+  for (let i = 0; i < 4; i++) {
+    ctx.beginPath()
+    ctx.moveTo(0, (i + 1) * 100)
+    ctx.lineTo(1000, (i + 1) * 100)
+    ctx.stroke()
+  }
+
+  const landGrad = ctx.createLinearGradient(0, 0, 0, 500)
+  landGrad.addColorStop(0, '#4a5a3a')
+  landGrad.addColorStop(1, '#39472e')
+  ctx.fillStyle = landGrad
+  ctx.strokeStyle = 'rgba(0,0,0,0.35)'
+  ctx.lineWidth = 1.5
+  CONTINENT_PATHS.forEach((d) => {
+    const p = new Path2D(d)
+    ctx.fill(p)
+    ctx.stroke(p)
+  })
+
+  ctx.fillStyle = 'rgba(232,240,248,0.7)'
+  ctx.fillRect(0, 0, 1000, 12)
+  ctx.fillStyle = 'rgba(232,240,248,0.85)'
+  ctx.fillRect(0, 488, 1000, 12)
+
+  ctx.restore()
+  return canvas
+}
+
+/* ---------- real 3D globe (WebGL sphere via three.js) ----------
+   Unlike a flat div faked into looking round with gradients, this is an
+   actual sphere mesh with a real light, so it stays convincingly round
+   and correctly shaded from every viewing angle -- drag vertically to
+   orbit over the poles, drag horizontally to spin, scroll/buttons to
+   zoom -- the same feel as Google Earth. */
+
+function Globe3D({ rotation, tilt, zoom, dragging, onPointerDown, onPointerMove, onPointerUp }) {
+  const mountRef = useRef(null)
+  const cameraRef = useRef(null)
+  const frameRef = useRef(null)
+
+  useEffect(() => {
+    const mount = mountRef.current
+    if (!mount) return undefined
+
+    const width = mount.clientWidth || 1
+    const height = mount.clientHeight || 1
+
+    const scene = new THREE.Scene()
+    const camera = new THREE.PerspectiveCamera(35, width / height, 0.1, 100)
+    cameraRef.current = camera
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+    renderer.setSize(width, height)
+    mount.appendChild(renderer.domElement)
+
+    const texture = new THREE.CanvasTexture(buildGlobeTextureCanvas())
+    texture.colorSpace = THREE.SRGBColorSpace
+    texture.anisotropy = renderer.capabilities.getMaxAnisotropy()
+
+    const sphere = new THREE.Mesh(
+      new THREE.SphereGeometry(1, 64, 64),
+      new THREE.MeshPhongMaterial({ map: texture, shininess: 8, specular: 0x223355 })
+    )
+    scene.add(sphere)
+
+    // thin glowing atmosphere shell, brightest at the silhouette edge --
+    // this is what keeps the limb looking round instead of a hard cutout
+    const atmosphere = new THREE.Mesh(
+      new THREE.SphereGeometry(1.035, 64, 64),
+      new THREE.ShaderMaterial({
+        transparent: true,
+        side: THREE.BackSide,
+        depthWrite: false,
+        uniforms: {},
+        vertexShader: `
+          varying vec3 vNormal;
+          void main() {
+            vNormal = normalize(normalMatrix * normal);
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          varying vec3 vNormal;
+          void main() {
+            float intensity = pow(0.62 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.6);
+            gl_FragColor = vec4(0.35, 0.62, 1.0, 1.0) * clamp(intensity, 0.0, 1.0);
+          }
+        `,
+      })
+    )
+    scene.add(atmosphere)
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.55))
+    const sun = new THREE.DirectionalLight(0xffffff, 1.15)
+    sun.position.set(4, 2.5, 5)
+    scene.add(sun)
+
+    function renderLoop() {
+      renderer.render(scene, camera)
+      frameRef.current = requestAnimationFrame(renderLoop)
+    }
+    renderLoop()
+
+    const resizeObserver = new ResizeObserver(() => {
+      const w = mount.clientWidth || 1
+      const h = mount.clientHeight || 1
+      camera.aspect = w / h
+      camera.updateProjectionMatrix()
+      renderer.setSize(w, h)
+    })
+    resizeObserver.observe(mount)
+
+    return () => {
+      cancelAnimationFrame(frameRef.current)
+      resizeObserver.disconnect()
+      mount.removeChild(renderer.domElement)
+      sphere.geometry.dispose()
+      sphere.material.dispose()
+      atmosphere.geometry.dispose()
+      atmosphere.material.dispose()
+      texture.dispose()
+      renderer.dispose()
+    }
+  }, [])
+
+  // Orbit the camera around the sphere -- true spherical coordinates, so
+  // the globe reads as a solid ball no matter how far it's tilted, instead
+  // of a flat disc being rotated in space.
+  useEffect(() => {
+    const camera = cameraRef.current
+    if (!camera) return
+    // negated so the globe's surface follows the drag direction (grabbing
+    // the sphere and turning it), instead of the camera orbiting the same
+    // way the drag moved -- which visually spins the surface backwards
+    const theta = THREE.MathUtils.degToRad(-rotation)
+    // polar angle measured from the top pole; clamped so the camera never
+    // whips straight through a pole (same guard Google Earth applies)
+    const phiDeg = clampNum(90 - tilt, 12, 168)
+    const phi = THREE.MathUtils.degToRad(phiDeg)
+    const radius = 2.6 / clampNum(zoom, MIN_ZOOM_3D, MAX_ZOOM_3D)
+
+    camera.position.set(
+      radius * Math.sin(phi) * Math.sin(theta),
+      radius * Math.cos(phi),
+      radius * Math.sin(phi) * Math.cos(theta)
+    )
+    camera.up.set(0, 1, 0)
+    camera.lookAt(0, 0, 0)
+  }, [rotation, tilt, zoom])
+
   return (
     <div
       className={`globe3d-wrap${dragging ? ' is-dragging' : ''}`}
-      style={{ transform: `scale(${zoom})` }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
     >
       <div className="globe3d-halo" />
-      <div className="globe3d-sphere">
-        <div
-          className={`globe3d-surface${manualRotate ? ' manual' : ''}`}
-          style={manualRotate ? { transform: `translateX(${(rotation / 360) * 50}%)` } : undefined}
-        >
-          <WorldMap2D />
-          <WorldMap2D />
-        </div>
-        <div className="globe3d-shading" />
-        <div className="globe3d-grid" />
-      </div>
+      <div className="globe3d-canvas-mount" ref={mountRef} />
     </div>
   )
 }
@@ -349,12 +636,13 @@ export default function Explore({ events = [] }) {
   const activePointers = useRef(new Map()) // pointerId -> { x, y } (for two-finger pinch)
   const pinchState = useRef(null) // { startDist, startZoom, startPan }
 
-  // -- 3D globe: rotation + zoom --
+  // -- 3D globe: rotation + tilt + zoom --
   const [rotation, setRotation] = useState(0)
+  const [tilt, setTilt] = useState(0)
   const [zoom3d, setZoom3d] = useState(1)
   const [manualRotate, setManualRotate] = useState(false)
   const [isRotating, setIsRotating] = useState(false)
-  const rotateDrag = useRef(null) // { startX, startRotation, pointerId }
+  const rotateDrag = useRef(null) // { startX, startY, startRotation, startTilt, pointerId }
 
   const panelRef = useRef(null)
 
@@ -424,6 +712,7 @@ export default function Explore({ events = [] }) {
     } else {
       setZoom3d(1)
       setRotation(0)
+      setTilt(0)
       setManualRotate(false)
     }
   }
@@ -515,19 +804,29 @@ export default function Explore({ events = [] }) {
     zoomAtPoint(zoom + 0.6, e.clientX, e.clientY)
   }
 
-  // -- 3D drag-to-rotate handlers --
+  // -- 3D drag-to-rotate handlers (horizontal drag spins the view around
+  // the globe, vertical drag orbits it up/down over the poles -- tilt is
+  // clamped so the camera never flips upside-down through a pole, the same
+  // guard Google Earth applies) --
   function handleRotatePointerDown(e) {
     if (e.button !== undefined && e.button !== 0) return
     setManualRotate(true)
     setIsRotating(true)
-    rotateDrag.current = { startX: e.clientX, startRotation: rotation, pointerId: e.pointerId }
+    rotateDrag.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      startRotation: rotation,
+      startTilt: tilt,
+      pointerId: e.pointerId,
+    }
     e.currentTarget.setPointerCapture?.(e.pointerId)
   }
 
   function handleRotatePointerMove(e) {
     if (!rotateDrag.current) return
-    const { startX, startRotation } = rotateDrag.current
+    const { startX, startY, startRotation, startTilt } = rotateDrag.current
     setRotation(startRotation + (e.clientX - startX) * ROTATE_SENSITIVITY)
+    setTilt(clampNum(startTilt + (e.clientY - startY) * TILT_SENSITIVITY, MIN_TILT, MAX_TILT))
   }
 
   function handleRotatePointerUp(e) {
@@ -542,23 +841,19 @@ export default function Explore({ events = [] }) {
     setIsRotating(false)
   }
 
-  // Native (non-passive) wheel listener. For the 2D map we deliberately do
-  // NOT zoom on a plain scroll -- only a trackpad pinch gesture (which the
-  // browser reports as a wheel event with ctrlKey set) zooms, so normal
-  // scrolling behaves like normal scrolling. The 3D globe still zooms on
-  // any scroll since it has no competing "scroll the page" expectation.
+  // Native (non-passive) wheel listener. The 2D map does NOT zoom on
+  // scroll at all -- some touchpad drivers (notably on Windows) tag
+  // ordinary two-finger scrolling with ctrlKey the same way they tag a
+  // real pinch gesture, so there's no reliable way to tell them apart.
+  // Zoom is available via the +/- buttons and double-click instead. The
+  // 3D globe still zooms on scroll, since it has no competing "scroll the
+  // page" expectation to protect.
   useEffect(() => {
     const el = panelRef.current
     if (!el) return undefined
 
     function onWheel(e) {
-      if (mode === '2D') {
-        if (!e.ctrlKey) return // let the page scroll normally
-        e.preventDefault()
-        const factor = Math.exp(-e.deltaY * 0.012)
-        zoomAtPoint(zoom * factor, e.clientX, e.clientY)
-        return
-      }
+      if (mode === '2D') return // scrolling never zooms the 2D map
       e.preventDefault()
       const factor = Math.exp(-e.deltaY * 0.0016)
       setZoom3d((z) => clampNum(+(z * factor).toFixed(3), MIN_ZOOM_3D, MAX_ZOOM_3D))
@@ -701,7 +996,7 @@ export default function Explore({ events = [] }) {
             <div className="map-viewport">
               <Globe3D
                 rotation={rotation}
-                manualRotate={manualRotate}
+                tilt={tilt}
                 zoom={zoom3d}
                 dragging={isRotating}
                 onPointerDown={handleRotatePointerDown}
