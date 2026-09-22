@@ -1,21 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import * as THREE from 'three'
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 import Navbar from '../components/Navbar.jsx'
-
-/* ---------- pan/zoom tuning ---------- */
-
-const MIN_ZOOM_2D = 0.6
-const MAX_ZOOM_2D = 3
-const MIN_ZOOM_3D = 0.6
-const MAX_ZOOM_3D = 2.2
-const ROTATE_SENSITIVITY = 0.35 // degrees of spin (left/right) per pixel dragged
-const TILT_SENSITIVITY = 0.35 // degrees of tilt (up/down) per pixel dragged
-const MIN_TILT = -80 // clamped so the camera never whips straight through a pole
-const MAX_TILT = 80
-
-function clampNum(v, min, max) {
-  return Math.min(max, Math.max(min, v))
-}
+import { usePlaces } from '../context/PlacesContext.jsx'
 
 /* ---------- constants ---------- */
 
@@ -166,364 +154,330 @@ function pct(y) {
   return ((y - MIN_YEAR) / (MAX_YEAR - MIN_YEAR)) * 100
 }
 
-/* ---------- real-world coastline data (equirectangular) ----------
-   Traced from actual longitude/latitude coordinates rather than made-up
-   shapes, so both the 2D map and the 3D globe show recognizable real
-   continents. These are hand-simplified (10-30 points per landmass) for
-   a clean stylized look, not survey-grade GIS data. */
+/* ---------- real 2D map (Leaflet + real OpenStreetMap tiles) ----------
+   This mounts an actual Leaflet slippy map with genuine OSM raster tiles,
+   instead of a hand-drawn SVG world. Panning, pinch/scroll zoom, momentum
+   and tile loading are all handled by Leaflet itself. */
 
-function projectLonLat(lon, lat) {
-  const x = ((lon + 180) / 360) * 1000
-  const y = ((90 - lat) / 180) * 500
-  return [Number(x.toFixed(1)), Number(y.toFixed(1))]
-}
-
-// Turns the same coordinate list into a smooth closed curve (quadratic
-// Bezier through each point's midpoint) instead of a hard-cornered
-// straight-line polygon. At low zoom the difference is subtle, but it's
-// what keeps coastlines -- especially narrow stretches like the Central
-// American isthmus -- from looking like jagged, self-crossing shapes once
-// you zoom in.
-function pathFromLonLat(points) {
-  const pts = points.map(([lon, lat]) => projectLonLat(lon, lat))
-  const n = pts.length
-  const midpoint = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
-
-  const start = midpoint(pts[n - 1], pts[0])
-  let d = `M ${start[0]} ${start[1]} `
-  for (let i = 0; i < n; i++) {
-    const curr = pts[i]
-    const next = pts[(i + 1) % n]
-    const m = midpoint(curr, next)
-    d += `Q ${curr[0]} ${curr[1]} ${m[0]} ${m[1]} `
-  }
-  return `${d}Z`
-}
-
-const WORLD_LANDMASSES = [
-  // North America (Alaska -> Arctic Canada -> east coast -> Gulf ->
-  // Central America -> Pacific coast -> back to Alaska)
-  [
-    [-168, 65], [-155, 71], [-130, 70], [-95, 68], [-75, 62], [-65, 60],
-    [-55, 51], [-63, 45], [-70, 41], [-74, 40], [-76, 37], [-80, 32],
-    [-80, 25], [-83, 30], [-90, 29], [-97, 26], [-97, 21], [-90, 16],
-    [-84, 10], [-79, 8], [-83, 9], [-87, 13], [-92, 15], [-105, 20],
-    [-112, 24], [-117, 32], [-122, 37], [-124, 46], [-130, 54],
-    [-140, 60], [-152, 58], [-165, 65],
-  ],
-  // Greenland
-  [
-    [-73, 60], [-55, 60], [-42, 61], [-22, 70], [-25, 78], [-45, 83],
-    [-65, 80], [-73, 70],
-  ],
-  // South America
-  [
-    [-77, 8], [-72, 11], [-61, 10], [-51, 1], [-35, -6], [-40, -14],
-    [-43, -23], [-48, -27], [-53, -34], [-58, -38], [-62, -42],
-    [-68, -52], [-70, -55], [-73, -50], [-72, -42], [-71, -33],
-    [-70, -20], [-77, -12], [-80, -3], [-79, 2],
-  ],
-  // Europe (mainland, folding in a rough Italy notch)
-  [
-    [-9, 38], [-9, 43], [-2, 47], [5, 51], [8, 54], [10, 57], [13, 55],
-    [18, 54], [20, 60], [24, 65], [30, 60], [30, 50], [28, 44],
-    [23, 42], [20, 39], [18, 40], [13, 45], [12, 42], [16, 38],
-    [10, 44], [3, 43], [0, 39], [-5, 36],
-  ],
-  // British Isles
-  [
-    [-8, 51], [-10, 54], [-6, 55], [-5, 58], [-2, 58], [0, 53], [1, 51],
-    [-3, 50],
-  ],
-  // Scandinavia
-  [
-    [5, 58], [5, 62], [8, 66], [15, 69], [25, 70], [28, 65], [23, 60],
-    [18, 59], [11, 59],
-  ],
-  // Africa
-  [
-    [-17, 21], [-17, 14], [-10, 6], [2, 6], [9, 4], [9, -1], [12, -6],
-    [13, -12], [14, -22], [18, -34], [26, -33], [33, -28], [35, -20],
-    [40, -11], [42, 0], [51, 10], [45, 12], [43, 12], [37, 18],
-    [35, 28], [32, 31], [25, 32], [10, 37], [2, 36], [-6, 35], [-9, 30],
-  ],
-  // Madagascar
-  [[44, -25], [43, -20], [48, -13], [50, -16], [47, -25]],
-  // Arabian Peninsula
-  [
-    [36, 30], [43, 30], [48, 30], [56, 26], [58, 22], [53, 17],
-    [44, 13], [39, 20], [35, 28],
-  ],
-  // Indian subcontinent
-  [
-    [68, 24], [70, 21], [73, 15], [77, 8], [80, 13], [85, 20], [88, 22],
-    [92, 22], [88, 27], [77, 30], [70, 28],
-  ],
-  // Main Asian landmass (Turkey -> Siberia -> Far East -> SE Asia -> back through Iran)
-  [
-    [27, 40], [35, 42], [40, 47], [48, 46], [60, 55], [70, 65],
-    [100, 73], [140, 73], [170, 68], [163, 60], [155, 53], [140, 46],
-    [131, 43], [129, 35], [122, 31], [114, 22], [108, 16], [103, 8],
-    [98, 8], [94, 16], [92, 22], [80, 30], [60, 37], [48, 38],
-    [44, 37], [36, 37],
-  ],
-  // Japan
-  [[130, 31], [133, 34], [140, 36], [142, 40], [141, 45], [139, 41], [135, 35]],
-  // Sumatra
-  [[96, 5], [106, -6], [102, -4], [95, 4]],
-  // Borneo
-  [[109, 4], [119, 4], [117, -4], [109, -1]],
-  // Philippines
-  [[120, 19], [122, 10], [126, 8], [124, 17]],
-  // New Guinea
-  [[131, -1], [151, -10], [141, -9], [131, -3]],
-  // Australia
-  [
-    [113, -22], [122, -18], [131, -12], [137, -12], [142, -11],
-    [145, -17], [151, -24], [153, -30], [150, -37], [140, -38],
-    [135, -32], [129, -32], [115, -34], [113, -26],
-  ],
-  // New Zealand
-  [[173, -41], [178, -38], [177, -35], [172, -41], [166, -46], [169, -46]],
-]
-
-const CONTINENT_PATHS = WORLD_LANDMASSES.map(pathFromLonLat)
-
-/* ---------- world map (2D), traced from real coastlines ---------- */
-
-function WorldMap2D() {
-  return (
-    <svg className="world-svg" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <radialGradient id="ocean" cx="50%" cy="38%" r="75%">
-          <stop offset="0%" stopColor="#132043" />
-          <stop offset="55%" stopColor="#0c1730" />
-          <stop offset="100%" stopColor="#070c1c" />
-        </radialGradient>
-        <linearGradient id="land" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#4a5a3a" />
-          <stop offset="100%" stopColor="#39472e" />
-        </linearGradient>
-      </defs>
-
-      <rect x="0" y="0" width="1000" height="500" fill="url(#ocean)" />
-
-      {/* graticule */}
-      <g stroke="#ffffff10" strokeWidth="1">
-        {Array.from({ length: 9 }).map((_, i) => (
-          <line key={`v${i}`} x1={(i + 1) * 100} y1="0" x2={(i + 1) * 100} y2="500" />
-        ))}
-        {Array.from({ length: 4 }).map((_, i) => (
-          <line key={`h${i}`} x1="0" y1={(i + 1) * 100} x2="1000" y2={(i + 1) * 100} />
-        ))}
-      </g>
-
-      {/* polar ice caps */}
-      <rect x="0" y="0" width="1000" height="14" fill="#e8f0f8" opacity="0.65" />
-      <rect x="0" y="486" width="1000" height="14" fill="#e8f0f8" opacity="0.8" />
-
-      {/* real-world continents, traced from lon/lat */}
-      <g fill="url(#land)" stroke="#00000030" strokeWidth="1.2" strokeLinejoin="round">
-        {CONTINENT_PATHS.map((d, i) => (
-          <path key={i} d={d} />
-        ))}
-      </g>
-    </svg>
-  )
-}
-
-/* ---------- equirectangular world texture (shared look with the 2D map) ---------- */
-
-function buildGlobeTextureCanvas() {
-  const canvas = document.createElement('canvas')
-  canvas.width = 2048
-  canvas.height = 1024
-  const ctx = canvas.getContext('2d')
-  const sx = canvas.width / 1000
-  const sy = canvas.height / 500
-
-  ctx.save()
-  ctx.scale(sx, sy)
-
-  const oceanGrad = ctx.createRadialGradient(500, 190, 50, 500, 190, 750)
-  oceanGrad.addColorStop(0, '#132043')
-  oceanGrad.addColorStop(0.55, '#0c1730')
-  oceanGrad.addColorStop(1, '#070c1c')
-  ctx.fillStyle = oceanGrad
-  ctx.fillRect(0, 0, 1000, 500)
-
-  ctx.strokeStyle = 'rgba(255,255,255,0.05)'
-  ctx.lineWidth = 1
-  for (let i = 0; i < 9; i++) {
-    ctx.beginPath()
-    ctx.moveTo((i + 1) * 100, 0)
-    ctx.lineTo((i + 1) * 100, 500)
-    ctx.stroke()
-  }
-  for (let i = 0; i < 4; i++) {
-    ctx.beginPath()
-    ctx.moveTo(0, (i + 1) * 100)
-    ctx.lineTo(1000, (i + 1) * 100)
-    ctx.stroke()
-  }
-
-  const landGrad = ctx.createLinearGradient(0, 0, 0, 500)
-  landGrad.addColorStop(0, '#4a5a3a')
-  landGrad.addColorStop(1, '#39472e')
-  ctx.fillStyle = landGrad
-  ctx.strokeStyle = 'rgba(0,0,0,0.35)'
-  ctx.lineWidth = 1.5
-  CONTINENT_PATHS.forEach((d) => {
-    const p = new Path2D(d)
-    ctx.fill(p)
-    ctx.stroke(p)
-  })
-
-  ctx.fillStyle = 'rgba(232,240,248,0.7)'
-  ctx.fillRect(0, 0, 1000, 12)
-  ctx.fillStyle = 'rgba(232,240,248,0.85)'
-  ctx.fillRect(0, 488, 1000, 12)
-
-  ctx.restore()
-  return canvas
-}
-
-/* ---------- real 3D globe (WebGL sphere via three.js) ----------
-   Unlike a flat div faked into looking round with gradients, this is an
-   actual sphere mesh with a real light, so it stays convincingly round
-   and correctly shaded from every viewing angle -- drag vertically to
-   orbit over the poles, drag horizontally to spin, scroll/buttons to
-   zoom -- the same feel as Google Earth. */
-
-function Globe3D({ rotation, tilt, zoom, dragging, onPointerDown, onPointerMove, onPointerUp }) {
+const LeafletMap2D = forwardRef(function LeafletMap2D({ mode, places = [] }, ref) {
   const mountRef = useRef(null)
-  const cameraRef = useRef(null)
-  const frameRef = useRef(null)
+  const mapRef = useRef(null)
+  const markersLayerRef = useRef(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
-    const mount = mountRef.current
-    if (!mount) return undefined
+    if (!mountRef.current || mapRef.current) return undefined
 
-    const width = mount.clientWidth || 1
-    const height = mount.clientHeight || 1
-
-    const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(35, width / height, 0.1, 100)
-    cameraRef.current = camera
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
-    renderer.setSize(width, height)
-    mount.appendChild(renderer.domElement)
-
-    const texture = new THREE.CanvasTexture(buildGlobeTextureCanvas())
-    texture.colorSpace = THREE.SRGBColorSpace
-    texture.anisotropy = renderer.capabilities.getMaxAnisotropy()
-
-    const sphere = new THREE.Mesh(
-      new THREE.SphereGeometry(1, 64, 64),
-      new THREE.MeshPhongMaterial({ map: texture, shininess: 8, specular: 0x223355 })
-    )
-    scene.add(sphere)
-
-    // thin glowing atmosphere shell, brightest at the silhouette edge --
-    // this is what keeps the limb looking round instead of a hard cutout
-    const atmosphere = new THREE.Mesh(
-      new THREE.SphereGeometry(1.035, 64, 64),
-      new THREE.ShaderMaterial({
-        transparent: true,
-        side: THREE.BackSide,
-        depthWrite: false,
-        uniforms: {},
-        vertexShader: `
-          varying vec3 vNormal;
-          void main() {
-            vNormal = normalize(normalMatrix * normal);
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          }
-        `,
-        fragmentShader: `
-          varying vec3 vNormal;
-          void main() {
-            float intensity = pow(0.62 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.6);
-            gl_FragColor = vec4(0.35, 0.62, 1.0, 1.0) * clamp(intensity, 0.0, 1.0);
-          }
-        `,
-      })
-    )
-    scene.add(atmosphere)
-
-    scene.add(new THREE.AmbientLight(0xffffff, 0.55))
-    const sun = new THREE.DirectionalLight(0xffffff, 1.15)
-    sun.position.set(4, 2.5, 5)
-    scene.add(sun)
-
-    function renderLoop() {
-      renderer.render(scene, camera)
-      frameRef.current = requestAnimationFrame(renderLoop)
-    }
-    renderLoop()
-
-    const resizeObserver = new ResizeObserver(() => {
-      const w = mount.clientWidth || 1
-      const h = mount.clientHeight || 1
-      camera.aspect = w / h
-      camera.updateProjectionMatrix()
-      renderer.setSize(w, h)
+    const map = L.map(mountRef.current, {
+      center: [20, 0],
+      zoom: 2,
+      minZoom: 2,
+      maxZoom: 19,
+      worldCopyJump: true,
+      zoomControl: false,
+      attributionControl: true,
     })
-    resizeObserver.observe(mount)
+
+    // Standard OSM tiles render place names in each region's local language,
+    // so this uses Wikimedia's "osm-intl" tile set with an explicit
+    // lang=en query param instead -- same OSM data, but every label is
+    // forced to English (falling back to a Latin-script transliteration
+    // where no English name exists in the data).
+    L.tileLayer('https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png?lang=en', {
+      maxZoom: 19,
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors | Tiles &copy; <a href="https://wikimediafoundation.org/" target="_blank" rel="noreferrer">Wikimedia</a>',
+    }).addTo(map)
+
+    markersLayerRef.current = L.layerGroup().addTo(map)
+    mapRef.current = map
+    // Leaflet measures its container on creation; if that happened while the
+    // panel was still mid-layout (e.g. right after a page transition), the
+    // tiles come in misaligned until something nudges it -- so nudge it once
+    // more on the next frame.
+    requestAnimationFrame(() => map.invalidateSize())
 
     return () => {
-      cancelAnimationFrame(frameRef.current)
-      resizeObserver.disconnect()
-      mount.removeChild(renderer.domElement)
-      sphere.geometry.dispose()
-      sphere.material.dispose()
-      atmosphere.geometry.dispose()
-      atmosphere.material.dispose()
-      texture.dispose()
-      renderer.dispose()
+      map.remove()
+      mapRef.current = null
     }
   }, [])
 
-  // Orbit the camera around the sphere -- true spherical coordinates, so
-  // the globe reads as a solid ball no matter how far it's tilted, instead
-  // of a flat disc being rotated in space.
+  // Leaflet caches its container size, so switching back to 2D after a
+  // stretch in 3D (or any panel resize) needs an explicit re-measure or the
+  // tiles render into a stale, wrongly-sized grid.
   useEffect(() => {
-    const camera = cameraRef.current
-    if (!camera) return
-    // negated so the globe's surface follows the drag direction (grabbing
-    // the sphere and turning it), instead of the camera orbiting the same
-    // way the drag moved -- which visually spins the surface backwards
-    const theta = THREE.MathUtils.degToRad(-rotation)
-    // polar angle measured from the top pole; clamped so the camera never
-    // whips straight through a pole (same guard Google Earth applies)
-    const phiDeg = clampNum(90 - tilt, 12, 168)
-    const phi = THREE.MathUtils.degToRad(phiDeg)
-    const radius = 2.6 / clampNum(zoom, MIN_ZOOM_3D, MAX_ZOOM_3D)
+    if (mode === '2D') {
+      requestAnimationFrame(() => mapRef.current?.invalidateSize())
+    }
+  }, [mode])
 
-    camera.position.set(
-      radius * Math.sin(phi) * Math.sin(theta),
-      radius * Math.cos(phi),
-      radius * Math.sin(phi) * Math.cos(theta)
-    )
-    camera.up.set(0, 1, 0)
-    camera.lookAt(0, 0, 0)
-  }, [rotation, tilt, zoom])
+  // Plot one pin per dataset entry -- re-runs whenever `places` changes, so
+  // swapping in the real dataset later just makes these pins update.
+  useEffect(() => {
+    const layer = markersLayerRef.current
+    if (!layer) return
+    layer.clearLayers()
+
+    places.forEach((place) => {
+      if (!place.coords) return
+      const icon = L.divIcon({
+        className: 'place-pin-icon',
+        html: `
+          <svg class="place-pin" width="26" height="34" viewBox="0 0 26 34" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M13 33S2 20.6 2 12.5C2 6.1 6.9 1 13 1s11 5.1 11 11.5C24 20.6 13 33 13 33z"
+              fill="var(--yellow)"
+              stroke="#1a1300"
+              stroke-width="2"
+              stroke-linejoin="round"
+            />
+            <circle cx="13" cy="12.5" r="4" fill="#1a1300" />
+          </svg>
+        `,
+        iconSize: [26, 34],
+        iconAnchor: [13, 34],
+      })
+      const marker = L.marker([place.coords.lat, place.coords.lng], { icon })
+      marker.bindTooltip(place.name, { direction: 'top', offset: [0, -30] })
+      marker.on('click', () => navigate(`/place/${place.id}`))
+      marker.addTo(layer)
+    })
+  }, [places, navigate])
+
+  useImperativeHandle(ref, () => ({
+    zoomIn() {
+      mapRef.current?.zoomIn()
+    },
+    zoomOut() {
+      mapRef.current?.zoomOut()
+    },
+    reset() {
+      mapRef.current?.setView([20, 0], 2)
+    },
+  }))
 
   return (
     <div
-      className={`globe3d-wrap${dragging ? ' is-dragging' : ''}`}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
-    >
-      <div className="globe3d-halo" />
-      <div className="globe3d-canvas-mount" ref={mountRef} />
-    </div>
+      className="leaflet-mount"
+      ref={mountRef}
+      style={{ display: mode === '2D' ? 'block' : 'none' }}
+    />
   )
+})
+
+/* ---------- shared pin artwork (2D + 3D use the same shape) ---------- */
+
+const PIN_FILL_COLOR = '#f7c740'
+const PIN_STROKE_COLOR = '#1a1300'
+
+// Cesium billboards render onto a canvas texture outside the DOM, so they
+// can't read CSS custom properties the way the Leaflet divIcon SVG does --
+// this builds the same pin shape as a literal-color data URL for that case.
+function buildPinDataUrl() {
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="26" height="34" viewBox="0 0 26 34">` +
+    `<path d="M13 33S2 20.6 2 12.5C2 6.1 6.9 1 13 1s11 5.1 11 11.5C24 20.6 13 33 13 33z" fill="${PIN_FILL_COLOR}" stroke="${PIN_STROKE_COLOR}" stroke-width="2" stroke-linejoin="round"/>` +
+    `<circle cx="13" cy="12.5" r="4" fill="${PIN_STROKE_COLOR}"/>` +
+    `</svg>`
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`
 }
+
+/* ---------- real 3D globe (CesiumJS + real OpenStreetMap imagery) ----------
+   Cesium is a real digital-globe engine -- the same category of tech behind
+   Google Earth's web viewer -- so this renders actual map imagery on a true
+   globe with its own camera system: left-drag to orbit, right-drag (or
+   ctrl+drag) to tilt, scroll to zoom. Because there's no artificial circular
+   mask around it (see .leaflet-mount / .cesium-mount in index.css), the
+   sphere's own curved edge is the only thing that can ever "cut" the frame,
+   and only for as long as the globe is genuinely small enough to be smaller
+   than the frame -- zoom in far enough and it fills the whole panel with no
+   cutoff, the same way Google Earth behaves.
+
+   Cesium is a large library, so it's imported dynamically the first time the
+   3D tab is actually opened rather than bundled into the initial page load.
+   Once created, the viewer is kept alive (just hidden with CSS) so switching
+   back and forth between 2D/3D doesn't lose your place on the globe. */
+
+const CesiumGlobe3D = forwardRef(function CesiumGlobe3D({ mode, places = [] }, ref) {
+  const mountRef = useRef(null)
+  const viewerRef = useRef(null)
+  const cesiumRef = useRef(null)
+  const initStarted = useRef(false)
+  const [ready, setReady] = useState(false)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (mode !== '3D' || initStarted.current) return undefined
+    initStarted.current = true
+    let cancelled = false
+
+    ;(async () => {
+      const [Cesium] = await Promise.all([
+        import('cesium'),
+        import('cesium/Build/Cesium/Widgets/widgets.css'),
+      ])
+      if (cancelled || !mountRef.current) return
+
+      // Real satellite/aerial photography (Esri World Imagery), not a
+      // stylized road map -- this is what actually gives the globe true
+      // earth-like coloring: blue oceans, green forests, brown deserts,
+      // white ice, instead of OSM's flat cream-and-beige road-map palette.
+      // fromBasemapType() is async (it fetches Esri's basemap style/tiling
+      // metadata first), so it's handed to ImageryLayer.fromProviderAsync
+      // rather than wrapped synchronously like the old OSM provider was.
+      const viewer = new Cesium.Viewer(mountRef.current, {
+        baseLayer: Cesium.ImageryLayer.fromProviderAsync(
+          Cesium.ArcGisMapServerImageryProvider.fromBasemapType(
+            Cesium.ArcGisBaseMapType.SATELLITE
+          )
+        ),
+        terrainProvider: new Cesium.EllipsoidTerrainProvider(),
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+        animation: false,
+        timeline: false,
+        fullscreenButton: false,
+        infoBox: false,
+        selectionIndicator: false,
+      })
+
+      // Ocean-blue fallback while the satellite imagery is still loading in,
+      // instead of Cesium's default light-grey globe.
+      viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#1b3a5c')
+
+      // Plain satellite imagery has no place names on it at all, so this
+      // adds Esri's "World Boundaries and Places" reference layer on top --
+      // country/state/city labels (in English) plus admin boundaries,
+      // purpose-built to sit over a dark basemap like satellite imagery.
+      try {
+        const labelsProvider = await Cesium.ArcGisMapServerImageryProvider.fromUrl(
+          'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer'
+        )
+        if (cancelled) return
+        viewer.imageryLayers.addImageryProvider(labelsProvider)
+      } catch (err) {
+        // Labels are a nice-to-have on top of the globe -- if the reference
+        // service is unreachable, fail quietly and keep the satellite base.
+        console.warn('Globe labels layer failed to load:', err)
+      }
+
+      viewerRef.current = viewer
+      cesiumRef.current = Cesium
+      setReady(true)
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [mode])
+
+  // Plot one pin per dataset entry, mirroring LeafletMap2D. Pins are added
+  // as billboards -- flat, always-camera-facing 2D sprites -- rather than
+  // ground-hugging shapes, so the pin never distorts, flips, or goes edge-on
+  // invisible as the globe rotates or tilts; disableDepthTestDistance keeps
+  // each one drawn on top of the globe surface itself, so a pin is never
+  // swallowed by the curvature of the earth mid-rotation either.
+  useEffect(() => {
+    const viewer = viewerRef.current
+    const Cesium = cesiumRef.current
+    if (!viewer || !Cesium || !ready) return undefined
+
+    viewer.entities.removeAll()
+    const pinImage = buildPinDataUrl()
+
+    places.forEach((place) => {
+      if (!place.coords) return
+      viewer.entities.add({
+        id: `place-${place.id}`,
+        position: Cesium.Cartesian3.fromDegrees(place.coords.lng, place.coords.lat),
+        billboard: {
+          image: pinImage,
+          width: 26,
+          height: 34,
+          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+          horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          scaleByDistance: new Cesium.NearFarScalar(1.0e6, 1, 2.5e7, 0.5),
+        },
+      })
+    })
+
+    return () => {
+      viewer.entities.removeAll()
+    }
+  }, [places, ready])
+
+  // Click a pin to open its place page (same behavior as the 2D markers),
+  // and swap in a pointer cursor while hovering one.
+  useEffect(() => {
+    const viewer = viewerRef.current
+    const Cesium = cesiumRef.current
+    if (!viewer || !Cesium || !ready) return undefined
+
+    const handler = viewer.screenSpaceEventHandler
+
+    function placeIdFromPick(picked) {
+      const id = picked?.id?.id
+      return typeof id === 'string' && id.startsWith('place-') ? id.slice('place-'.length) : null
+    }
+
+    function onClick(movement) {
+      const placeId = placeIdFromPick(viewer.scene.pick(movement.position))
+      if (placeId) navigate(`/place/${placeId}`)
+    }
+
+    function onMove(movement) {
+      const placeId = placeIdFromPick(viewer.scene.pick(movement.endPosition))
+      viewer.scene.canvas.style.cursor = placeId ? 'pointer' : ''
+    }
+
+    handler.setInputAction(onClick, Cesium.ScreenSpaceEventType.LEFT_CLICK)
+    handler.setInputAction(onMove, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
+
+    return () => {
+      handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK)
+      handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE)
+    }
+  }, [ready, navigate])
+
+  // Only torn down when the page itself unmounts, not on every 2D/3D toggle.
+  useEffect(
+    () => () => {
+      viewerRef.current?.destroy()
+      viewerRef.current = null
+    },
+    []
+  )
+
+  useImperativeHandle(ref, () => ({
+    zoomIn() {
+      const viewer = viewerRef.current
+      if (!viewer) return
+      viewer.camera.zoomIn(viewer.camera.positionCartographic.height * 0.3)
+    },
+    zoomOut() {
+      const viewer = viewerRef.current
+      if (!viewer) return
+      viewer.camera.zoomOut(viewer.camera.positionCartographic.height * 0.4)
+    },
+    reset() {
+      viewerRef.current?.camera.flyHome(0.6)
+    },
+  }))
+
+  return (
+    <div
+      className="cesium-mount"
+      ref={mountRef}
+      style={{ display: mode === '3D' ? 'block' : 'none' }}
+    />
+  )
+})
+
 
 /* ---------- dual range timeline ---------- */
 
@@ -621,273 +575,56 @@ function TimelineRange({ range, setRange }) {
 
 /* ---------- main page ---------- */
 
-export default function Explore({ events = [] }) {
+export default function Explore() {
+  const { places: PLACES } = usePlaces()
   const [mode, setMode] = useState('2D')
   const [activeCategory, setActiveCategory] = useState('Events')
   const [search, setSearch] = useState('')
   const [filterOpen, setFilterOpen] = useState(false)
   const [range, setRange] = useState([MIN_YEAR, MAX_YEAR])
 
-  // -- 2D map: zoom + pan --
-  const [zoom, setZoom] = useState(1)
-  const [pan, setPan] = useState({ x: 0, y: 0 })
-  const [isPanning, setIsPanning] = useState(false)
-  const panDrag = useRef(null) // { startX, startY, startPan, pointerId }
-  const activePointers = useRef(new Map()) // pointerId -> { x, y } (for two-finger pinch)
-  const pinchState = useRef(null) // { startDist, startZoom, startPan }
+  // Imperative handles onto the real map engines -- Leaflet owns the 2D
+  // pan/zoom state, Cesium owns the 3D camera, so the zoom buttons and
+  // reset-view button just delegate to whichever one is active.
+  const leafletApiRef = useRef(null)
+  const cesiumApiRef = useRef(null)
 
-  // -- 3D globe: rotation + tilt + zoom --
-  const [rotation, setRotation] = useState(0)
-  const [tilt, setTilt] = useState(0)
-  const [zoom3d, setZoom3d] = useState(1)
-  const [manualRotate, setManualRotate] = useState(false)
-  const [isRotating, setIsRotating] = useState(false)
-  const rotateDrag = useRef(null) // { startX, startY, startRotation, startTilt, pointerId }
-
-  const panelRef = useRef(null)
-
-  function clampPan(next, z) {
-    const el = panelRef.current
-    if (!el) return next
-    const rect = el.getBoundingClientRect()
-    const maxX = Math.max(0, (rect.width * (z - 1)) / 2)
-    const maxY = Math.max(0, (rect.height * (z - 1)) / 2)
-    return {
-      x: clampNum(next.x, -maxX, maxX),
-      y: clampNum(next.y, -maxY, maxY),
-    }
-  }
-
-  // Zooms the 2D map while keeping the point under (clientX, clientY) fixed
-  // on screen -- this is what makes scroll-to-zoom and the +/- buttons feel
-  // natural instead of always re-centering on the middle of the panel.
-  function zoomAtPoint(nextZoomRaw, clientX, clientY) {
-    const nextZoom = clampNum(nextZoomRaw, MIN_ZOOM_2D, MAX_ZOOM_2D)
-    const el = panelRef.current
-    if (!el) {
-      setZoom(nextZoom)
-      return
-    }
-    const rect = el.getBoundingClientRect()
-    const cx = rect.width / 2
-    const cy = rect.height / 2
-    const mx = clientX - rect.left
-    const my = clientY - rect.top
-    const ratio = nextZoom / zoom
-
-    setPan((prev) => {
-      const raw = {
-        x: (mx - cx) * (1 - ratio) + prev.x * ratio,
-        y: (my - cy) * (1 - ratio) + prev.y * ratio,
-      }
-      return clampPan(raw, nextZoom)
-    })
-    setZoom(nextZoom)
-  }
-
-  // Same anchored-zoom math as zoomAtPoint, but computed fresh from a fixed
-  // "base" zoom/pan snapshot rather than the latest state -- used while a
-  // two-finger pinch gesture is in progress so each move event is anchored
-  // consistently to the moment the pinch started, instead of compounding
-  // rounding drift frame over frame.
-  function anchoredPanFrom(baseZoom, basePan, nextZoom, clientX, clientY) {
-    const el = panelRef.current
-    if (!el) return basePan
-    const rect = el.getBoundingClientRect()
-    const cx = rect.width / 2
-    const cy = rect.height / 2
-    const mx = clientX - rect.left
-    const my = clientY - rect.top
-    const ratio = nextZoom / baseZoom
-    return {
-      x: (mx - cx) * (1 - ratio) + basePan.x * ratio,
-      y: (my - cy) * (1 - ratio) + basePan.y * ratio,
+  function zoomButton(direction) {
+    if (mode === '2D') {
+      if (direction > 0) leafletApiRef.current?.zoomIn()
+      else leafletApiRef.current?.zoomOut()
+    } else if (direction > 0) {
+      cesiumApiRef.current?.zoomIn()
+    } else {
+      cesiumApiRef.current?.zoomOut()
     }
   }
 
   function resetView() {
-    if (mode === '2D') {
-      setZoom(1)
-      setPan({ x: 0, y: 0 })
-    } else {
-      setZoom3d(1)
-      setRotation(0)
-      setTilt(0)
-      setManualRotate(false)
-    }
+    if (mode === '2D') leafletApiRef.current?.reset()
+    else cesiumApiRef.current?.reset()
   }
 
-  function zoomButton(direction) {
-    const el = panelRef.current
-    if (mode === '2D') {
-      const step = direction * 0.3
-      if (el) {
-        const rect = el.getBoundingClientRect()
-        zoomAtPoint(zoom + step, rect.left + rect.width / 2, rect.top + rect.height / 2)
-      } else {
-        setZoom((z) => clampNum(z + step, MIN_ZOOM_2D, MAX_ZOOM_2D))
-      }
-    } else {
-      setZoom3d((z) => clampNum(+(z + direction * 0.2).toFixed(2), MIN_ZOOM_3D, MAX_ZOOM_3D))
-    }
-  }
-
-  // -- 2D drag-to-pan + two-finger pinch-to-zoom handlers --
-  function handlePanPointerDown(e) {
-    if (e.button !== undefined && e.button !== 0) return
-    e.currentTarget.setPointerCapture?.(e.pointerId)
-    activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
-
-    if (activePointers.current.size >= 2) {
-      // A second finger just touched down -- switch from panning to pinching.
-      panDrag.current = null
-      setIsPanning(false)
-      const pts = Array.from(activePointers.current.values()).slice(0, 2)
-      const startDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y)
-      pinchState.current = { startDist, startZoom: zoom, startPan: pan }
-    } else {
-      setIsPanning(true)
-      panDrag.current = { startX: e.clientX, startY: e.clientY, startPan: pan, pointerId: e.pointerId }
-    }
-  }
-
-  function handlePanPointerMove(e) {
-    if (!activePointers.current.has(e.pointerId)) return
-    activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
-
-    if (pinchState.current && activePointers.current.size >= 2) {
-      const pts = Array.from(activePointers.current.values()).slice(0, 2)
-      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y)
-      const { startDist, startZoom, startPan } = pinchState.current
-      if (startDist === 0) return
-      const nextZoom = clampNum(startZoom * (dist / startDist), MIN_ZOOM_2D, MAX_ZOOM_2D)
-      const midX = (pts[0].x + pts[1].x) / 2
-      const midY = (pts[0].y + pts[1].y) / 2
-      const nextPan = anchoredPanFrom(startZoom, startPan, nextZoom, midX, midY)
-      setZoom(nextZoom)
-      setPan(clampPan(nextPan, nextZoom))
-      return
-    }
-
-    if (!panDrag.current) return
-    const { startX, startY, startPan } = panDrag.current
-    const next = { x: startPan.x + (e.clientX - startX), y: startPan.y + (e.clientY - startY) }
-    setPan(clampPan(next, zoom))
-  }
-
-  function handlePanPointerUp(e) {
-    activePointers.current.delete(e.pointerId)
-    try {
-      e.currentTarget.releasePointerCapture?.(e.pointerId)
-    } catch {
-      /* no-op */
-    }
-
-    if (activePointers.current.size < 2) {
-      pinchState.current = null
-    }
-
-    if (activePointers.current.size === 0) {
-      panDrag.current = null
-      setIsPanning(false)
-    } else if (activePointers.current.size === 1) {
-      // Lifted one of two pinch fingers -- resume single-finger panning
-      // from wherever the remaining finger currently is.
-      const [[pointerId, pos]] = Array.from(activePointers.current.entries())
-      panDrag.current = { startX: pos.x, startY: pos.y, startPan: pan, pointerId }
-      setIsPanning(true)
-    }
-  }
-
-  function handleMapDoubleClick(e) {
-    if (mode !== '2D') return
-    zoomAtPoint(zoom + 0.6, e.clientX, e.clientY)
-  }
-
-  // -- 3D drag-to-rotate handlers (horizontal drag spins the view around
-  // the globe, vertical drag orbits it up/down over the poles -- tilt is
-  // clamped so the camera never flips upside-down through a pole, the same
-  // guard Google Earth applies) --
-  function handleRotatePointerDown(e) {
-    if (e.button !== undefined && e.button !== 0) return
-    setManualRotate(true)
-    setIsRotating(true)
-    rotateDrag.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      startRotation: rotation,
-      startTilt: tilt,
-      pointerId: e.pointerId,
-    }
-    e.currentTarget.setPointerCapture?.(e.pointerId)
-  }
-
-  function handleRotatePointerMove(e) {
-    if (!rotateDrag.current) return
-    const { startX, startY, startRotation, startTilt } = rotateDrag.current
-    setRotation(startRotation + (e.clientX - startX) * ROTATE_SENSITIVITY)
-    setTilt(clampNum(startTilt + (e.clientY - startY) * TILT_SENSITIVITY, MIN_TILT, MAX_TILT))
-  }
-
-  function handleRotatePointerUp(e) {
-    if (rotateDrag.current) {
-      try {
-        e.currentTarget.releasePointerCapture?.(rotateDrag.current.pointerId)
-      } catch {
-        /* no-op */
-      }
-    }
-    rotateDrag.current = null
-    setIsRotating(false)
-  }
-
-  // Native (non-passive) wheel listener. The 2D map does NOT zoom on
-  // scroll at all -- some touchpad drivers (notably on Windows) tag
-  // ordinary two-finger scrolling with ctrlKey the same way they tag a
-  // real pinch gesture, so there's no reliable way to tell them apart.
-  // Zoom is available via the +/- buttons and double-click instead. The
-  // 3D globe still zooms on scroll, since it has no competing "scroll the
-  // page" expectation to protect.
-  useEffect(() => {
-    const el = panelRef.current
-    if (!el) return undefined
-
-    function onWheel(e) {
-      if (mode === '2D') return // scrolling never zooms the 2D map
-      e.preventDefault()
-      const factor = Math.exp(-e.deltaY * 0.0016)
-      setZoom3d((z) => clampNum(+(z * factor).toFixed(3), MIN_ZOOM_3D, MAX_ZOOM_3D))
-    }
-
-    el.addEventListener('wheel', onWheel, { passive: false })
-    return () => el.removeEventListener('wheel', onWheel)
-  }, [mode, zoom])
-
-  // Re-clamp pan if the panel is resized (e.g. window resize) so the map
-  // never ends up stranded out of view.
-  useEffect(() => {
-    const el = panelRef.current
-    if (!el || typeof ResizeObserver === 'undefined') return undefined
-    const observer = new ResizeObserver(() => {
-      setPan((prev) => clampPan(prev, zoom))
-    })
-    observer.observe(el)
-    return () => observer.disconnect()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zoom])
-
-  const filteredEvents = useMemo(() => {
+  // Filters run against the real dataset now: category matches each place's
+  // own tag (or passes everything when "Events" -- the catch-all tab -- is
+  // active), the year range keeps any place whose span overlaps the
+  // selected [from, to] window (not just ones fully inside it), and search
+  // matches on name/location/tags so typing "rome" or "italy" both work.
+  const filteredPlaces = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return events.filter((ev) => {
-      const inCategory = activeCategory === 'Events' ? true : ev.category === activeCategory
-      const inRange = ev.year >= range[0] && ev.year <= range[1]
+    return PLACES.filter((place) => {
+      const inCategory = activeCategory === 'Events' ? true : place.category === activeCategory
+      const placeStart = place.yearStart ?? place.yearEnd ?? MIN_YEAR
+      const placeEnd = place.yearEnd ?? place.yearStart ?? MAX_YEAR
+      const inRange = placeEnd >= range[0] && placeStart <= range[1]
       const inSearch =
         !q ||
-        ev.title?.toLowerCase().includes(q) ||
-        ev.place?.toLowerCase().includes(q)
+        place.name?.toLowerCase().includes(q) ||
+        place.location?.toLowerCase().includes(q) ||
+        place.tags?.some((t) => t.toLowerCase().includes(q))
       return inCategory && inRange && inSearch
     })
-  }, [events, activeCategory, range, search])
+  }, [PLACES, activeCategory, range, search])
 
   function applyPreset(preset) {
     setRange(preset.range)
@@ -976,44 +713,20 @@ export default function Explore({ events = [] }) {
           ))}
         </aside>
 
-        <div
-          className={`map-panel${mode === '2D' && isPanning ? ' is-interacting' : ''}${mode === '3D' && isRotating ? ' is-interacting' : ''}`}
-          ref={panelRef}
-        >
-          {mode === '2D' ? (
-            <div
-              className={`map-viewport${isPanning ? ' is-dragging' : ''}`}
-              style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
-              onPointerDown={handlePanPointerDown}
-              onPointerMove={handlePanPointerMove}
-              onPointerUp={handlePanPointerUp}
-              onPointerCancel={handlePanPointerUp}
-              onDoubleClick={handleMapDoubleClick}
-            >
-              <WorldMap2D />
-            </div>
-          ) : (
-            <div className="map-viewport">
-              <Globe3D
-                rotation={rotation}
-                tilt={tilt}
-                zoom={zoom3d}
-                dragging={isRotating}
-                onPointerDown={handleRotatePointerDown}
-                onPointerMove={handleRotatePointerMove}
-                onPointerUp={handleRotatePointerUp}
-              />
-            </div>
-          )}
+        <div className="map-panel">
+          <LeafletMap2D ref={leafletApiRef} mode={mode} places={filteredPlaces} />
+          <CesiumGlobe3D ref={cesiumApiRef} mode={mode} places={filteredPlaces} />
 
-          {filteredEvents.length === 0 && (
+          {filteredPlaces.length === 0 && (
             <div className="map-empty-note">
-              No dataset connected yet — pins will appear here once events are loaded.
+              No places match the current filters — try widening the timeline or clearing the search.
             </div>
           )}
 
           <div className="map-hint">
-            {mode === '2D' ? 'Drag to pan · Pinch or +/- to zoom · Double-click to zoom in' : 'Drag to rotate · Scroll or +/- to zoom'}
+            {mode === '2D'
+              ? 'Drag to pan · Scroll or +/- to zoom · Double-click to zoom in'
+              : 'Drag to orbit · Right-drag to tilt · Scroll or +/- to zoom'}
           </div>
 
           <div className="map-zoom-controls">

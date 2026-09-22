@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import globeImg from '../assets/globe.png'
 import Navbar from '../components/Navbar.jsx'
 
@@ -60,9 +61,9 @@ export default function Home() {
           </p>
 
           <div className="hero-actions">
-            <a href="#" className="btn-primary" onClick={noop}>
+            <Link to="/explore" className="btn-primary">
               Start Exploring <ArrowIcon />
-            </a>
+            </Link>
             <a href="#" className="btn-secondary" onClick={noop}>
               Learn More
             </a>

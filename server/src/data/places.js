@@ -1,0 +1,91 @@
+// Minimal place -> country lookup, used only to verify "every point in a
+// country has been visited" when recomputing countriesExplored.
+//
+// This mirrors the ids/countries in the client's src/data/places.js. It's
+// duplicated (rather than imported) because the client dataset pulls in
+// Vite-only asset imports (place images) that plain Node can't resolve --
+// keep this file in sync with the client dataset whenever places are
+// added, removed, or moved to a different country.
+export const PLACE_COUNTRIES = {
+  colosseum: 'Italy',
+  "rome": "Italy",
+  "athens": "Greece",
+  "sparta": "Greece",
+  "jerusalem": "Israel/Palestine",
+  "mecca": "Saudi Arabia",
+  "constantinople": "Turkey",
+  "baghdad": "Iraq",
+  "xi-an": "China",
+  "beijing": "China",
+  "kyoto": "Japan",
+  "delhi": "India",
+  "agra": "India",
+  "cairo": "Egypt",
+  "giza": "Egypt",
+  "alexandria": "Egypt",
+  "carthage": "Tunisia",
+  "timbuktu": "Mali",
+  "great-zimbabwe": "Zimbabwe",
+  "cusco": "Peru",
+  "mexico-city": "Mexico",
+  "paris": "France",
+  "versailles": "France",
+  "london": "United Kingdom",
+  "runnymede": "United Kingdom",
+  "moscow": "Russia",
+  "st-petersburg": "Russia",
+  "berlin": "Germany",
+  "nuremberg": "Germany",
+  "vienna": "Austria",
+  "philadelphia": "United States",
+  "gettysburg": "United States",
+  "washington-dc": "United States",
+  "hiroshima": "Japan",
+  "nagasaki": "Japan",
+  "yalta": "Ukraine (Crimea)",
+  "potsdam": "Germany",
+  "sarajevo": "Bosnia and Herzegovina",
+  "normandy": "France",
+  "waterloo": "Belgium",
+  "trafalgar": "Spain",
+  "westphalia": "Germany",
+  "tehran": "Iran",
+  "amritsar": "India",
+  "dandi": "India",
+  "soweto": "South Africa",
+  "cape-town": "South Africa",
+  "havana": "Cuba",
+  "isfahan": "Iran",
+  "samarkand": "Uzbekistan",
+  "angkor": "Cambodia",
+  "hastings": "United Kingdom",
+  "agincourt": "France",
+  "orleans": "France",
+  "lisbon": "Portugal",
+  "seville": "Spain",
+  "plymouth": "United Kingdom",
+  "boston": "United States",
+  "lexington": "United States",
+  "yorktown": "United States",
+  "vicksburg": "United States",
+  "appomattox": "United States",
+  "pearl-harbor": "United States",
+  "nanjing": "China",
+  "hong-kong": "China",
+  "bandung": "Indonesia",
+  "geneva": "Switzerland",
+  "the-hague": "Netherlands",
+  "san-francisco": "United States",
+  "new-york-city": "United States",
+  "pompeii": "Italy",
+  "chernobyl": "Ukraine",
+  "tikal": "Guatemala",
+  "machu-picchu": "Peru",
+}
+
+// Groups place ids by country, e.g. { Italy: ['colosseum'] }.
+export const PLACES_BY_COUNTRY = Object.entries(PLACE_COUNTRIES).reduce((acc, [id, country]) => {
+  if (!acc[country]) acc[country] = []
+  acc[country].push(id)
+  return acc
+}, {})

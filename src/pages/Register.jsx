@@ -1,10 +1,25 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import globeImg from '../assets/globe-register.png'
 import Navbar from '../components/Navbar.jsx'
+import { authApi } from '../lib/api.js'
+import { avatarUrlFor } from '../lib/avatar.js'
+import { COUNTRIES, flagEmojiFor } from '../data/countries.js'
+import { useAuth } from '../context/AuthContext.jsx'
 
 function noop(e) {
   e.preventDefault()
+}
+
+const INITIAL_FORM = {
+  fullName: '',
+  email: '',
+  username: '',
+  password: '',
+  confirmPassword: '',
+  agreeTerms: false,
+  gender: '',
+  country: '',
 }
 
 function MapIcon() {
@@ -107,8 +122,66 @@ function GithubIcon() {
 }
 
 export default function Register() {
+  const navigate = useNavigate()
+  const { login } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+
+  const [form, setForm] = useState(INITIAL_FORM)
+  const [fieldErrors, setFieldErrors] = useState({})
+  const [formError, setFormError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  function updateField(key) {
+    return (e) => {
+      const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
+      setForm((f) => ({ ...f, [key]: value }))
+      // Clear this field's error as soon as the user edits it.
+      setFieldErrors((errs) => {
+        if (!errs[key]) return errs
+        const next = { ...errs }
+        delete next[key]
+        return next
+      })
+    }
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setFormError('')
+
+    // Quick client-side checks so the user doesn't have to round-trip to the
+    // server for the most obvious mistakes. The server re-validates everything.
+    const clientErrors = {}
+    if (!form.fullName.trim()) clientErrors.fullName = 'Full name is required.'
+    if (!form.email.trim()) clientErrors.email = 'Email is required.'
+    if (!form.username.trim()) clientErrors.username = 'Username is required.'
+    if (!form.password) clientErrors.password = 'Password is required.'
+    if (!form.confirmPassword) clientErrors.confirmPassword = 'Please confirm your password.'
+    else if (form.password && form.confirmPassword !== form.password) {
+      clientErrors.confirmPassword = 'Passwords do not match.'
+    }
+    if (!form.agreeTerms) clientErrors.agreeTerms = 'You must agree to the Terms of Service and Privacy Policy.'
+    if (!form.gender) clientErrors.gender = 'Please select Male or Female.'
+    if (!form.country) clientErrors.country = 'Please select your country.'
+
+    if (Object.keys(clientErrors).length > 0) {
+      setFieldErrors(clientErrors)
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      const data = await authApi.register(form)
+      login(data)
+      navigate('/')
+    } catch (err) {
+      if (err.fieldErrors) setFieldErrors(err.fieldErrors)
+      setFormError(err.error || 'Something went wrong. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   return (
     <div className="page register-page">
@@ -150,73 +223,182 @@ export default function Register() {
             <h2 className="signin-title">Create Account</h2>
             <p className="signin-card-sub">Sign up and begin your adventure</p>
 
-            <form onSubmit={noop}>
-              <label className="field-label" htmlFor="fullname">Full Name</label>
-              <div className="field">
-                <input id="fullname" type="text" placeholder="Enter your full name" autoComplete="name" />
-                <span className="field-icon"><PersonIcon /></span>
-              </div>
+            <form onSubmit={handleSubmit} noValidate>
+              {formError && <p className="form-error" role="alert">{formError}</p>}
 
-              <label className="field-label" htmlFor="email">Email</label>
-              <div className="field">
-                <input id="email" type="email" placeholder="Enter your email address" autoComplete="email" />
-                <span className="field-icon"><MailIcon /></span>
-              </div>
+                <label className="field-label" htmlFor="fullname">
+                  Full Name<span className="required-star"> *</span>
+                </label>
+                <div className={`field${fieldErrors.fullName ? ' field-invalid' : ''}`}>
+                  <input
+                    id="fullname"
+                    type="text"
+                    placeholder="Enter your full name"
+                    autoComplete="name"
+                    value={form.fullName}
+                    onChange={updateField('fullName')}
+                    required
+                  />
+                  <span className="field-icon"><PersonIcon /></span>
+                </div>
+                {fieldErrors.fullName && <p className="field-error">{fieldErrors.fullName}</p>}
 
-              <label className="field-label" htmlFor="username">Username</label>
-              <div className="field">
-                <input id="username" type="text" placeholder="Choose a username" autoComplete="username" />
-                <span className="field-icon"><AtIcon /></span>
-              </div>
+                <label className="field-label" htmlFor="email">
+                  Email<span className="required-star"> *</span>
+                </label>
+                <div className={`field${fieldErrors.email ? ' field-invalid' : ''}`}>
+                  <input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email address"
+                    autoComplete="email"
+                    value={form.email}
+                    onChange={updateField('email')}
+                    required
+                  />
+                  <span className="field-icon"><MailIcon /></span>
+                </div>
+                {fieldErrors.email && <p className="field-error">{fieldErrors.email}</p>}
 
-              <label className="field-label" htmlFor="password">Password</label>
-              <div className="field">
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Create a password"
-                  autoComplete="new-password"
-                />
-                <button
-                  type="button"
-                  className="field-icon field-icon-btn"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  <EyeIcon open={showPassword} />
+                <label className="field-label" htmlFor="username">
+                  Username<span className="required-star"> *</span>
+                </label>
+                <div className={`field${fieldErrors.username ? ' field-invalid' : ''}`}>
+                  <input
+                    id="username"
+                    type="text"
+                    placeholder="Choose a username"
+                    autoComplete="username"
+                    value={form.username}
+                    onChange={updateField('username')}
+                    required
+                  />
+                  <span className="field-icon"><AtIcon /></span>
+                </div>
+                {fieldErrors.username && <p className="field-error">{fieldErrors.username}</p>}
+
+                <label className="field-label" htmlFor="password">
+                  Password<span className="required-star"> *</span>
+                </label>
+                <div className={`field${fieldErrors.password ? ' field-invalid' : ''}`}>
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Create a password"
+                    autoComplete="new-password"
+                    value={form.password}
+                    onChange={updateField('password')}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="field-icon field-icon-btn"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    <EyeIcon open={showPassword} />
+                  </button>
+                </div>
+                {fieldErrors.password && <p className="field-error">{fieldErrors.password}</p>}
+
+                <label className="field-label" htmlFor="gender">
+                  Gender<span className="required-star"> *</span>
+                </label>
+                <div className="avatar-style-row">
+                  <img
+                    src={avatarUrlFor(form.username || form.fullName, form.gender || 'unspecified')}
+                    alt="Avatar preview"
+                    className="avatar-style-preview"
+                  />
+                  <div className={`field avatar-style-field${fieldErrors.gender ? ' field-invalid' : ''}`}>
+                    <select
+                      id="gender"
+                      value={form.gender}
+                      onChange={updateField('gender')}
+                      required
+                    >
+                      <option value="" disabled>Select Male or Female</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                    </select>
+                  </div>
+                </div>
+                <p className="about-char-count" style={{ marginTop: -8, marginBottom: 14 }}>
+                  Used to pick a matching avatar style for your profile.
+                </p>
+                {fieldErrors.gender && <p className="field-error">{fieldErrors.gender}</p>}
+
+                <label className="field-label" htmlFor="country">
+                  Country<span className="required-star"> *</span>
+                </label>
+                <div className="avatar-style-row">
+                  <span className="country-flag-preview" aria-hidden="true">
+                    {form.country ? flagEmojiFor(form.country) : '🏳️'}
+                  </span>
+                  <div className={`field avatar-style-field${fieldErrors.country ? ' field-invalid' : ''}`}>
+                    <select
+                      id="country"
+                      value={form.country}
+                      onChange={updateField('country')}
+                      required
+                    >
+                      <option value="" disabled>Select your country</option>
+                      {COUNTRIES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {flagEmojiFor(c.code)} {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <p className="about-char-count" style={{ marginTop: -8, marginBottom: 14 }}>
+                  Shown on the leaderboard next to your name.
+                </p>
+                {fieldErrors.country && <p className="field-error">{fieldErrors.country}</p>}
+
+                <label className="field-label" htmlFor="confirm-password">
+                  Confirm Password<span className="required-star"> *</span>
+                </label>
+                <div className={`field${fieldErrors.confirmPassword ? ' field-invalid' : ''}`}>
+                  <input
+                    id="confirm-password"
+                    type={showConfirm ? 'text' : 'password'}
+                    placeholder="Confirm your password"
+                    autoComplete="new-password"
+                    value={form.confirmPassword}
+                    onChange={updateField('confirmPassword')}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="field-icon field-icon-btn"
+                    onClick={() => setShowConfirm((v) => !v)}
+                    aria-label={showConfirm ? 'Hide password' : 'Show password'}
+                  >
+                    <EyeIcon open={showConfirm} />
+                  </button>
+                </div>
+                {fieldErrors.confirmPassword && <p className="field-error">{fieldErrors.confirmPassword}</p>}
+
+                <label className="terms-row">
+                  <input
+                    type="checkbox"
+                    checked={form.agreeTerms}
+                    onChange={updateField('agreeTerms')}
+                    required
+                  />
+                  <span>
+                    I agree to the <a href="#" onClick={noop} className="link-accent">Terms of Service</a> and{' '}
+                    <a href="#" onClick={noop} className="link-accent">Privacy Policy</a>
+                    <span className="required-star"> *</span>
+                  </span>
+                </label>
+                {fieldErrors.agreeTerms && <p className="field-error">{fieldErrors.agreeTerms}</p>}
+
+                <button type="submit" className="btn-login" disabled={submitting}>
+                  {submitting ? 'Signing Up…' : 'Sign Up'}
                 </button>
-              </div>
-
-              <label className="field-label" htmlFor="confirm-password">Confirm Password</label>
-              <div className="field">
-                <input
-                  id="confirm-password"
-                  type={showConfirm ? 'text' : 'password'}
-                  placeholder="Confirm your password"
-                  autoComplete="new-password"
-                />
-                <button
-                  type="button"
-                  className="field-icon field-icon-btn"
-                  onClick={() => setShowConfirm((v) => !v)}
-                  aria-label={showConfirm ? 'Hide password' : 'Show password'}
-                >
-                  <EyeIcon open={showConfirm} />
-                </button>
-              </div>
-
-              <label className="terms-row">
-                <input type="checkbox" />
-                <span>
-                  I agree to the <a href="#" onClick={noop} className="link-accent">Terms of Service</a> and{' '}
-                  <a href="#" onClick={noop} className="link-accent">Privacy Policy</a>
-                </span>
-              </label>
-
-              <button type="submit" className="btn-login" onClick={noop}>
-                Sign Up
-              </button>
-            </form>
+              </form>
 
             <div className="divider"><span>or</span></div>
 

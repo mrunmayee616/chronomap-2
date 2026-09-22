@@ -1,0 +1,14 @@
+// vite.config.js
+import { defineConfig } from "file:///home/claude/chronomap/node_modules/vite/dist/node/index.js";
+import react from "file:///home/claude/chronomap/node_modules/@vitejs/plugin-react/dist/index.js";
+import cesium from "file:///home/claude/chronomap/node_modules/vite-plugin-cesium/dist/index.mjs";
+var vite_config_default = defineConfig({
+  // vite-plugin-cesium copies Cesium's static assets (workers, imagery
+  // renderer, widget skin) into the build and points window.CESIUM_BASE_URL
+  // at them, which the raw "cesium" package needs to run in the browser.
+  plugins: [react(), cesium()]
+});
+export {
+  vite_config_default as default
+};
+//# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsidml0ZS5jb25maWcuanMiXSwKICAic291cmNlc0NvbnRlbnQiOiBbImNvbnN0IF9fdml0ZV9pbmplY3RlZF9vcmlnaW5hbF9kaXJuYW1lID0gXCIvaG9tZS9jbGF1ZGUvY2hyb25vbWFwXCI7Y29uc3QgX192aXRlX2luamVjdGVkX29yaWdpbmFsX2ZpbGVuYW1lID0gXCIvaG9tZS9jbGF1ZGUvY2hyb25vbWFwL3ZpdGUuY29uZmlnLmpzXCI7Y29uc3QgX192aXRlX2luamVjdGVkX29yaWdpbmFsX2ltcG9ydF9tZXRhX3VybCA9IFwiZmlsZTovLy9ob21lL2NsYXVkZS9jaHJvbm9tYXAvdml0ZS5jb25maWcuanNcIjtpbXBvcnQgeyBkZWZpbmVDb25maWcgfSBmcm9tICd2aXRlJ1xuaW1wb3J0IHJlYWN0IGZyb20gJ0B2aXRlanMvcGx1Z2luLXJlYWN0J1xuaW1wb3J0IGNlc2l1bSBmcm9tICd2aXRlLXBsdWdpbi1jZXNpdW0nXG5cbmV4cG9ydCBkZWZhdWx0IGRlZmluZUNvbmZpZyh7XG4gIC8vIHZpdGUtcGx1Z2luLWNlc2l1bSBjb3BpZXMgQ2VzaXVtJ3Mgc3RhdGljIGFzc2V0cyAod29ya2VycywgaW1hZ2VyeVxuICAvLyByZW5kZXJlciwgd2lkZ2V0IHNraW4pIGludG8gdGhlIGJ1aWxkIGFuZCBwb2ludHMgd2luZG93LkNFU0lVTV9CQVNFX1VSTFxuICAvLyBhdCB0aGVtLCB3aGljaCB0aGUgcmF3IFwiY2VzaXVtXCIgcGFja2FnZSBuZWVkcyB0byBydW4gaW4gdGhlIGJyb3dzZXIuXG4gIHBsdWdpbnM6IFtyZWFjdCgpLCBjZXNpdW0oKV0sXG59KVxuIl0sCiAgIm1hcHBpbmdzIjogIjtBQUFvUCxTQUFTLG9CQUFvQjtBQUNqUixPQUFPLFdBQVc7QUFDbEIsT0FBTyxZQUFZO0FBRW5CLElBQU8sc0JBQVEsYUFBYTtBQUFBO0FBQUE7QUFBQTtBQUFBLEVBSTFCLFNBQVMsQ0FBQyxNQUFNLEdBQUcsT0FBTyxDQUFDO0FBQzdCLENBQUM7IiwKICAibmFtZXMiOiBbXQp9Cg==

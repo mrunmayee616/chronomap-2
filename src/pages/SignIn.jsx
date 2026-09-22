@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import colosseumImg from '../assets/colosseum.jpg'
 import Navbar from '../components/Navbar.jsx'
+import { authApi } from '../lib/api.js'
+import { useAuth } from '../context/AuthContext.jsx'
 
 function noop(e) {
   e.preventDefault()
@@ -100,7 +102,47 @@ function GithubIcon() {
 }
 
 export default function SignIn() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { login } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
+
+  const [identifier, setIdentifier] = useState('')
+  const [password, setPassword] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
+  const [formError, setFormError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setFormError('')
+
+    const clientErrors = {}
+    if (!identifier.trim()) clientErrors.identifier = 'Email or username is required.'
+    if (!password) clientErrors.password = 'Password is required.'
+    if (Object.keys(clientErrors).length > 0) {
+      setFieldErrors(clientErrors)
+      return
+    }
+    setFieldErrors({})
+
+    setSubmitting(true)
+    try {
+      const data = await authApi.login({ identifier, password })
+      login(data)
+      if (data.user?.isAdmin) {
+        navigate('/admin', { replace: true })
+        return
+      }
+      const dest = location.state?.from?.pathname || '/'
+      navigate(dest, { replace: true })
+    } catch (err) {
+      if (err.fieldErrors) setFieldErrors(err.fieldErrors)
+      setFormError(err.error || 'Something went wrong. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   return (
     <div className="page signin-page">
@@ -170,16 +212,43 @@ export default function SignIn() {
             <h2 className="signin-title">Log In</h2>
             <p className="signin-card-sub">Welcome back! Please enter your details.</p>
 
-            <form onSubmit={noop}>
-              <label className="field-label" htmlFor="identifier">Email or Username</label>
-              <div className="field">
-                <input id="identifier" type="text" placeholder="Enter your email or username" />
+            <form onSubmit={handleSubmit} noValidate>
+              {formError && <p className="form-error" role="alert">{formError}</p>}
+
+              <label className="field-label" htmlFor="identifier">
+                Email or Username<span className="required-star"> *</span>
+              </label>
+              <div className={`field${fieldErrors.identifier ? ' field-invalid' : ''}`}>
+                <input
+                  id="identifier"
+                  type="text"
+                  placeholder="Enter your email or username"
+                  value={identifier}
+                  onChange={(e) => {
+                    setIdentifier(e.target.value)
+                    setFieldErrors((errs) => ({ ...errs, identifier: undefined }))
+                  }}
+                  required
+                />
                 <span className="field-icon"><PersonIcon /></span>
               </div>
+              {fieldErrors.identifier && <p className="field-error">{fieldErrors.identifier}</p>}
 
-              <label className="field-label" htmlFor="password">Password</label>
-              <div className="field">
-                <input id="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" />
+              <label className="field-label" htmlFor="password">
+                Password<span className="required-star"> *</span>
+              </label>
+              <div className={`field${fieldErrors.password ? ' field-invalid' : ''}`}>
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value)
+                    setFieldErrors((errs) => ({ ...errs, password: undefined }))
+                  }}
+                  required
+                />
                 <button
                   type="button"
                   className="field-icon field-icon-btn"
@@ -189,13 +258,14 @@ export default function SignIn() {
                   <EyeIcon open={showPassword} />
                 </button>
               </div>
+              {fieldErrors.password && <p className="field-error">{fieldErrors.password}</p>}
 
               <div className="forgot-row">
                 <a href="#" onClick={noop} className="link-accent">Forgot Password?</a>
               </div>
 
-              <button type="submit" className="btn-login" onClick={noop}>
-                Log In
+              <button type="submit" className="btn-login" disabled={submitting}>
+                {submitting ? 'Logging In…' : 'Log In'}
               </button>
             </form>
 
