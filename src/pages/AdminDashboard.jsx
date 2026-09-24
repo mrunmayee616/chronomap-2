@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { usePlaces } from '../context/PlacesContext.jsx'
@@ -7,6 +7,7 @@ import { avatarUrlFor } from '../lib/avatar.js'
 import { PLACES as STATIC_PLACES } from '../data/places.js'
 
 const CATEGORY_OPTIONS = ['Battles', 'Kingdoms', 'Discoveries', 'Revolution', 'Monuments', 'Treaties']
+const MAX_IMAGE_BYTES = 3 * 1024 * 1024
 
 const EMPTY_FORM = {
   name: '',
@@ -17,7 +18,19 @@ const EMPTY_FORM = {
   year: '',
   yearEra: 'CE',
   summary: '',
+  image: '',
 }
+
+const REQUIRED_CSV_COLUMNS = [
+  'place_name',
+  'country',
+  'latitude',
+  'longitude',
+  'event_name',
+  'event_type',
+  'event_date',
+  'description',
+]
 
 /* ---------- icons ---------- */
 
@@ -85,6 +98,42 @@ function PlusIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
       <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function EditIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+      <path d="M12 20h9" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function UploadIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+      <path d="M12 16V4m0 0-4 4m4-4 4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function CloseIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function FileCsvIcon() {
+  return (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+      <path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M15 2v5h5" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M8 14v4M12 14v4M16 14v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
     </svg>
   )
 }
@@ -274,9 +323,10 @@ function UsersPanel({ token }) {
 /* ---------- dataset panel ---------- */
 
 function DatasetPanel({ token }) {
-  const { removedIds, addedPlaces, refresh } = usePlaces()
+  const { removedIds, addedPlaces, refresh, getPlaceById } = usePlaces()
   const [pendingId, setPendingId] = useState(null)
   const [error, setError] = useState('')
+  const [editingId, setEditingId] = useState(null)
 
   const rows = [
     ...STATIC_PLACES.map((p) => ({
@@ -323,9 +373,12 @@ function DatasetPanel({ token }) {
     }
   }
 
+  const editingPlace = editingId ? getPlaceById(editingId) : null
+
   return (
     <div>
       <AddPlaceForm token={token} onAdded={refresh} />
+      <CsvImportCard token={token} onImported={refresh} />
 
       {error && <p className="admin-status admin-status-error">{error}</p>}
 
@@ -348,7 +401,17 @@ function DatasetPanel({ token }) {
             <span className={row.removed ? 'admin-status-pill removed' : 'admin-status-pill active'}>
               {row.removed ? 'Removed' : 'Active'}
             </span>
-            <span>
+            <span className="admin-row-actions">
+              {!row.removed && (
+                <button
+                  type="button"
+                  className="btn-admin-secondary"
+                  disabled={pendingId === row.id}
+                  onClick={() => setEditingId(row.id)}
+                >
+                  <EditIcon /> Edit
+                </button>
+              )}
               {row.removed ? (
                 <button
                   type="button"
@@ -372,16 +435,30 @@ function DatasetPanel({ token }) {
           </div>
         ))}
       </div>
+
+      {editingPlace && (
+        <EditPlaceModal
+          place={editingPlace}
+          token={token}
+          onClose={() => setEditingId(null)}
+          onSaved={refresh}
+        />
+      )}
     </div>
   )
 }
 
-function AddPlaceForm({ token, onAdded }) {
-  const [form, setForm] = useState(EMPTY_FORM)
+function EditPlaceModal({ place, token, onClose, onSaved }) {
+  const [form, setForm] = useState({
+    name: place.name || '',
+    category: place.category || '',
+    image: place.image || '',
+    summary: place.summary || place.overview || '',
+  })
   const [fieldErrors, setFieldErrors] = useState({})
   const [formError, setFormError] = useState('')
-  const [successMsg, setSuccessMsg] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const fileInputRef = useRef(null)
 
   function updateField(key) {
     return (e) => {
@@ -393,6 +470,226 @@ function AddPlaceForm({ token, onAdded }) {
         return next
       })
     }
+  }
+
+  function handleImageFile(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (file.size > MAX_IMAGE_BYTES) {
+      setFieldErrors((errs) => ({ ...errs, image: 'Please choose an image under 3MB.' }))
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => setForm((f) => ({ ...f, image: reader.result }))
+    reader.readAsDataURL(file)
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setFormError('')
+    setFieldErrors({})
+    setSubmitting(true)
+    try {
+      await adminApi.editPlace(token, place.id, form)
+      await onSaved()
+      onClose()
+    } catch (err) {
+      if (err.fieldErrors) setFieldErrors(err.fieldErrors)
+      setFormError(err.error || 'Could not save changes.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="admin-modal-overlay" onClick={onClose}>
+      <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-modal-header">
+          <h2 className="admin-panel-title">Edit {place.name}</h2>
+          <button type="button" className="admin-modal-close" onClick={onClose} aria-label="Close">
+            <CloseIcon />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          {formError && <p className="form-error" role="alert">{formError}</p>}
+
+          <div className="admin-form-grid">
+            <div>
+              <label className="field-label" htmlFor="ep-name">Name</label>
+              <div className={`field${fieldErrors.name ? ' field-invalid' : ''}`}>
+                <input id="ep-name" type="text" value={form.name} onChange={updateField('name')} />
+              </div>
+              {fieldErrors.name && <p className="field-error">{fieldErrors.name}</p>}
+            </div>
+
+            <div>
+              <label className="field-label" htmlFor="ep-category">Category</label>
+              <div className={`field${fieldErrors.category ? ' field-invalid' : ''}`}>
+                <select id="ep-category" value={form.category} onChange={updateField('category')}>
+                  {CATEGORY_OPTIONS.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+              {fieldErrors.category && <p className="field-error">{fieldErrors.category}</p>}
+            </div>
+
+            <div className="admin-form-full">
+              <label className="field-label">Image</label>
+              {form.image && <img src={form.image} alt="" className="admin-image-preview" />}
+              <div className="admin-image-row">
+                <div className={`field${fieldErrors.image ? ' field-invalid' : ''}`}>
+                  <input
+                    type="text"
+                    placeholder="Image URL"
+                    value={form.image?.startsWith('data:') ? '' : form.image}
+                    onChange={updateField('image')}
+                  />
+                </div>
+                <button type="button" className="btn-secondary admin-upload-btn" onClick={() => fileInputRef.current?.click()}>
+                  <UploadIcon /> Upload
+                </button>
+                <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleImageFile} />
+              </div>
+              {fieldErrors.image && <p className="field-error">{fieldErrors.image}</p>}
+            </div>
+
+            <div className="admin-form-full">
+              <label className="field-label" htmlFor="ep-summary">Summary / Overview</label>
+              <div className={`field admin-textarea-field${fieldErrors.summary ? ' field-invalid' : ''}`}>
+                <textarea id="ep-summary" rows={4} value={form.summary} onChange={updateField('summary')} />
+              </div>
+              {fieldErrors.summary && <p className="field-error">{fieldErrors.summary}</p>}
+            </div>
+          </div>
+
+          <div className="admin-modal-actions">
+            <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn-primary" disabled={submitting}>
+              {submitting ? 'Saving…' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function CsvImportCard({ token, onImported }) {
+  const [importing, setImporting] = useState(false)
+  const [result, setResult] = useState(null)
+  const [error, setError] = useState('')
+  const fileInputRef = useRef(null)
+
+  function handleFileChosen(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setError('')
+    setResult(null)
+    setImporting(true)
+
+    const reader = new FileReader()
+    reader.onload = async () => {
+      try {
+        const data = await adminApi.bulkImportPlaces(token, reader.result)
+        setResult(data)
+        await onImported()
+      } catch (err) {
+        setError(err.error || 'Could not import that file.')
+      } finally {
+        setImporting(false)
+      }
+    }
+    reader.onerror = () => {
+      setError('Could not read that file.')
+      setImporting(false)
+    }
+    reader.readAsText(file)
+  }
+
+  return (
+    <div className="admin-add-form admin-csv-card">
+      <h2 className="admin-panel-title"><FileCsvIcon /> Import a CSV</h2>
+      <p className="admin-csv-help">
+        Feed in a whole dataset at once. Columns required:{' '}
+        <code>{REQUIRED_CSV_COLUMNS.join(', ')}</code>. Rows sharing the same{' '}
+        <code>place_name</code> are combined into one place with a multi-event timeline.
+      </p>
+
+      {error && <p className="form-error" role="alert">{error}</p>}
+
+      <button type="button" className="btn-primary" disabled={importing} onClick={() => fileInputRef.current?.click()}>
+        <UploadIcon /> {importing ? 'Importing…' : 'Choose CSV File'}
+      </button>
+      <input ref={fileInputRef} type="file" accept=".csv,text/csv" hidden onChange={handleFileChosen} />
+
+      {result && (
+        <div className="admin-csv-result">
+          <p className="admin-success">
+            {result.addedCount} place{result.addedCount === 1 ? '' : 's'} added.
+            {result.skipped.length > 0 && ` ${result.skipped.length} skipped (already in the dataset).`}
+            {result.errors.length > 0 && ` ${result.errors.length} row error${result.errors.length === 1 ? '' : 's'}.`}
+          </p>
+          {result.skipped.length > 0 && (
+            <details className="admin-csv-details">
+              <summary>Skipped places</summary>
+              <ul>
+                {result.skipped.map((s, i) => (
+                  <li key={i}>{s.name} — {s.reason}</li>
+                ))}
+              </ul>
+            </details>
+          )}
+          {result.errors.length > 0 && (
+            <details className="admin-csv-details">
+              <summary>Row errors</summary>
+              <ul>
+                {result.errors.map((e, i) => (
+                  <li key={i}>Row {e.row}: {e.message}</li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function AddPlaceForm({ token, onAdded }) {
+  const [form, setForm] = useState(EMPTY_FORM)
+  const [fieldErrors, setFieldErrors] = useState({})
+  const [formError, setFormError] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const fileInputRef = useRef(null)
+
+  function updateField(key) {
+    return (e) => {
+      setForm((f) => ({ ...f, [key]: e.target.value }))
+      setFieldErrors((errs) => {
+        if (!errs[key]) return errs
+        const next = { ...errs }
+        delete next[key]
+        return next
+      })
+    }
+  }
+
+  function handleImageFile(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (file.size > MAX_IMAGE_BYTES) {
+      setFieldErrors((errs) => ({ ...errs, image: 'Please choose an image under 3MB.' }))
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => setForm((f) => ({ ...f, image: reader.result }))
+    reader.readAsDataURL(file)
   }
 
   async function handleSubmit(e) {
@@ -410,6 +707,7 @@ function AddPlaceForm({ token, onAdded }) {
         year: form.year,
         yearEra: form.yearEra,
         summary: form.summary,
+        image: form.image,
       })
       setForm(EMPTY_FORM)
       setSuccessMsg(`${form.name} was added to the dataset.`)
@@ -502,6 +800,26 @@ function AddPlaceForm({ token, onAdded }) {
             />
           </div>
           {fieldErrors.summary && <p className="field-error">{fieldErrors.summary}</p>}
+        </div>
+
+        <div className="admin-form-full">
+          <label className="field-label">Image (optional)</label>
+          {form.image && <img src={form.image} alt="" className="admin-image-preview" />}
+          <div className="admin-image-row">
+            <div className={`field${fieldErrors.image ? ' field-invalid' : ''}`}>
+              <input
+                type="text"
+                placeholder="Image URL, or leave blank for a placeholder"
+                value={form.image?.startsWith('data:') ? '' : form.image}
+                onChange={updateField('image')}
+              />
+            </div>
+            <button type="button" className="btn-secondary admin-upload-btn" onClick={() => fileInputRef.current?.click()}>
+              <UploadIcon /> Upload
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleImageFile} />
+          </div>
+          {fieldErrors.image && <p className="field-error">{fieldErrors.image}</p>}
         </div>
       </div>
 

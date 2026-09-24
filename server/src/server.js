@@ -17,7 +17,11 @@ const PORT = process.env.PORT || 5000
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173'
 
 app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }))
-app.use(express.json())
+// Default body limit (100kb) is too small for a bulk CSV import or an
+// uploaded place image (stored inline as a base64 data URI) -- both go
+// through the admin routes as plain JSON, so the whole app's limit is
+// raised rather than special-casing one path.
+app.use(express.json({ limit: '15mb' }))
 
 // Basic brute-force protection on auth endpoints.
 const authLimiter = rateLimit({

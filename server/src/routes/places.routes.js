@@ -14,7 +14,10 @@ router.get('/overrides', async (_req, res) => {
   const overrides = await PlaceOverride.find().lean()
   const removedIds = overrides.filter((o) => o.action === 'removed').map((o) => o.placeId)
   const addedPlaces = overrides.filter((o) => o.action === 'added' && o.data).map((o) => o.data)
-  return res.status(200).json({ removedIds, addedPlaces })
+  const edits = overrides
+    .filter((o) => o.action === 'edited' && o.data)
+    .reduce((acc, o) => ({ ...acc, [o.placeId]: o.data }), {})
+  return res.status(200).json({ removedIds, addedPlaces, edits })
 })
 
 export default router

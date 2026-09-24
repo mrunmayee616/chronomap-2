@@ -75,10 +75,17 @@ export const adminApi = {
     request(`/api/admin/users/${encodeURIComponent(userId)}`, { method: 'DELETE', token }),
   addPlace: (token, payload) =>
     request('/api/admin/places', { method: 'POST', body: payload, token }),
+  editPlace: (token, placeId, payload) =>
+    request(`/api/admin/places/${encodeURIComponent(placeId)}`, { method: 'PATCH', body: payload, token }),
   removePlace: (token, placeId) =>
     request(`/api/admin/places/${encodeURIComponent(placeId)}`, { method: 'DELETE', token }),
   restorePlace: (token, placeId) =>
     request(`/api/admin/places/${encodeURIComponent(placeId)}/restore`, { method: 'POST', token }),
+  // csvText is the raw file content (already read client-side via
+  // FileReader) -- sent as a JSON string field rather than a multipart
+  // upload, since the whole app already speaks plain JSON.
+  bulkImportPlaces: (token, csvText) =>
+    request('/api/admin/places/bulk', { method: 'POST', body: { csv: csvText }, token }),
 }
 
 const TOKEN_KEY = 'chronomap_token'

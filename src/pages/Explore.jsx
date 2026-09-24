@@ -349,6 +349,14 @@ const CesiumGlobe3D = forwardRef(function CesiumGlobe3D({ mode, places = [] }, r
       // instead of Cesium's default light-grey globe.
       viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#1b3a5c')
 
+      // Off by default in Cesium, which means entities are never occluded
+      // by the globe itself -- a pin on the far side of the earth would
+      // keep rendering on top of the visible near side. Turning this on is
+      // what makes a pin actually disappear behind the horizon as it
+      // should, instead of appearing to drift across the visible globe as
+      // you rotate it.
+      viewer.scene.globe.depthTestAgainstTerrain = true
+
       // Plain satellite imagery has no place names on it at all, so this
       // adds Esri's "World Boundaries and Places" reference layer on top --
       // country/state/city labels (in English) plus admin boundaries,
@@ -377,10 +385,12 @@ const CesiumGlobe3D = forwardRef(function CesiumGlobe3D({ mode, places = [] }, r
 
   // Plot one pin per dataset entry, mirroring LeafletMap2D. Pins are added
   // as billboards -- flat, always-camera-facing 2D sprites -- rather than
-  // ground-hugging shapes, so the pin never distorts, flips, or goes edge-on
-  // invisible as the globe rotates or tilts; disableDepthTestDistance keeps
-  // each one drawn on top of the globe surface itself, so a pin is never
-  // swallowed by the curvature of the earth mid-rotation either.
+  // ground-hugging shapes, so the pin never distorts or flips as the globe
+  // rotates or tilts. Each sits a couple hundred meters above the surface
+  // (rather than exactly on it) purely to avoid z-fighting flicker against
+  // the ellipsoid at grazing viewing angles -- with depthTestAgainstTerrain
+  // now on, the globe itself correctly hides a pin once it rotates onto the
+  // far side, instead of it drawing through the earth.
   useEffect(() => {
     const viewer = viewerRef.current
     const Cesium = cesiumRef.current
@@ -393,14 +403,14 @@ const CesiumGlobe3D = forwardRef(function CesiumGlobe3D({ mode, places = [] }, r
       if (!place.coords) return
       viewer.entities.add({
         id: `place-${place.id}`,
-        position: Cesium.Cartesian3.fromDegrees(place.coords.lng, place.coords.lat),
+        position: Cesium.Cartesian3.fromDegrees(place.coords.lng, place.coords.lat, 200),
         billboard: {
           image: pinImage,
           width: 26,
           height: 34,
           verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
           horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
-          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          disableDepthTestDistance: 0,
           scaleByDistance: new Cesium.NearFarScalar(1.0e6, 1, 2.5e7, 0.5),
         },
       })

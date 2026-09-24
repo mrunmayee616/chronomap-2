@@ -1,5 +1,11 @@
 export const PLACE_CATEGORIES = ['Battles', 'Kingdoms', 'Discoveries', 'Revolution', 'Monuments', 'Treaties']
 
+// A base64 data: URI (an uploaded image) is stored inline in the Mongo
+// document -- there's no file storage in this project. Cap it well under
+// Mongo's 16MB document limit so one huge image can't crowd out everything
+// else in the document (or, for bulk imports, the whole batch).
+const MAX_IMAGE_DATA_URI_LENGTH = 4_000_000 // ~3MB of image data, base64-inflated
+
 export function slugify(name) {
   return name
     .toLowerCase()
@@ -25,9 +31,23 @@ export function shuffled(arr) {
   return a
 }
 
+// A image field is optional everywhere it appears (falls back to a
+// placeholder), but if one is given it must be a plausible URL or an
+// upload that isn't absurdly large.
+export function validateImage(image) {
+  if (image === undefined || image === null || image === '') return null
+  const str = String(image)
+  if (str.startsWith('data:image/')) {
+    if (str.length > MAX_IMAGE_DATA_URI_LENGTH) return 'That image is too large. Please use one under 3MB.'
+    return null
+  }
+  if (/^https?:\/\//.test(str)) return null
+  return 'Enter an image URL, or upload a file.'
+}
+
 // Validates a raw admin "add place" form payload. Returns a map of field ->
 // error message; an empty object means the payload is valid.
-export function validatePlaceForm({ name, country, latitude, longitude, category, year, yearEra, summary }) {
+export function validatePlaceForm({ name, country, latitude, longitude, category, year, yearEra, summary, image }) {
   const fieldErrors = {}
   if (!name || !String(name).trim()) fieldErrors.name = 'Name is required.'
   if (!country || !String(country).trim()) fieldErrors.country = 'Country is required.'
@@ -40,20 +60,22 @@ export function validatePlaceForm({ name, country, latitude, longitude, category
   if (!Number.isFinite(yearNum) || yearNum < 0) fieldErrors.year = 'Enter a positive year.'
   if (yearEra !== 'BCE' && yearEra !== 'CE') fieldErrors.yearEra = 'Pick BCE or CE.'
   if (!summary || !String(summary).trim()) fieldErrors.summary = 'A short description is required.'
+  const imageError = validateImage(image)
+  if (imageError) fieldErrors.image = imageError
   return fieldErrors
 }
 
 // Builds a full place object (matching the shape of the static dataset) from
 // a validated admin form payload. `id` must already be resolved to a unique,
 // unused slug by the caller (uniqueness depends on what's already stored).
-export function buildPlace({ id, name, country, latitude, longitude, category, year, yearEra, summary, allCountries }) {
+export function buildPlace({ id, name, country, latitude, longitude, category, year, yearEra, summary, allCountries, image }) {
   const lat = Number(latitude)
   const lng = Number(longitude)
   const yearNum = Number(year)
   const yearValue = yearEra === 'BCE' ? -yearNum : yearNum
   const dateLabel = `${yearNum} ${yearEra}`
   const era = eraFor(yearValue)
-  const image = `https://picsum.photos/seed/${id}/900/600`
+  const finalImage = image && String(image).trim() ? String(image).trim() : `https://picsum.photos/seed/${id}/900/600`
   const location = `${name}, ${country}`
 
   const otherCountries = [...new Set(allCountries)].filter((c) => c !== country)
@@ -70,14 +92,14 @@ export function buildPlace({ id, name, country, latitude, longitude, category, y
     dateLabel,
     yearStart: yearValue,
     yearEnd: yearValue,
-    image,
+    image: finalImage,
     tags: [category, country],
     summary,
     overview: summary,
     quickFacts: { Date: dateLabel, Location: location, Category: category, Era: era },
     keyFigures: [],
     timeline: [{ year: dateLabel, label: name, detail: summary }],
-    gallery: [{ image, caption: name }],
+    gallery: [{ image: finalImage, caption: name }],
     quiz: [
       {
         question: `In which country is ${name} located?`,
@@ -86,4 +108,53 @@ export function buildPlace({ id, name, country, latitude, longitude, category, y
       },
     ],
   }
+}
+
+// Validates a partial "edit place" payload -- only the fields actually
+// present are checked, since an edit can touch just one field at a time.
+export function validatePlaceEdit({ name, category, image, summary }) {
+  const fieldErrors = {}
+  if (name !== undefined && !String(name).trim()) fieldErrors.name = 'Name cannot be empty.'
+  if (category !== undefined && !PLACE_CATEGORIES.includes(category)) fieldErrors.category = 'Pick a valid category.'
+  if (summary !== undefined && !String(summary).trim()) fieldErrors.summary = 'Description cannot be empty.'
+  const imageError = validateImage(image)
+  if (imageError) fieldErrors.image = imageError
+  return fieldErrors
+}
+
+// Merges an edit onto a full place object, keeping the fields that are
+// derived from name/category/image in sync (the location string, the tags
+// list, the quick-facts panel, and the hero/gallery image).
+export function applyEditToPlace(place, changes) {
+  const next = { ...place }
+
+  if (changes.name !== undefined && changes.name !== '') {
+    const trimmedName = String(changes.name).trim()
+    const country = place.location?.includes(', ') ? place.location.split(', ').pop() : ''
+    next.tags = (place.tags || []).map((t) => (t === place.name ? trimmedName : t))
+    next.name = trimmedName
+    next.location = country ? `${trimmedName}, ${country}` : trimmedName
+    next.quickFacts = { ...place.quickFacts, Location: next.location }
+    if (place.gallery?.[0]?.caption === place.name) {
+      next.gallery = [{ ...place.gallery[0], caption: trimmedName }, ...place.gallery.slice(1)]
+    }
+  }
+
+  if (changes.category !== undefined && changes.category !== '') {
+    next.tags = (next.tags || place.tags || []).map((t) => (t === place.category ? changes.category : t))
+    next.category = changes.category
+    next.quickFacts = { ...next.quickFacts, Category: changes.category }
+  }
+
+  if (changes.image !== undefined && changes.image !== '') {
+    next.image = changes.image
+    next.gallery = [{ image: changes.image, caption: next.name }, ...(place.gallery || []).slice(1)]
+  }
+
+  if (changes.summary !== undefined && changes.summary !== '') {
+    next.summary = changes.summary
+    next.overview = changes.summary
+  }
+
+  return next
 }
