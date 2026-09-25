@@ -38,10 +38,6 @@ function ArrowIcon() {
   )
 }
 
-function noop(e) {
-  e.preventDefault()
-}
-
 export default function Home() {
   return (
     <div className="page">
@@ -64,9 +60,9 @@ export default function Home() {
             <Link to="/explore" className="btn-primary">
               Start Exploring <ArrowIcon />
             </Link>
-            <a href="#" className="btn-secondary" onClick={noop}>
+            <Link to="/how-it-works" className="btn-secondary">
               Learn More
-            </a>
+            </Link>
           </div>
 
           <div className="stats-row">

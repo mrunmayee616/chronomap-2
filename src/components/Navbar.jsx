@@ -87,11 +87,11 @@ export default function Navbar({ active = 'Home' }) {
 
       <div className="nav-links">
         {NAV_ITEMS.map((item) => {
-          if (item === 'Home' || item === 'Explore') {
+          if (item === 'Home' || item === 'Explore' || item === 'About') {
             return (
               <Link
                 key={item}
-                to={item === 'Home' ? '/' : '/explore'}
+                to={item === 'Home' ? '/' : item === 'Explore' ? '/explore' : '/about'}
                 className={item === active ? 'active' : ''}
               >
                 {item}
