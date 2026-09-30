@@ -1,5 +1,14 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
+// Where the "Continue with Google / GitHub" buttons send the browser. This is
+// a full-page navigation to the API server (not a fetch) because the OAuth
+// flow is a chain of redirects through Google/GitHub and back.
+// `next` is the on-site path to return to after signing in.
+export function oauthUrl(provider, next) {
+  const base = `${API_URL}/api/auth/oauth/${encodeURIComponent(provider)}`
+  return next && typeof next === 'string' ? `${base}?next=${encodeURIComponent(next)}` : base
+}
+
 async function request(path, { method = 'GET', body, token } = {}) {
   const headers = { 'Content-Type': 'application/json' }
   if (token) headers.Authorization = `Bearer ${token}`

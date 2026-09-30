@@ -128,7 +128,8 @@ router.post('/login', async (req, res) => {
   // reveal which accounts exist.
   const invalidCredsResponse = () => res.status(401).json({ error: 'Invalid email/username or password.' })
 
-  if (!user) return invalidCredsResponse()
+  // Accounts created via Google/GitHub have no password to check.
+  if (!user || !user.passwordHash) return invalidCredsResponse()
 
   if (user.lockedUntil && Date.now() < user.lockedUntil) {
     const minutesLeft = Math.ceil((user.lockedUntil - Date.now()) / 60000)

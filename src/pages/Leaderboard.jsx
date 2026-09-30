@@ -3,7 +3,8 @@ import Navbar from '../components/Navbar.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { leaderboardApi } from '../lib/api.js'
 import { avatarUrlFor } from '../lib/avatar.js'
-import { countryNameFor, flagEmojiFor } from '../data/countries.js'
+import { countryNameFor } from '../data/countries.js'
+import CountryFlag from '../components/CountryFlag.jsx'
 import { CrownIcon, TrophyIcon } from '../components/Icons.jsx'
 
 const PERIODS = [
@@ -40,7 +41,7 @@ function PodiumColumn({ entry, place }) {
   return (
     <div className="podium-col" style={{ order: place === 1 ? 2 : place === 2 ? 3 : 1 }}>
       <img
-        src={avatarUrlFor(entry.username, entry.gender)}
+        src={avatarUrlFor(entry.username)}
         alt={`${entry.fullName}'s avatar`}
         className={`podium-avatar podium-avatar-${place}`}
       />
@@ -154,7 +155,7 @@ export default function Leaderboard() {
                     </span>
                     <span className="leaderboard-user">
                       <img
-                        src={avatarUrlFor(entry.username, entry.gender)}
+                        src={avatarUrlFor(entry.username)}
                         alt={`${entry.fullName}'s avatar`}
                         className="leaderboard-avatar"
                       />
@@ -165,7 +166,7 @@ export default function Leaderboard() {
                     <span className="leaderboard-country">
                       {entry.country ? (
                         <>
-                          <span className="leaderboard-flag">{flagEmojiFor(entry.country)}</span>
+                          <CountryFlag code={entry.country} size={18} className="leaderboard-flag" />
                           {countryNameFor(entry.country) || entry.country}
                         </>
                       ) : (

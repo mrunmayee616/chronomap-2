@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useMemo } 
 import { PLACES as STATIC_PLACES } from '../data/places.js'
 import { placesApi } from '../lib/api.js'
 import { applyEditToPlace } from '../lib/placeEdits.js'
+import { PLACE_IMAGE_OVERRIDES } from '../data/placeImages.generated.js'
 
 const PlacesContext = createContext(null)
 
@@ -36,9 +37,14 @@ export function PlacesProvider({ children }) {
 
   const places = useMemo(() => {
     const removedSet = new Set(removedIds)
-    const staticMerged = STATIC_PLACES.filter((p) => !removedSet.has(p.id)).map((p) =>
-      edits[p.id] ? applyEditToPlace(p, edits[p.id]) : p
-    )
+    const staticMerged = STATIC_PLACES.filter((p) => !removedSet.has(p.id)).map((p) => {
+      // Real Wikipedia photos (src/data/placeImages.generated.js) replace the
+      // placeholder hero image and gallery, unless an admin has since set
+      // their own image for this place -- that edit always wins.
+      const override = PLACE_IMAGE_OVERRIDES[p.id]
+      const withRealImages = override ? { ...p, image: override.image, gallery: override.gallery } : p
+      return edits[p.id] ? applyEditToPlace(withRealImages, edits[p.id]) : withRealImages
+    })
     return staticMerged.concat(addedPlaces)
   }, [removedIds, addedPlaces, edits])
 

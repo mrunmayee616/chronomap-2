@@ -76,12 +76,11 @@ button {
   letter-spacing: -0.01em;
 }
 
-.brand-mark {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: conic-gradient(from 210deg, #f7c740, #3b82f6, #22c55e, #f7c740);
-  box-shadow: 0 0 0 3px #ffffff08;
+.brand-logo {
+  display: block;
+  object-fit: contain;
+  flex-shrink: 0;
+  user-select: none;
 }
 
 .nav-links {
@@ -575,8 +574,21 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 22px;
   line-height: 1;
+  overflow: hidden;
+}
+
+.country-flag-img {
+  border-radius: 4px;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px #ffffff1a;
+}
+
+.country-flag-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .field-icon {
@@ -2376,6 +2388,133 @@ button {
   border-color: #f76c6c55;
 }
 
+/* ---------- Share menu (Place page) ---------- */
+
+.share-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.place-icon-btn.active {
+  color: var(--text);
+  border-color: #ffffff33;
+}
+
+.share-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 40;
+  width: 300px;
+  max-width: calc(100vw - 32px);
+  padding: 14px;
+  background: var(--bg-elev);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  box-shadow: 0 16px 40px #00000080;
+  animation: toast-in 0.18s ease;
+}
+
+.share-menu-title {
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.share-link-row {
+  display: flex;
+  gap: 8px;
+}
+
+.share-link-input {
+  flex: 1;
+  min-width: 0;
+  background: #ffffff0a;
+  border: 1px solid #ffffff1f;
+  border-radius: 9px;
+  padding: 9px 11px;
+  font-size: 12.5px;
+  font-family: inherit;
+  color: var(--text-dim);
+  outline: none;
+}
+
+.share-link-input:focus {
+  border-color: var(--yellow);
+  color: var(--text);
+}
+
+.share-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 0 12px;
+  border-radius: 9px;
+  border: 1px solid var(--yellow);
+  background: var(--yellow);
+  color: #16130a;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.share-copy-btn:hover {
+  opacity: 0.9;
+}
+
+.share-copy-btn.copied {
+  background: #4ade8022;
+  border-color: #4ade8066;
+  color: #4ade80;
+}
+
+.share-status {
+  min-height: 16px;
+  margin: 6px 2px 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.share-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 8px;
+  border: none;
+  border-radius: 9px;
+  background: none;
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 500;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.share-item:hover,
+.share-item:focus-visible {
+  background: #ffffff10;
+  outline: none;
+}
+
+.share-item-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #ffffff0d;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 /* ---------- Login required toast ---------- */
 
 @keyframes toast-in {
@@ -3134,9 +3273,10 @@ button {
   text-overflow: ellipsis;
 }
 
-.leaderboard-flag {
-  font-size: 16px;
+.leaderboard-flag.country-flag-img,
+.leaderboard-flag.country-flag-fallback {
   flex-shrink: 0;
+  font-size: 14px;
 }
 
 .leaderboard-country-unset {
@@ -3335,6 +3475,73 @@ button {
   color: #4ade80;
   font-size: 13.5px;
   margin: 0 0 14px;
+}
+
+/* -- user search -- */
+
+.admin-search {
+  position: relative;
+  max-width: 420px;
+  margin-bottom: 14px;
+}
+
+.admin-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-faint);
+  display: flex;
+  pointer-events: none;
+}
+
+.admin-search-input {
+  width: 100%;
+  background: #ffffff0a;
+  border: 1px solid #ffffff1f;
+  border-radius: 9px;
+  padding: 12px 40px 12px 40px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.admin-search-input::placeholder {
+  color: var(--text-faint);
+}
+
+.admin-search-input:focus {
+  border-color: var(--yellow);
+}
+
+.admin-search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.admin-search-clear:hover {
+  color: var(--text);
+  background: #ffffff14;
+}
+
+.admin-search-count {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--text-dim);
 }
 
 /* -- tables (shared by users + dataset) -- */
