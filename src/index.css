@@ -1,12 +1,28 @@
+/* Design tokens. Every text colour below clears WCAG AA (4.5:1) against
+   --bg and --card-bg, so pick from these rather than ad-hoc greys or
+   translucent whites. Text is never set smaller than 12px. */
 :root {
   --bg: #0a0e1e;
   --bg-elev: #0d1226;
+  --card-bg: #0d1226e6;
+  --card-border: #ffffff1a;
+  --border: #ffffff14;
+
+  --text: #f5f6fa;
+  --text-dim: #a3aac0;
+  --text-faint: #8189a3;
+
   --yellow: #f7c740;
   --yellow-dim: #f7c74022;
-  --text: #f5f6fa;
-  --text-dim: #9aa1b8;
-  --text-faint: #6b7290;
-  --border: #ffffff14;
+  /* --violet is for text/icons on dark surfaces; --violet-strong is the
+     fill colour behind white text (the lighter violet only reaches 3.9:1). */
+  --violet: #8b7ef8;
+  --violet-strong: #5f4fe0;
+  --violet-dim: #7b6cf633;
+  --danger: #f25a76;
+  --danger-dim: #ef466522;
+
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--yellow);
   color-scheme: dark;
 }
 
@@ -38,6 +54,34 @@ a {
 button {
   font-family: inherit;
   cursor: pointer;
+}
+
+/* Keyboard focus: a visible ring on every interactive control. Mouse
+   clicks don't trigger :focus-visible on buttons/links, so this only
+   shows up for keyboard users. Text inputs keep their border highlight. */
+a:focus-visible,
+button:focus-visible,
+select:focus-visible,
+summary:focus-visible,
+[role='button']:focus-visible,
+[role='tab']:focus-visible,
+[tabindex]:not([tabindex='-1']):focus-visible,
+input[type='checkbox']:focus-visible,
+input[type='radio']:focus-visible,
+input[type='range']:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ---------- Layout shell ---------- */
@@ -163,7 +207,7 @@ button {
 }
 
 .hero-sub {
-  font-size: 16.5px;
+  font-size: 16px;
   line-height: 1.6;
   color: var(--text-dim);
   max-width: 460px;
@@ -251,7 +295,7 @@ button {
 }
 
 .stat-label {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-faint);
   white-space: nowrap;
 }
@@ -311,13 +355,6 @@ button {
 }
 
 /* ==================== Sign In page ==================== */
-
-:root {
-  --violet: #7b6cf6;
-  --violet-dim: #7b6cf633;
-  --card-bg: #0d1226e6;
-  --card-border: #ffffff1a;
-}
 
 .signin-page {
   display: flex;
@@ -392,7 +429,7 @@ button {
 
 .signin-sub {
   color: var(--text-dim);
-  font-size: 14.5px;
+  font-size: 15px;
   line-height: 1.6;
   max-width: 340px;
   margin: 0 0 26px;
@@ -445,7 +482,7 @@ button {
 }
 
 .stat-value.small {
-  font-size: 14.5px;
+  font-size: 15px;
 }
 
 /* -- Right form card -- */
@@ -477,13 +514,13 @@ button {
 .signin-card-sub {
   text-align: center;
   color: var(--text-faint);
-  font-size: 13.5px;
+  font-size: 14px;
   margin: 0 0 26px;
 }
 
 .field-label {
   display: block;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-dim);
   margin: 0 0 8px;
@@ -507,7 +544,7 @@ button {
 }
 
 .field input::placeholder {
-  color: #6b7290;
+  color: var(--text-faint);
 }
 
 .field input:focus {
@@ -579,16 +616,31 @@ button {
   overflow: hidden;
 }
 
+/* Circular flags. The hairline ring keeps white-heavy flags (Japan,
+   Switzerland...) from dissolving into light surfaces. */
 .country-flag-img {
-  border-radius: 4px;
+  display: inline-block;
+  flex-shrink: 0;
+  border-radius: 50%;
   object-fit: cover;
-  box-shadow: 0 0 0 1px #ffffff1a;
+  object-position: center;
+  box-shadow: 0 0 0 1px #ffffff26;
+  vertical-align: middle;
 }
 
 .country-flag-fallback {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  line-height: 1;
+}
+
+/* inside the round 52px preview badge, the flag fills the whole circle */
+.country-flag-preview .country-flag-img {
+  box-shadow: none;
 }
 
 .field-icon {
@@ -632,7 +684,7 @@ button {
 
 .btn-login {
   width: 100%;
-  background: linear-gradient(135deg, #8b7cf8, #6c5ce8);
+  background: linear-gradient(135deg, #6c5ce8, var(--violet-strong));
   color: #fff;
   font-weight: 700;
   font-size: 15px;
@@ -652,7 +704,7 @@ button {
   align-items: center;
   gap: 12px;
   color: var(--text-faint);
-  font-size: 12.5px;
+  font-size: 13px;
   margin: 20px 0;
 }
 
@@ -875,7 +927,7 @@ button {
 
 .register-sub {
   color: var(--text-dim);
-  font-size: 14.5px;
+  font-size: 15px;
   line-height: 1.6;
   max-width: 360px;
   margin: 16px 0 28px;
@@ -890,7 +942,7 @@ button {
   align-items: flex-start;
   gap: 10px;
   margin: -4px 0 22px;
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.5;
   color: var(--text-dim);
   cursor: pointer;
@@ -969,7 +1021,7 @@ button {
   border: none;
   outline: none;
   color: var(--text);
-  font-size: 14.5px;
+  font-size: 15px;
   font-family: inherit;
 }
 
@@ -989,7 +1041,7 @@ button {
   border: 1px solid #ffffff1f;
   border-radius: 12px;
   padding: 13px 20px;
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
@@ -1019,7 +1071,7 @@ button {
 }
 
 .filter-panel-title {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -1032,7 +1084,7 @@ button {
   background: none;
   border: none;
   color: var(--text);
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 500;
   padding: 9px 8px;
   border-radius: 8px;
@@ -1065,7 +1117,7 @@ button {
   background: none;
   border: none;
   color: var(--text-dim);
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 700;
   padding: 9px 18px;
   border-radius: 9px;
@@ -1104,7 +1156,7 @@ button {
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 10px;
-  width: 84px;
+  width: 96px;
   flex-shrink: 0;
   align-self: flex-start;
 }
@@ -1133,7 +1185,7 @@ button {
 }
 
 .sidebar-label {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.2;
   text-align: center;
@@ -1173,7 +1225,7 @@ button {
 .leaflet-mount .leaflet-control-attribution {
   background: #05070fcc;
   color: var(--text-faint);
-  font-size: 10.5px;
+  font-size: 12px;
 }
 
 .leaflet-mount .leaflet-control-attribution a {
@@ -1200,7 +1252,7 @@ button {
 
 .cesium-mount .cesium-credit-container,
 .cesium-mount .cesium-viewer-bottom {
-  font-size: 9px !important;
+  font-size: 12px !important;
   opacity: 0.65;
 }
 
@@ -1212,7 +1264,7 @@ button {
   background: #05070fcc;
   border: 1px solid var(--card-border);
   color: var(--text-faint);
-  font-size: 12.5px;
+  font-size: 13px;
   padding: 8px 16px;
   border-radius: 999px;
   backdrop-filter: blur(8px);
@@ -1228,7 +1280,7 @@ button {
   background: #05070fcc;
   border: 1px solid var(--card-border);
   color: var(--text-faint);
-  font-size: 11.5px;
+  font-size: 12px;
   padding: 7px 13px;
   border-radius: 999px;
   backdrop-filter: blur(8px);
@@ -1308,7 +1360,7 @@ button {
 .timeline-label {
   font-family: 'Sora', sans-serif;
   font-weight: 700;
-  font-size: 14.5px;
+  font-size: 15px;
   flex-shrink: 0;
 }
 
@@ -1436,6 +1488,10 @@ button {
   .sidebar-item {
     flex-shrink: 0;
   }
+  /* mouse-only instructions; meaningless on touch and too wide for phones */
+  .map-hint {
+    display: none;
+  }
   .timeline-bar {
     flex-direction: column;
     align-items: stretch;
@@ -1471,7 +1527,7 @@ button {
 
 .field-error {
   color: #f76c6c;
-  font-size: 12.5px;
+  font-size: 13px;
   margin: -12px 0 14px;
 }
 
@@ -1528,7 +1584,7 @@ button {
 }
 
 .verify-message {
-  font-size: 14.5px;
+  font-size: 15px;
   line-height: 1.6;
   margin: 0 0 22px;
 }
@@ -1552,7 +1608,7 @@ button {
 
 .navbar-avatar-link.active,
 .navbar-avatar-link:hover {
-  border-color: var(--violet, #7b6cf6);
+  border-color: var(--violet);
 }
 
 .navbar-avatar {
@@ -1587,7 +1643,7 @@ button {
   background: none;
   border: none;
   color: var(--text-dim);
-  font-size: 13.5px;
+  font-size: 14px;
   text-align: left;
   padding: 9px 10px;
   border-radius: 8px;
@@ -1649,13 +1705,13 @@ button {
 }
 
 .profile-username {
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--text-dim);
   margin: 0 0 6px;
 }
 
 .profile-level-row {
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--text-dim);
   margin: 0;
 }
@@ -1686,7 +1742,7 @@ button {
 }
 
 .xp-bar-label {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-dim);
   margin: 0;
 }
@@ -1713,7 +1769,7 @@ button {
 }
 
 .profile-stat-label {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-dim);
   margin: 0;
   line-height: 1.3;
@@ -1732,7 +1788,7 @@ button {
 }
 
 .profile-about-bio {
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--text-dim);
   line-height: 1.6;
   margin: 0 0 18px;
@@ -1768,7 +1824,7 @@ button {
 }
 
 .favourites-count {
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--text-dim);
   margin: 0;
 }
@@ -1779,7 +1835,7 @@ button {
 }
 
 .favourites-empty {
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--text-dim);
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -1834,7 +1890,7 @@ button {
 
 .favourite-card-name {
   display: block;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text);
   margin: 0 0 6px;
@@ -1849,7 +1905,7 @@ button {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-dim);
   margin: 0;
 }
@@ -1896,7 +1952,7 @@ button {
 }
 
 .achievements-count {
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--text-dim);
   margin: 0;
 }
@@ -1924,8 +1980,8 @@ button {
 }
 
 .filter-pill.active {
-  background: var(--violet, #7b6cf6);
-  border-color: var(--violet, #7b6cf6);
+  background: var(--violet-strong);
+  border-color: var(--violet);
   color: #fff;
 }
 
@@ -1961,7 +2017,7 @@ button {
 }
 
 .achievement-progress {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--progress-color);
   margin: 8px 0 0;
@@ -1985,14 +2041,14 @@ button {
 }
 
 .achievement-title {
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text);
   margin: 0 0 4px;
 }
 
 .achievement-description {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-dim);
   margin: 0;
   line-height: 1.4;
@@ -2032,7 +2088,7 @@ button {
   color: var(--text-dim);
   border-radius: 8px;
   padding: 6px 10px;
-  font-size: 12.5px;
+  font-size: 13px;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
@@ -2048,13 +2104,13 @@ button {
 }
 
 .icon-btn-save {
-  background: var(--violet, #7b6cf6);
-  border-color: var(--violet, #7b6cf6);
+  background: var(--violet-strong);
+  border-color: var(--violet-strong);
   color: #fff;
 }
 
 .icon-btn-save:hover {
-  background: var(--violet, #7b6cf6);
+  background: var(--violet-strong);
   color: #fff;
   opacity: 0.9;
 }
@@ -2074,7 +2130,7 @@ button {
   border: 1px solid #ffffff1f;
   border-radius: 9px;
   padding: 12px 14px;
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--text);
   outline: none;
   resize: vertical;
@@ -2084,11 +2140,11 @@ button {
 }
 
 .about-textarea:focus {
-  border-color: var(--violet, #7b6cf6);
+  border-color: var(--violet);
 }
 
 .about-char-count {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-faint);
   text-align: right;
   margin: 0 0 16px;
@@ -2126,7 +2182,7 @@ button {
   color: var(--text);
   border: 1px solid var(--card-border);
   font-family: 'Manrope', sans-serif;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   padding: 6px 10px;
   border-radius: 8px;
@@ -2274,7 +2330,7 @@ button {
 .place-figure-name {
   margin: 0 0 2px;
   font-weight: 700;
-  font-size: 14.5px;
+  font-size: 15px;
   color: var(--text);
 }
 
@@ -2349,7 +2405,7 @@ button {
 }
 
 .place-badge-filled {
-  background: var(--violet, #7b6cf6);
+  background: var(--violet-strong);
   color: #fff;
 }
 
@@ -2417,7 +2473,7 @@ button {
 
 .share-menu-title {
   margin: 0 0 10px;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text);
 }
@@ -2434,7 +2490,7 @@ button {
   border: 1px solid #ffffff1f;
   border-radius: 9px;
   padding: 9px 11px;
-  font-size: 12.5px;
+  font-size: 13px;
   font-family: inherit;
   color: var(--text-dim);
   outline: none;
@@ -2455,7 +2511,7 @@ button {
   border: 1px solid var(--yellow);
   background: var(--yellow);
   color: #16130a;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
@@ -2489,7 +2545,7 @@ button {
   border-radius: 9px;
   background: none;
   color: var(--text);
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 500;
   font-family: inherit;
   text-align: left;
@@ -2572,7 +2628,7 @@ button {
 
 .login-toast-text {
   margin: 2px 0 0;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-dim);
   line-height: 1.35;
 }
@@ -2636,7 +2692,7 @@ button {
   align-items: center;
   gap: 10px;
   color: var(--text-dim);
-  font-size: 13.5px;
+  font-size: 14px;
   margin-bottom: 16px;
 }
 
@@ -2651,7 +2707,7 @@ button {
 }
 
 .place-summary {
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--text-dim);
   line-height: 1.6;
   margin: 0 0 26px;
@@ -2702,7 +2758,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 13.5px;
+  font-size: 14px;
 }
 
 .place-facts-label {
@@ -2716,7 +2772,7 @@ button {
 
 .btn-start-quiz {
   width: 100%;
-  background: var(--violet, #7b6cf6);
+  background: var(--violet-strong);
   color: #fff;
   font-weight: 700;
   font-size: 15px;
@@ -2847,9 +2903,9 @@ button {
 
 .quiz-hub-card-count {
   margin: 0;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
-  color: var(--violet, #7b6cf6);
+  color: var(--violet);
 }
 
 .quiz-place-label {
@@ -2869,7 +2925,7 @@ button {
 .quiz-progress-row {
   display: flex;
   justify-content: space-between;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-dim);
   margin-bottom: 10px;
 }
@@ -2886,7 +2942,7 @@ button {
 .quiz-progress-fill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--violet, #7b6cf6), #a99bff);
+  background: linear-gradient(90deg, var(--violet), #a99bff);
   transition: width 0.3s ease;
 }
 
@@ -2910,7 +2966,7 @@ button {
   background: #ffffff08;
   border: 1.5px solid var(--card-border);
   color: var(--text);
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 600;
   padding: 14px 18px;
   border-radius: 12px;
@@ -3046,7 +3102,7 @@ button {
 }
 
 .leaderboard-sub {
-  font-size: 14.5px;
+  font-size: 15px;
   color: var(--text-dim);
   margin: 0;
 }
@@ -3075,14 +3131,14 @@ button {
 }
 
 .leaderboard-tab.active {
-  background: linear-gradient(135deg, var(--violet, #7b6cf6), #9b3ff0);
+  background: linear-gradient(135deg, var(--violet-strong), #9b3ff0);
   border-color: transparent;
   color: #fff;
 }
 
 .leaderboard-status {
   color: var(--text-dim);
-  font-size: 14.5px;
+  font-size: 15px;
   padding: 40px 0;
   text-align: center;
 }
@@ -3148,7 +3204,7 @@ button {
 }
 
 .podium-name {
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 700;
   font-style: italic;
   color: var(--text);
@@ -3208,18 +3264,18 @@ button {
 }
 
 .leaderboard-row-you {
-  background: var(--violet-dim, #7b6cf633);
+  background: var(--violet-dim);
 }
 
 .leaderboard-row-you:hover {
-  background: var(--violet-dim, #7b6cf633);
+  background: var(--violet-dim);
 }
 
 .leaderboard-rank {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-dim);
 }
@@ -3247,10 +3303,10 @@ button {
 }
 
 .leaderboard-you-tag {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
-  color: var(--violet, #7b6cf6);
-  background: var(--violet-dim, #7b6cf633);
+  color: var(--violet);
+  background: var(--violet-dim);
   border-radius: 999px;
   padding: 2px 8px;
   flex-shrink: 0;
@@ -3316,11 +3372,6 @@ button {
 
 /* ==================== Admin dashboard ==================== */
 
-:root {
-  --danger: #ef4665;
-  --danger-dim: #ef466522;
-}
-
 .admin-page {
   min-height: 100vh;
 }
@@ -3337,9 +3388,9 @@ button {
 }
 
 .admin-badge {
-  background: var(--violet, #7b6cf6);
+  background: var(--violet-strong);
   color: #fff;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -3378,7 +3429,7 @@ button {
 }
 
 .admin-sub {
-  font-size: 14.5px;
+  font-size: 15px;
   color: var(--text-dim);
   margin: 0 0 28px;
 }
@@ -3423,7 +3474,7 @@ button {
 }
 
 .admin-stat-label {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-dim);
   margin: 0;
 }
@@ -3453,7 +3504,7 @@ button {
 }
 
 .admin-tab.active {
-  background: linear-gradient(135deg, var(--violet, #7b6cf6), #9b3ff0);
+  background: linear-gradient(135deg, var(--violet-strong), #9b3ff0);
   border-color: transparent;
   color: #fff;
 }
@@ -3462,7 +3513,7 @@ button {
 
 .admin-status {
   color: var(--text-dim);
-  font-size: 14.5px;
+  font-size: 15px;
   padding: 32px 0;
   text-align: center;
 }
@@ -3473,7 +3524,7 @@ button {
 
 .admin-success {
   color: #4ade80;
-  font-size: 13.5px;
+  font-size: 14px;
   margin: 0 0 14px;
 }
 
@@ -3571,7 +3622,7 @@ button {
 }
 
 .admin-table-header {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -3630,7 +3681,7 @@ button {
 
 .admin-cell-dim {
   color: var(--text-dim);
-  font-size: 13.5px;
+  font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3638,7 +3689,7 @@ button {
 
 .admin-status-pill {
   display: inline-block;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 999px;
@@ -3660,7 +3711,7 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 700;
   padding: 8px 12px;
   border-radius: 8px;
@@ -3780,7 +3831,7 @@ button {
   align-items: center;
   gap: 6px;
   padding: 12px 16px;
-  font-size: 13.5px;
+  font-size: 14px;
   white-space: nowrap;
 }
 
@@ -3858,7 +3909,7 @@ button {
 }
 
 .admin-csv-help {
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--text-dim);
   line-height: 1.6;
   margin: 0 0 18px;
@@ -3868,7 +3919,7 @@ button {
   background: #ffffff10;
   padding: 1px 6px;
   border-radius: 5px;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text);
 }
 
@@ -3956,8 +4007,8 @@ button {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--violet, #7b6cf6);
-  background: var(--violet-dim, #7b6cf633);
+  color: var(--violet);
+  background: var(--violet-dim);
   padding: 7px 16px;
   border-radius: 999px;
   margin-bottom: 22px;
@@ -4040,7 +4091,7 @@ button {
 .about-section-sub {
   text-align: center;
   color: var(--text-dim);
-  font-size: 14.5px;
+  font-size: 15px;
   max-width: 560px;
   margin: 0 auto 32px;
   line-height: 1.6;
@@ -4071,7 +4122,7 @@ button {
   height: 84px;
   border-radius: 999px;
   background: var(--bg-elev);
-  border: 2px solid var(--violet, #7b6cf6);
+  border: 2px solid var(--violet);
   margin-bottom: 16px;
 }
 
@@ -4082,7 +4133,7 @@ button {
 }
 
 .about-team-role {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-faint);
   margin: 0;
   text-transform: uppercase;
@@ -4203,13 +4254,13 @@ button {
   width: 46px;
   height: 46px;
   border-radius: 12px;
-  background: var(--violet-dim, #7b6cf633);
-  color: var(--violet, #7b6cf6);
+  background: var(--violet-dim);
+  color: var(--violet);
   margin-bottom: 16px;
 }
 
 .hiw-step-card h3 {
-  font-size: 16.5px;
+  font-size: 16px;
   font-weight: 800;
   margin: 0 0 8px;
 }

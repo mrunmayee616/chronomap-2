@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useMemo } 
 import { PLACES as STATIC_PLACES } from '../data/places.js'
 import { placesApi } from '../lib/api.js'
 import { applyEditToPlace } from '../lib/placeEdits.js'
+import { dedupeQuiz } from '../lib/quiz.js'
 import { PLACE_IMAGE_OVERRIDES } from '../data/placeImages.generated.js'
 
 const PlacesContext = createContext(null)
@@ -45,7 +46,7 @@ export function PlacesProvider({ children }) {
       const withRealImages = override ? { ...p, image: override.image, gallery: override.gallery } : p
       return edits[p.id] ? applyEditToPlace(withRealImages, edits[p.id]) : withRealImages
     })
-    return staticMerged.concat(addedPlaces)
+    return staticMerged.concat(addedPlaces).map((p) => ({ ...p, quiz: dedupeQuiz(p.quiz) }))
   }, [removedIds, addedPlaces, edits])
 
   const getPlaceById = useCallback((id) => places.find((p) => p.id === id), [places])

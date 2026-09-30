@@ -336,7 +336,7 @@ export default function Register() {
                 </label>
                 <div className="avatar-style-row">
                   <span className="country-flag-preview" aria-hidden="true">
-                    <CountryFlag code={form.country} size={40} />
+                    <CountryFlag code={form.country} size={48} />
                   </span>
                   <div className={`field avatar-style-field${fieldErrors.country ? ' field-invalid' : ''}`}>
                     <select

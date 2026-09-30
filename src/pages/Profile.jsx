@@ -262,7 +262,7 @@ export default function Profile() {
                 <label className="field-label" htmlFor="about-country">Country</label>
                 <div className="avatar-style-row">
                   <span className="country-flag-preview" aria-hidden="true">
-                    <CountryFlag code={countryDraft} size={40} />
+                    <CountryFlag code={countryDraft} size={48} />
                   </span>
                   <div className="field avatar-style-field">
                     <select
