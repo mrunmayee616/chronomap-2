@@ -105,8 +105,12 @@ export function countryNameFor(code) {
 
 // Turns an ISO 3166-1 alpha-2 code into its flag emoji by mapping each
 // letter to its "regional indicator symbol" codepoint (U+1F1E6 = 'A').
-// Every modern OS/browser renders a pair of these as a single flag glyph,
-// so this needs no image assets or network requests at all.
+// Kept as a plain-text fallback (used in <img alt> text, for example) --
+// NOT used for the actual on-screen flag anymore. Many Windows browser/font
+// combinations don't compose these two-letter pairs into a flag glyph at
+// all and instead print the raw two letters (e.g. "US"), which is exactly
+// the "flag doesn't appear" bug this file's flagImageUrl() below fixes by
+// using a real flag image instead.
 export function flagEmojiFor(code) {
   if (!code || code.length !== 2) return '🏳️'
   const chars = code
@@ -114,4 +118,14 @@ export function flagEmojiFor(code) {
     .split('')
     .map((ch) => 127397 + ch.charCodeAt(0))
   return String.fromCodePoint(...chars)
+}
+
+// A real flag image (SVG), from flagcdn.com -- a free CDN of public-domain
+// flag artwork keyed by the same ISO 3166-1 alpha-2 codes already used
+// throughout this file. Renders identically on every OS/browser, unlike the
+// emoji flags above. See src/components/CountryFlag.jsx for the component
+// that displays this with a graceful fallback if the request fails.
+export function flagImageUrl(code) {
+  if (!code || code.length !== 2) return null
+  return `https://flagcdn.com/${code.toLowerCase()}.svg`
 }

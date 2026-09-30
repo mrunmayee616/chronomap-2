@@ -1,12 +1,30 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import colosseumImg from '../assets/colosseum.jpg'
 import Navbar from '../components/Navbar.jsx'
-import { authApi } from '../lib/api.js'
+import { authApi, oauthUrl } from '../lib/api.js'
 import { useAuth } from '../context/AuthContext.jsx'
+import Logo from '../components/Logo.jsx'
 
 function noop(e) {
   e.preventDefault()
+}
+
+// Error codes the server appends as /signin?oauth_error=<code> when a
+// Google/GitHub sign-in fails (see server/src/routes/oauth.routes.js).
+const OAUTH_ERRORS = {
+  not_configured: 'Google/GitHub sign-in is not set up on this server yet.',
+  access_denied: 'Sign-in was cancelled. You can try again, or log in with your email and password.',
+  invalid_state: 'Your sign-in session expired. Please try again.',
+  no_verified_email:
+    "We couldn't get a verified email address from that account. Verify your email with the provider, or sign in another way.",
+  email_exists:
+    'An account with this email already exists. Please log in with your email and password instead.',
+}
+
+function oauthErrorMessage(code) {
+  if (!code) return ''
+  return OAUTH_ERRORS[code] || 'Something went wrong signing in. Please try again.'
 }
 
 function MapIcon() {
@@ -110,8 +128,21 @@ export default function SignIn() {
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
-  const [formError, setFormError] = useState('')
+  const [formError, setFormError] = useState(() =>
+    oauthErrorMessage(new URLSearchParams(location.search).get('oauth_error'))
+  )
   const [submitting, setSubmitting] = useState(false)
+
+  // Where Google/GitHub sign-in should return to (same place password login goes).
+  const afterLoginPath = location.state?.from?.pathname
+
+  // Drop ?oauth_error from the address bar so a refresh doesn't show it again.
+  useEffect(() => {
+    if (new URLSearchParams(location.search).has('oauth_error')) {
+      navigate(location.pathname, { replace: true, state: location.state })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -271,10 +302,10 @@ export default function SignIn() {
 
             <div className="divider"><span>or</span></div>
 
-            <a href="#" className="btn-oauth" onClick={noop}>
+            <a href={oauthUrl('google', afterLoginPath)} className="btn-oauth">
               <GoogleIcon /> Continue with Google
             </a>
-            <a href="#" className="btn-oauth" onClick={noop}>
+            <a href={oauthUrl('github', afterLoginPath)} className="btn-oauth">
               <GithubIcon /> Continue with GitHub
             </a>
 
@@ -288,7 +319,7 @@ export default function SignIn() {
 
       <footer className="site-footer">
         <div className="footer-brand">
-          <span className="brand-mark" aria-hidden="true" />
+          <Logo size={28} />
           <span>ChronoMap</span>
         </div>
 

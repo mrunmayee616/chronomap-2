@@ -4,7 +4,7 @@ import User from '../models/User.js'
 import PlaceOverride from '../models/PlaceOverride.js'
 import { requireAuth, requireAdmin } from '../middleware/auth.js'
 import { PLACE_COUNTRIES } from '../data/places.js'
-import { slugify, validatePlaceForm, validatePlaceEdit, buildPlace, applyEditToPlace } from '../utils/placeBuilder.js'
+import { slugify, validatePlaceForm, validatePlaceEdit, buildPlace, applyEditToPlace, resolvePlaceImage } from '../utils/placeBuilder.js'
 import { parseCsv } from '../utils/csvParse.js'
 import { buildPlacesFromCsvRows, REQUIRED_CSV_COLUMNS } from '../utils/csvImport.js'
 
@@ -83,6 +83,12 @@ router.post('/places', async (req, res) => {
     n += 1
   }
 
+  // If the admin didn't supply an image, try a real Wikipedia photo (and a
+  // small gallery) before falling back to buildPlace's placeholder image.
+  // Best-effort and bounded (see resolvePlaceImage) -- never blocks this
+  // request for long, and a lookup miss just means the usual placeholder.
+  const resolved = await resolvePlaceImage(trimmedName, image)
+
   const place = buildPlace({
     id,
     name: trimmedName,
@@ -93,7 +99,8 @@ router.post('/places', async (req, res) => {
     year,
     yearEra,
     summary: trimmedSummary,
-    image,
+    image: resolved.image,
+    gallery: resolved.gallery,
     allCountries: Object.values(PLACE_COUNTRIES),
   })
 

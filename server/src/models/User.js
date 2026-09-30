@@ -18,7 +18,23 @@ const userSchema = new mongoose.Schema(
       trim: true,
       index: true,
     },
-    passwordHash: { type: String, required: true },
+    // Empty for accounts created through "Continue with Google/GitHub" --
+    // those have no password, and login() refuses them for password sign-in.
+    passwordHash: { type: String, default: '' },
+
+    // Linked social sign-in identities. providerId is the provider's own
+    // stable user id (Google "sub", GitHub numeric id) -- never the email,
+    // which can change.
+    oauthAccounts: {
+      type: [
+        {
+          provider: { type: String, enum: ['google', 'github'], required: true },
+          providerId: { type: String, required: true },
+          _id: false,
+        },
+      ],
+      default: [],
+    },
 
     // Brute-force protection
     failedLoginAttempts: { type: Number, default: 0 },
@@ -71,5 +87,7 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } }
 )
+
+userSchema.index({ 'oauthAccounts.provider': 1, 'oauthAccounts.providerId': 1 })
 
 export default mongoose.model('User', userSchema)

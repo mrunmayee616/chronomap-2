@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
+import ShareButton from '../components/ShareButton.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useFavourites } from '../context/FavouritesContext.jsx'
 import { progressApi } from '../lib/api.js'
@@ -17,17 +18,6 @@ function HeartIcon({ filled }) {
         strokeWidth="1.7"
         strokeLinejoin="round"
       />
-    </svg>
-  )
-}
-
-function ShareIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-      <circle cx="18" cy="5" r="2.6" stroke="currentColor" strokeWidth="1.7" />
-      <circle cx="6" cy="12" r="2.6" stroke="currentColor" strokeWidth="1.7" />
-      <circle cx="18" cy="19" r="2.6" stroke="currentColor" strokeWidth="1.7" />
-      <path d="M8.3 10.7l7.4-4.2M8.3 13.3l7.4 4.2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
     </svg>
   )
 }
@@ -216,9 +206,11 @@ export default function Place() {
                 >
                   <HeartIcon filled={liked} />
                 </button>
-                <button type="button" className="place-icon-btn" aria-label="Share place">
-                  <ShareIcon />
-                </button>
+                <ShareButton
+                  title={place.name}
+                  text={`${place.name} (${place.location}) — explore its history on ChronoMap.`}
+                  path={`/place/${place.id}`}
+                />
               </div>
             </div>
 

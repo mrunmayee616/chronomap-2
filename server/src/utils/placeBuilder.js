@@ -68,7 +68,7 @@ export function validatePlaceForm({ name, country, latitude, longitude, category
 // Builds a full place object (matching the shape of the static dataset) from
 // a validated admin form payload. `id` must already be resolved to a unique,
 // unused slug by the caller (uniqueness depends on what's already stored).
-export function buildPlace({ id, name, country, latitude, longitude, category, year, yearEra, summary, allCountries, image }) {
+export function buildPlace({ id, name, country, latitude, longitude, category, year, yearEra, summary, allCountries, image, gallery }) {
   const lat = Number(latitude)
   const lng = Number(longitude)
   const yearNum = Number(year)
@@ -76,6 +76,10 @@ export function buildPlace({ id, name, country, latitude, longitude, category, y
   const dateLabel = `${yearNum} ${yearEra}`
   const era = eraFor(yearValue)
   const finalImage = image && String(image).trim() ? String(image).trim() : `https://picsum.photos/seed/${id}/900/600`
+  // A caller that already fetched a real, multi-photo gallery (see
+  // resolvePlaceImage below) passes it through here; otherwise the hero
+  // image is repeated as a single-item gallery, same as before.
+  const finalGallery = Array.isArray(gallery) && gallery.length ? gallery : [{ image: finalImage, caption: name }]
   const location = `${name}, ${country}`
 
   const otherCountries = [...new Set(allCountries)].filter((c) => c !== country)
@@ -99,7 +103,7 @@ export function buildPlace({ id, name, country, latitude, longitude, category, y
     quickFacts: { Date: dateLabel, Location: location, Category: category, Era: era },
     keyFigures: [],
     timeline: [{ year: dateLabel, label: name, detail: summary }],
-    gallery: [{ image: finalImage, caption: name }],
+    gallery: finalGallery,
     quiz: [
       {
         question: `In which country is ${name} located?`,
@@ -157,4 +161,23 @@ export function applyEditToPlace(place, changes) {
   }
 
   return next
+}
+
+// Best-effort: if the admin left the image field blank, try to find a real
+// photo (and a small gallery) on Wikipedia by the place's own name before
+// falling back to the picsum placeholder. Never throws and never blocks
+// place creation -- a failed or slow lookup just means the picsum
+// placeholder is used, exactly like before this existed.
+export async function resolvePlaceImage(name, suppliedImage) {
+  if (suppliedImage && String(suppliedImage).trim()) {
+    return { image: String(suppliedImage).trim(), gallery: null }
+  }
+  try {
+    const { fetchPlaceImageSetByName } = await import('./wikimediaImages.js')
+    const result = await fetchPlaceImageSetByName(name)
+    if (result.image) return { image: result.image, gallery: result.gallery }
+  } catch {
+    // Network hiccup or no matching article -- fall through to the placeholder.
+  }
+  return { image: null, gallery: null }
 }

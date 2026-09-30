@@ -1,0 +1,92 @@
+// Which Wikipedia articles to pull photos from for each place.
+//
+//   title  - the article that best matches the place / event. Its lead image
+//            becomes the hero picture and it supplies most gallery photos.
+//   extra  - 1-3 related articles (landmarks, monuments, the event itself).
+//            A few photos from each are mixed into the gallery so a place
+//            shows several different views instead of one picture repeated.
+//
+// Titles are English Wikipedia article titles (redirects are followed, so
+// alternate spellings are fine). A title that doesn't exist is simply skipped,
+// so a typo here can never break a page. Kept away from graphic articles on
+// purpose (massacres, bombings' casualties, etc.): memorials and landmarks are
+// used instead.
+//
+// Places added later from the admin dashboard aren't listed here; they fall
+// back to looking up an article with the same name as the place.
+export const PLACE_IMAGE_TOPICS = {
+  colosseum: { title: 'Colosseum', extra: ['Arch of Titus', 'Roman Forum'] },
+  rome: { title: 'Rome', extra: ['Pantheon, Rome', 'Roman Forum', 'Trevi Fountain'] },
+  athens: { title: 'Athens', extra: ['Parthenon', 'Acropolis of Athens'] },
+  sparta: { title: 'Sparta', extra: ['Battle of Thermopylae', 'Mystras'] },
+  jerusalem: { title: 'Jerusalem', extra: ['Western Wall', 'Dome of the Rock', 'Church of the Holy Sepulchre'] },
+  mecca: { title: 'Mecca', extra: ['Kaaba', 'Masjid al-Haram'] },
+  constantinople: { title: 'Constantinople', extra: ['Hagia Sophia', 'Walls of Constantinople'] },
+  baghdad: { title: 'Baghdad', extra: ['Round City of Baghdad', 'House of Wisdom'] },
+  'xi-an': { title: "Xi'an", extra: ['Terracotta Army', 'Big Wild Goose Pagoda'] },
+  beijing: { title: 'Beijing', extra: ['Forbidden City', 'Temple of Heaven'] },
+  kyoto: { title: 'Kyoto', extra: ['Kinkaku-ji', 'Fushimi Inari-taisha'] },
+  delhi: { title: 'Delhi', extra: ['Red Fort', 'Qutb Minar'] },
+  agra: { title: 'Agra', extra: ['Taj Mahal', 'Agra Fort'] },
+  cairo: { title: 'Cairo', extra: ['Al-Azhar Mosque', 'Citadel of Cairo'] },
+  giza: { title: 'Giza pyramid complex', extra: ['Great Sphinx of Giza', 'Great Pyramid of Giza'] },
+  alexandria: { title: 'Alexandria', extra: ['Lighthouse of Alexandria', 'Bibliotheca Alexandrina'] },
+  carthage: { title: 'Carthage', extra: ['Third Punic War', 'Punic Wars'] },
+  timbuktu: { title: 'Timbuktu', extra: ['Djinguereber Mosque', 'Sankore Madrasah'] },
+  'great-zimbabwe': { title: 'Great Zimbabwe', extra: ['Kingdom of Zimbabwe', 'Zimbabwe Bird'] },
+  cusco: { title: 'Cusco', extra: ['Sacsayhuamán', 'Qorikancha'] },
+  'mexico-city': { title: 'Tenochtitlan', extra: ['Templo Mayor', 'Mexico City'] },
+  paris: { title: 'Paris', extra: ['Storming of the Bastille', 'Louvre'] },
+  versailles: { title: 'Palace of Versailles', extra: ['Treaty of Versailles', 'Gardens of Versailles'] },
+  london: { title: 'London', extra: ['Tower of London', 'Magna Carta'] },
+  runnymede: { title: 'Runnymede', extra: ['Magna Carta', 'Magna Carta Memorial'] },
+  moscow: { title: 'Moscow', extra: ['Red Square', 'October Revolution'] },
+  'st-petersburg': { title: 'Saint Petersburg', extra: ['Winter Palace', 'Storming of the Winter Palace'] },
+  berlin: { title: 'Berlin', extra: ['Berlin Wall', 'Brandenburg Gate'] },
+  nuremberg: { title: 'Nuremberg', extra: ['Nuremberg trials', 'Nuremberg Castle'] },
+  vienna: { title: 'Vienna', extra: ['Congress of Vienna', 'Schönbrunn Palace'] },
+  philadelphia: { title: 'Philadelphia', extra: ['Independence Hall', 'Liberty Bell'] },
+  gettysburg: { title: 'Gettysburg, Pennsylvania', extra: ['Battle of Gettysburg', 'Gettysburg National Military Park'] },
+  'washington-dc': { title: 'Washington, D.C.', extra: ['Lincoln Memorial', 'March on Washington for Jobs and Freedom'] },
+  hiroshima: { title: 'Hiroshima', extra: ['Hiroshima Peace Memorial', 'Hiroshima Castle'] },
+  nagasaki: { title: 'Nagasaki', extra: ['Nagasaki Peace Park', 'Glover Garden'] },
+  yalta: { title: 'Yalta', extra: ['Yalta Conference', 'Livadia Palace'] },
+  potsdam: { title: 'Potsdam', extra: ['Potsdam Conference', 'Sanssouci'] },
+  sarajevo: { title: 'Sarajevo', extra: ['Latin Bridge', 'Baščaršija'] },
+  normandy: { title: 'Omaha Beach', extra: ['Normandy American Cemetery and Memorial', 'Normandy landings'] },
+  waterloo: { title: 'Battle of Waterloo', extra: ["Lion's Mound", 'Waterloo, Belgium'] },
+  trafalgar: { title: 'Battle of Trafalgar', extra: ['Cape Trafalgar', 'HMS Victory'] },
+  westphalia: { title: 'Peace of Westphalia', extra: ['Osnabrück', 'Münster'] },
+  tehran: { title: 'Tehran', extra: ['Tehran Conference', 'Azadi Tower'] },
+  amritsar: { title: 'Amritsar', extra: ['Golden Temple', 'Jallianwala Bagh massacre'] },
+  dandi: { title: 'Salt March', extra: ['Mahatma Gandhi', 'Sabarmati Ashram'] },
+  soweto: { title: 'Soweto', extra: ['Soweto uprising', 'Vilakazi Street'] },
+  'cape-town': { title: 'Robben Island', extra: ['Cape Town', 'Table Mountain'] },
+  havana: { title: 'Havana', extra: ['Cuban Revolution', 'El Capitolio'] },
+  isfahan: { title: 'Isfahan', extra: ['Naqsh-e Jahan Square', 'Sheikh Lotfollah Mosque'] },
+  samarkand: { title: 'Samarkand', extra: ['Registan', 'Gur-e-Amir'] },
+  angkor: { title: 'Angkor', extra: ['Angkor Wat', 'Bayon'] },
+  hastings: { title: 'Battle of Hastings', extra: ['Bayeux Tapestry', 'Hastings'] },
+  agincourt: { title: 'Battle of Agincourt', extra: ['Azincourt', 'Henry V of England'] },
+  orleans: { title: 'Siege of Orléans', extra: ['Joan of Arc', 'Orléans'] },
+  lisbon: { title: 'Lisbon', extra: ['Belém Tower', 'Jerónimos Monastery'] },
+  seville: { title: 'Seville', extra: ['Seville Cathedral', 'Archivo General de Indias'] },
+  plymouth: { title: 'Plymouth', extra: ['Mayflower', 'Plymouth Hoe'] },
+  boston: { title: 'Boston', extra: ['Boston Tea Party', 'Faneuil Hall'] },
+  lexington: { title: 'Battles of Lexington and Concord', extra: ['Lexington, Massachusetts', 'Minute Man National Historical Park'] },
+  yorktown: { title: 'Siege of Yorktown', extra: ['Yorktown, Virginia', 'Yorktown Victory Monument'] },
+  vicksburg: { title: 'Siege of Vicksburg', extra: ['Vicksburg National Military Park', 'Vicksburg, Mississippi'] },
+  appomattox: { title: 'Appomattox Court House National Historical Park', extra: ['Battle of Appomattox Court House', 'Appomattox, Virginia'] },
+  'pearl-harbor': { title: 'Pearl Harbor', extra: ['USS Arizona Memorial', 'Attack on Pearl Harbor'] },
+  nanjing: { title: 'Nanjing', extra: ['Treaty of Nanking', 'Sun Yat-sen Mausoleum'] },
+  'hong-kong': { title: 'Hong Kong', extra: ['Victoria Harbour', 'Handover of Hong Kong'] },
+  bandung: { title: 'Bandung', extra: ['Bandung Conference', 'Gedung Sate'] },
+  geneva: { title: 'Geneva', extra: ['Geneva Conventions', 'Palace of Nations'] },
+  'the-hague': { title: 'The Hague', extra: ['Peace Palace', 'International Court of Justice'] },
+  'san-francisco': { title: 'San Francisco', extra: ['Golden Gate Bridge', 'War Memorial Opera House'] },
+  'new-york-city': { title: 'New York City', extra: ['One World Trade Center', 'National September 11 Memorial & Museum'] },
+  pompeii: { title: 'Pompeii', extra: ['Mount Vesuvius', 'House of the Faun'] },
+  chernobyl: { title: 'Chernobyl disaster', extra: ['Pripyat', 'Chernobyl Exclusion Zone'] },
+  tikal: { title: 'Tikal', extra: ['Temple of the Great Jaguar', 'Maya civilization'] },
+  'machu-picchu': { title: 'Machu Picchu', extra: ['Huayna Picchu', 'Sacred Valley'] },
+}

@@ -5,6 +5,7 @@ import { usePlaces } from '../context/PlacesContext.jsx'
 import { adminApi } from '../lib/api.js'
 import { avatarUrlFor } from '../lib/avatar.js'
 import { PLACES as STATIC_PLACES } from '../data/places.js'
+import Logo from '../components/Logo.jsx'
 
 const CATEGORY_OPTIONS = ['Battles', 'Kingdoms', 'Discoveries', 'Revolution', 'Monuments', 'Treaties']
 const MAX_IMAGE_BYTES = 3 * 1024 * 1024
@@ -85,6 +86,15 @@ function RestoreIcon() {
   )
 }
 
+function SearchIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M20 20l-4.2-4.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 function LogoutIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
@@ -154,7 +164,7 @@ export default function AdminDashboard() {
     <div className="page admin-page">
       <header className="admin-header">
         <div className="brand">
-          <span className="brand-mark" aria-hidden="true" />
+          <Logo size={40} />
           <span>ChronoMap</span>
           <span className="admin-badge">Admin</span>
         </div>
@@ -252,6 +262,7 @@ function UsersPanel({ token }) {
   const [users, setUsers] = useState(null)
   const [error, setError] = useState('')
   const [pendingId, setPendingId] = useState(null)
+  const [query, setQuery] = useState('')
 
   function load() {
     setError('')
@@ -281,41 +292,84 @@ function UsersPanel({ token }) {
   if (!users) return <p className="admin-status">Loading users…</p>
   if (users.length === 0) return <p className="admin-status">No registered users yet.</p>
 
+  // Every word typed must appear in the user's name or username, so
+  // "john sm" finds "John Smith" and word order doesn't matter.
+  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
+  const filtered = terms.length === 0
+    ? users
+    : users.filter((u) => {
+        const haystack = `${u.fullName} ${u.username}`.toLowerCase()
+        return terms.every((t) => haystack.includes(t))
+      })
+
   return (
-    <div className="admin-table-card">
-      <div className="admin-table-header admin-users-grid">
-        <span>User</span>
-        <span>Email</span>
-        <span>Level</span>
-        <span>Countries</span>
-        <span>Quizzes</span>
-        <span />
+    <div>
+      <div className="admin-search">
+        <span className="admin-search-icon"><SearchIcon /></span>
+        <input
+          type="text"
+          className="admin-search-input"
+          placeholder="Search users by name…"
+          aria-label="Search users by name"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        {query && (
+          <button
+            type="button"
+            className="admin-search-clear"
+            aria-label="Clear search"
+            onClick={() => setQuery('')}
+          >
+            <CloseIcon />
+          </button>
+        )}
       </div>
-      {users.map((u) => (
-        <div className="admin-table-row admin-users-grid" key={u.id}>
-          <span className="admin-user-cell">
-            <img src={avatarUrlFor(u.username, u.gender)} alt="" className="admin-user-avatar" />
-            <span>
-              <span className="admin-user-name">{u.fullName}</span>
-              <span className="admin-user-handle">@{u.username}</span>
-            </span>
-          </span>
-          <span className="admin-cell-dim">{u.email}</span>
-          <span>{u.level}</span>
-          <span>{u.countriesExplored}</span>
-          <span>{u.quizzesCompleted}</span>
-          <span>
-            <button
-              type="button"
-              className="btn-admin-danger"
-              disabled={pendingId === u.id}
-              onClick={() => handleDelete(u)}
-            >
-              <TrashIcon /> {pendingId === u.id ? 'Deleting…' : 'Delete'}
-            </button>
-          </span>
+      {terms.length > 0 && (
+        <p className="admin-search-count">
+          {filtered.length} of {users.length} user{users.length === 1 ? '' : 's'}
+        </p>
+      )}
+
+      {filtered.length === 0 ? (
+        <p className="admin-status">No users match “{query.trim()}”.</p>
+      ) : (
+        <div className="admin-table-card">
+          <div className="admin-table-header admin-users-grid">
+            <span>User</span>
+            <span>Email</span>
+            <span>Level</span>
+            <span>Countries</span>
+            <span>Quizzes</span>
+            <span />
+          </div>
+          {filtered.map((u) => (
+            <div className="admin-table-row admin-users-grid" key={u.id}>
+              <span className="admin-user-cell">
+                <img src={avatarUrlFor(u.username)} alt="" className="admin-user-avatar" />
+                <span>
+                  <span className="admin-user-name">{u.fullName}</span>
+                  <span className="admin-user-handle">@{u.username}</span>
+                </span>
+              </span>
+              <span className="admin-cell-dim">{u.email}</span>
+              <span>{u.level}</span>
+              <span>{u.countriesExplored}</span>
+              <span>{u.quizzesCompleted}</span>
+              <span>
+                <button
+                  type="button"
+                  className="btn-admin-danger"
+                  disabled={pendingId === u.id}
+                  onClick={() => handleDelete(u)}
+                >
+                  <TrashIcon /> {pendingId === u.id ? 'Deleting…' : 'Delete'}
+                </button>
+              </span>
+            </div>
+          ))}
         </div>
-      ))}
+      )}
     </div>
   )
 }

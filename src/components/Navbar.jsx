@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { avatarUrlFor } from '../lib/avatar.js'
+import Logo from './Logo.jsx'
 
-const NAV_ITEMS = ['Home', 'Explore', 'Timeline', 'Quiz', 'Leaderboard', 'About']
+const NAV_ITEMS = ['Home', 'Explore', 'Quiz', 'Leaderboard', 'About']
 
 function noop(e) {
   e.preventDefault()
@@ -81,7 +82,7 @@ export default function Navbar({ active = 'Home' }) {
   return (
     <nav className="navbar">
       <div className="brand">
-        <span className="brand-mark" aria-hidden="true" />
+        <Logo size={44} />
         <span>ChronoMap</span>
       </div>
 
@@ -145,7 +146,7 @@ export default function Navbar({ active = 'Home' }) {
             onClick={() => setMenuOpen((v) => !v)}
           >
             <img
-              src={avatarUrlFor(user.username, user.gender)}
+              src={avatarUrlFor(user.username)}
               alt={`${user.username}'s avatar`}
               className="navbar-avatar"
             />

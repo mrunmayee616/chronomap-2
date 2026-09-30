@@ -6,6 +6,7 @@ import express from 'express'
 import cors from 'cors'
 import rateLimit from 'express-rate-limit'
 import authRoutes from './routes/auth.routes.js'
+import oauthRoutes from './routes/oauth.routes.js'
 import progressRoutes from './routes/progress.routes.js'
 import leaderboardRoutes from './routes/leaderboard.routes.js'
 import placesRoutes from './routes/places.routes.js'
@@ -31,6 +32,8 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many requests. Please try again later.' },
 })
+// Must be mounted before '/api/auth' so /api/auth/oauth/* is handled here.
+app.use('/api/auth/oauth', authLimiter, oauthRoutes)
 app.use('/api/auth', authLimiter, authRoutes)
 app.use('/api/progress', progressRoutes)
 app.use('/api/leaderboard', leaderboardRoutes)

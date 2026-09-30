@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useFavourites } from '../context/FavouritesContext.jsx'
 import { authApi } from '../lib/api.js'
 import { avatarUrlFor } from '../lib/avatar.js'
+import { COUNTRIES, countryNameFor } from '../data/countries.js'
+import CountryFlag from '../components/CountryFlag.jsx'
 import { ACHIEVEMENTS, achievementProgress } from '../lib/achievements.js'
 import { getPlaceById } from '../data/places.js'
 import {
@@ -56,6 +58,7 @@ export default function Profile() {
   const [bioDraft, setBioDraft] = useState('')
   const [locationDraft, setLocationDraft] = useState('')
   const [genderDraft, setGenderDraft] = useState('unspecified')
+  const [countryDraft, setCountryDraft] = useState('')
   const [aboutError, setAboutError] = useState('')
   const [savingAbout, setSavingAbout] = useState(false)
 
@@ -80,6 +83,7 @@ export default function Profile() {
     setBioDraft(user.bio || '')
     setLocationDraft(user.location || '')
     setGenderDraft(user.gender || 'unspecified')
+    setCountryDraft(user.country || '')
     setAboutError('')
     setIsEditingAbout(true)
   }
@@ -94,7 +98,12 @@ export default function Profile() {
     setAboutError('')
     setSavingAbout(true)
     try {
-      await authApi.updateProfile(token, { bio: bioDraft, location: locationDraft, gender: genderDraft })
+      await authApi.updateProfile(token, {
+        bio: bioDraft,
+        location: locationDraft,
+        gender: genderDraft,
+        country: countryDraft,
+      })
       await refreshUser()
       setIsEditingAbout(false)
     } catch (err) {
@@ -140,7 +149,7 @@ export default function Profile() {
           <div className="profile-card profile-summary-card">
             <div className="profile-header-row">
               <img
-                src={avatarUrlFor(user.username, user.gender)}
+                src={avatarUrlFor(user.username)}
                 alt={`${user.username}'s avatar`}
                 className="profile-avatar"
               />
@@ -226,10 +235,10 @@ export default function Profile() {
                   <span className="field-icon"><MapPinIcon /></span>
                 </div>
 
-                <label className="field-label" htmlFor="about-gender">Avatar style</label>
+                <label className="field-label" htmlFor="about-gender">Gender</label>
                 <div className="avatar-style-row">
                   <img
-                    src={avatarUrlFor(user.username, genderDraft)}
+                    src={avatarUrlFor(user.username)}
                     alt="Avatar preview"
                     className="avatar-style-preview"
                   />
@@ -245,12 +254,34 @@ export default function Profile() {
                     </select>
                   </div>
                 </div>
-                {genderDraft === 'unspecified' && (
-                  <p className="about-char-count" style={{ marginTop: -8, marginBottom: 14 }}>
-                    We'll pick a consistent look for you automatically. Choose Male or Female above for
-                    more control over the style.
-                  </p>
-                )}
+                <p className="about-char-count" style={{ marginTop: -8, marginBottom: 14 }}>
+                  Your avatar above is generated automatically from your username. Gender isn't
+                  shown publicly.
+                </p>
+
+                <label className="field-label" htmlFor="about-country">Country</label>
+                <div className="avatar-style-row">
+                  <span className="country-flag-preview" aria-hidden="true">
+                    <CountryFlag code={countryDraft} size={40} />
+                  </span>
+                  <div className="field avatar-style-field">
+                    <select
+                      id="about-country"
+                      value={countryDraft}
+                      onChange={(e) => setCountryDraft(e.target.value)}
+                    >
+                      <option value="">Prefer not to say</option>
+                      {COUNTRIES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <p className="about-char-count" style={{ marginTop: -8, marginBottom: 14 }}>
+                  Shown on the leaderboard next to your name.
+                </p>
 
                 <div className="about-edit-actions">
                   <button type="submit" className="icon-btn icon-btn-save" disabled={savingAbout} aria-label="Save">
@@ -276,6 +307,12 @@ export default function Profile() {
                 {user.location && (
                   <p className="profile-meta-row">
                     <MapPinIcon /> <span>{user.location}</span>
+                  </p>
+                )}
+                {user.country && (
+                  <p className="profile-meta-row">
+                    <CountryFlag code={user.country} size={16} />
+                    <span>{countryNameFor(user.country) || user.country}</span>
                   </p>
                 )}
                 <p className="profile-meta-row">

@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import globeImg from '../assets/globe-register.png'
 import Navbar from '../components/Navbar.jsx'
-import { authApi } from '../lib/api.js'
+import { authApi, oauthUrl } from '../lib/api.js'
 import { avatarUrlFor } from '../lib/avatar.js'
-import { COUNTRIES, flagEmojiFor } from '../data/countries.js'
+import { COUNTRIES } from '../data/countries.js'
+import CountryFlag from '../components/CountryFlag.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import Logo from '../components/Logo.jsx'
 
 function noop(e) {
   e.preventDefault()
@@ -306,7 +308,7 @@ export default function Register() {
                 </label>
                 <div className="avatar-style-row">
                   <img
-                    src={avatarUrlFor(form.username || form.fullName, form.gender || 'unspecified')}
+                    src={avatarUrlFor(form.username || form.fullName)}
                     alt="Avatar preview"
                     className="avatar-style-preview"
                   />
@@ -324,7 +326,8 @@ export default function Register() {
                   </div>
                 </div>
                 <p className="about-char-count" style={{ marginTop: -8, marginBottom: 14 }}>
-                  Used to pick a matching avatar style for your profile.
+                  Your avatar above is generated automatically from your username. Gender isn't
+                  shown publicly.
                 </p>
                 {fieldErrors.gender && <p className="field-error">{fieldErrors.gender}</p>}
 
@@ -333,7 +336,7 @@ export default function Register() {
                 </label>
                 <div className="avatar-style-row">
                   <span className="country-flag-preview" aria-hidden="true">
-                    {form.country ? flagEmojiFor(form.country) : '🏳️'}
+                    <CountryFlag code={form.country} size={40} />
                   </span>
                   <div className={`field avatar-style-field${fieldErrors.country ? ' field-invalid' : ''}`}>
                     <select
@@ -345,7 +348,7 @@ export default function Register() {
                       <option value="" disabled>Select your country</option>
                       {COUNTRIES.map((c) => (
                         <option key={c.code} value={c.code}>
-                          {flagEmojiFor(c.code)} {c.name}
+                          {c.name}
                         </option>
                       ))}
                     </select>
@@ -402,10 +405,10 @@ export default function Register() {
 
             <div className="divider"><span>or</span></div>
 
-            <a href="#" className="btn-oauth" onClick={noop}>
+            <a href={oauthUrl('google')} className="btn-oauth">
               <GoogleIcon /> Sign up with Google
             </a>
-            <a href="#" className="btn-oauth" onClick={noop}>
+            <a href={oauthUrl('github')} className="btn-oauth">
               <GithubIcon /> Sign up with GitHub
             </a>
 
@@ -419,7 +422,7 @@ export default function Register() {
 
       <footer className="site-footer">
         <div className="footer-brand">
-          <span className="brand-mark" aria-hidden="true" />
+          <Logo size={28} />
           <span>ChronoMap</span>
         </div>
 
