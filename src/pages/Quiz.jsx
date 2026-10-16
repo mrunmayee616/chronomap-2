@@ -46,7 +46,14 @@ function QuizHub() {
 /* ---------- an actual quiz for one place ---------- */
 
 function PlaceQuiz({ place }) {
+<<<<<<< HEAD
   const { token, refreshUser } = useAuth()
+=======
+  const { token, user, refreshUser } = useAuth()
+  // The admin can play any quiz, but results aren't recorded for it: no XP,
+  // no completion, and so no place on the leaderboard.
+  const isAdmin = Boolean(user?.isAdmin)
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   const questions = place.quiz
   const [step, setStep] = useState(0)
   const [selected, setSelected] = useState(null)
@@ -62,7 +69,11 @@ function PlaceQuiz({ place }) {
   // (pass or fail, higher score or lower) never inflate the dashboard count
   // or award XP a second time; only that first passing attempt counts.
   useEffect(() => {
+<<<<<<< HEAD
     if (!finished || !token) return
+=======
+    if (!finished || !token || isAdmin) return
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
     const scorePercent = Math.round((score / questions.length) * 100)
     progressApi
       .submitQuizResult(token, place.id, scorePercent)
@@ -107,12 +118,25 @@ function PlaceQuiz({ place }) {
         <p className="quiz-result-score">
           You scored <strong>{score}</strong> out of <strong>{questions.length}</strong>
         </p>
+<<<<<<< HEAD
         {xpResult && xpResult.xpGained > 0 && (
+=======
+        {isAdmin && (
+          <p className="quiz-result-xp quiz-result-xp-muted">
+            Admin preview — scores aren't recorded and the admin isn't ranked on the leaderboard.
+          </p>
+        )}
+        {!isAdmin && xpResult && xpResult.xpGained > 0 && (
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
           <p className="quiz-result-xp">
             +{xpResult.xpGained} XP{xpResult.levelsGained > 0 ? ' · Level up!' : ''}
           </p>
         )}
+<<<<<<< HEAD
         {xpResult && xpResult.xpGained === 0 && (
+=======
+        {!isAdmin && xpResult && xpResult.xpGained === 0 && (
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
           <p className="quiz-result-xp quiz-result-xp-muted">
             {xpResult.counted === false && Math.round((score / questions.length) * 100) >= 80
               ? 'Already completed — no additional XP for retakes.'

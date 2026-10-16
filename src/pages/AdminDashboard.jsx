@@ -4,6 +4,10 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { usePlaces } from '../context/PlacesContext.jsx'
 import { adminApi } from '../lib/api.js'
 import { avatarUrlFor } from '../lib/avatar.js'
+<<<<<<< HEAD
+=======
+import { normalizeQuestionText } from '../lib/quiz.js'
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 import { PLACES as STATIC_PLACES } from '../data/places.js'
 import Logo from '../components/Logo.jsx'
 
@@ -22,6 +26,11 @@ const EMPTY_FORM = {
   image: '',
 }
 
+<<<<<<< HEAD
+=======
+const EMPTY_QUESTION = { placeId: '', question: '', options: ['', '', '', ''], answerIndex: 0 }
+
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 const REQUIRED_CSV_COLUMNS = [
   'place_name',
   'country',
@@ -178,7 +187,11 @@ export default function AdminDashboard() {
 
       <div className="admin-wrap">
         <h1 className="admin-title">Admin Dashboard</h1>
+<<<<<<< HEAD
         <p className="admin-sub">Manage explorer accounts and the historical places dataset.</p>
+=======
+        <p className="admin-sub">Manage explorer accounts, the historical places dataset, and quiz questions.</p>
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 
         <AdminStats />
 
@@ -197,9 +210,24 @@ export default function AdminDashboard() {
           >
             Dataset
           </button>
+<<<<<<< HEAD
         </div>
 
         {tab === 'users' ? <UsersPanel token={token} /> : <DatasetPanel token={token} />}
+=======
+          <button
+            type="button"
+            className={tab === 'quizzes' ? 'admin-tab active' : 'admin-tab'}
+            onClick={() => setTab('quizzes')}
+          >
+            Quizzes
+          </button>
+        </div>
+
+        {tab === 'users' && <UsersPanel token={token} />}
+        {tab === 'dataset' && <DatasetPanel token={token} />}
+        {tab === 'quizzes' && <QuizzesPanel token={token} />}
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
       </div>
     </div>
   )
@@ -346,7 +374,11 @@ function UsersPanel({ token }) {
           {filtered.map((u) => (
             <div className="admin-table-row admin-users-grid" key={u.id}>
               <span className="admin-user-cell">
+<<<<<<< HEAD
                 <img src={avatarUrlFor(u.username)} alt="" className="admin-user-avatar" />
+=======
+                <img src={avatarUrlFor(u.username, u.avatar)} alt="" className="admin-user-avatar" />
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
                 <span>
                   <span className="admin-user-name">{u.fullName}</span>
                   <span className="admin-user-handle">@{u.username}</span>
@@ -374,6 +406,225 @@ function UsersPanel({ token }) {
   )
 }
 
+<<<<<<< HEAD
+=======
+/* ---------- quizzes panel ---------- */
+
+function QuizzesPanel({ token }) {
+  const { places, extraQuestions, refresh, getPlaceById } = usePlaces()
+  const [form, setForm] = useState(EMPTY_QUESTION)
+  const [fieldErrors, setFieldErrors] = useState({})
+  const [formError, setFormError] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [pendingId, setPendingId] = useState(null)
+  const [listError, setListError] = useState('')
+
+  const sortedPlaces = [...places].sort((a, b) => a.name.localeCompare(b.name))
+
+  function clearError(key) {
+    setFieldErrors((errs) => {
+      if (!errs[key]) return errs
+      const next = { ...errs }
+      delete next[key]
+      return next
+    })
+  }
+
+  function setOption(i, value) {
+    setForm((f) => ({ ...f, options: f.options.map((o, idx) => (idx === i ? value : o)) }))
+    clearError('options')
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setFormError('')
+    setSuccessMsg('')
+
+    const clientErrors = {}
+    if (!form.placeId) clientErrors.placeId = 'Choose which place this question is for.'
+    if (!form.question.trim()) clientErrors.question = 'Question text is required.'
+    if (form.options.some((o) => !o.trim())) clientErrors.options = 'Fill in all four answer options.'
+    // No repeats: the question text, and its correct answer, must be new to
+    // this place's quiz (built-in questions included).
+    if (form.placeId && form.question.trim() && !clientErrors.options) {
+      const existing = getPlaceById(form.placeId)?.quiz || []
+      const wantedText = normalizeQuestionText(form.question)
+      const wantedAnswer = normalizeQuestionText(form.options[form.answerIndex])
+      if (existing.some((q) => normalizeQuestionText(q.question) === wantedText)) {
+        clientErrors.question = 'This place already has that question.'
+      } else if (existing.some((q) => normalizeQuestionText(q.options[q.answerIndex]) === wantedAnswer)) {
+        clientErrors.answerIndex = 'Another question in this quiz already has that correct answer. Ask about something different.'
+      }
+    }
+    if (Object.keys(clientErrors).length > 0) {
+      setFieldErrors(clientErrors)
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      await adminApi.addQuestion(token, form.placeId, {
+        question: form.question,
+        options: form.options,
+        answerIndex: form.answerIndex,
+      })
+      await refresh()
+      const placeName = getPlaceById(form.placeId)?.name || 'that place'
+      setSuccessMsg(`Question added to the ${placeName} quiz.`)
+      // Keep the chosen place so several questions can be added in a row.
+      setForm({ ...EMPTY_QUESTION, placeId: form.placeId })
+      setFieldErrors({})
+    } catch (err) {
+      if (err.fieldErrors) setFieldErrors(err.fieldErrors)
+      setFormError(err.error || 'Could not add that question. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleDelete(q) {
+    setListError('')
+    setPendingId(q.id)
+    try {
+      await adminApi.deleteQuestion(token, q.id)
+      await refresh()
+    } catch (err) {
+      setListError(err.error || 'Could not delete that question.')
+    } finally {
+      setPendingId(null)
+    }
+  }
+
+  const rows = Object.entries(extraQuestions)
+    .flatMap(([placeId, qs]) => qs.map((q) => ({ ...q, placeId, placeName: getPlaceById(placeId)?.name || placeId })))
+    .sort((a, b) => a.placeName.localeCompare(b.placeName))
+
+  return (
+    <div>
+      <form className="admin-add-form" onSubmit={handleSubmit}>
+        <h2 className="admin-panel-title"><PlusIcon /> Add a Quiz Question</h2>
+        {formError && <p className="form-error" role="alert">{formError}</p>}
+        {successMsg && <p className="admin-success">{successMsg}</p>}
+
+        <div className="admin-form-grid">
+          <div className="admin-form-full">
+            <label className="field-label" htmlFor="aq-place">Place</label>
+            <div className={`field${fieldErrors.placeId ? ' field-invalid' : ''}`}>
+              <select
+                id="aq-place"
+                value={form.placeId}
+                onChange={(e) => {
+                  setForm((f) => ({ ...f, placeId: e.target.value }))
+                  clearError('placeId')
+                }}
+              >
+                <option value="" disabled>Select a place…</option>
+                {sortedPlaces.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name} — {p.location}</option>
+                ))}
+              </select>
+            </div>
+            {fieldErrors.placeId && <p className="field-error">{fieldErrors.placeId}</p>}
+          </div>
+
+          <div className="admin-form-full">
+            <label className="field-label" htmlFor="aq-question">Question</label>
+            <div className={`field${fieldErrors.question ? ' field-invalid' : ''}`}>
+              <input
+                id="aq-question"
+                type="text"
+                maxLength={300}
+                placeholder="e.g. In which year did the battle take place?"
+                value={form.question}
+                onChange={(e) => {
+                  setForm((f) => ({ ...f, question: e.target.value }))
+                  clearError('question')
+                }}
+              />
+            </div>
+            {fieldErrors.question && <p className="field-error">{fieldErrors.question}</p>}
+          </div>
+
+          <div className="admin-form-full">
+            <label className="field-label">Answer options — select the correct one</label>
+            <div className="admin-option-list">
+              {form.options.map((opt, i) => (
+                <div className="admin-option-row" key={i}>
+                  <input
+                    type="radio"
+                    name="aq-correct"
+                    className="admin-option-radio"
+                    checked={form.answerIndex === i}
+                    onChange={() => {
+                      setForm((f) => ({ ...f, answerIndex: i }))
+                      clearError('answerIndex')
+                    }}
+                    aria-label={`Option ${i + 1} is the correct answer`}
+                  />
+                  <div className={`field admin-option-field${fieldErrors.options ? ' field-invalid' : ''}`}>
+                    <input
+                      type="text"
+                      maxLength={120}
+                      placeholder={`Option ${i + 1}`}
+                      value={opt}
+                      onChange={(e) => setOption(i, e.target.value)}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            {fieldErrors.options && <p className="field-error">{fieldErrors.options}</p>}
+            {fieldErrors.answerIndex && <p className="field-error">{fieldErrors.answerIndex}</p>}
+          </div>
+        </div>
+
+        <div className="admin-form-actions">
+          <button type="submit" className="btn-primary" disabled={submitting}>
+            {submitting ? 'Adding…' : 'Add Question'}
+          </button>
+          {form.placeId && (
+            <Link to={`/quiz/${form.placeId}`} className="btn-secondary">Play this quiz</Link>
+          )}
+        </div>
+      </form>
+
+      {listError && <p className="admin-status admin-status-error">{listError}</p>}
+
+      {rows.length === 0 ? (
+        <p className="admin-status">No custom questions yet. Questions you add appear at the end of that place's quiz.</p>
+      ) : (
+        <div className="admin-table-card">
+          <div className="admin-table-header admin-questions-grid">
+            <span>Place</span>
+            <span>Question</span>
+            <span>Correct answer</span>
+            <span />
+          </div>
+          {rows.map((q) => (
+            <div className="admin-table-row admin-questions-grid" key={q.id}>
+              <span className="admin-user-name">{q.placeName}</span>
+              <span>{q.question}</span>
+              <span className="admin-cell-dim">{q.options[q.answerIndex]}</span>
+              <span className="admin-row-actions">
+                <button
+                  type="button"
+                  className="btn-admin-danger"
+                  disabled={pendingId === q.id}
+                  onClick={() => handleDelete(q)}
+                >
+                  <TrashIcon /> {pendingId === q.id ? 'Deleting…' : 'Delete'}
+                </button>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 /* ---------- dataset panel ---------- */
 
 function DatasetPanel({ token }) {

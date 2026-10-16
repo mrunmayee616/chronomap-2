@@ -4,7 +4,11 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { avatarUrlFor } from '../lib/avatar.js'
 import Logo from './Logo.jsx'
 
+<<<<<<< HEAD
 const NAV_ITEMS = ['Home', 'Explore', 'Quiz', 'Leaderboard', 'About']
+=======
+const NAV_ITEMS = ['Home', 'Explore', 'Quiz', 'Leaderboard', 'Explorers', 'About']
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 
 function noop(e) {
   e.preventDefault()
@@ -55,6 +59,18 @@ export default function Navbar({ active = 'Home' }) {
     }
   }
 
+<<<<<<< HEAD
+=======
+  function goToExplorers(e) {
+    e.preventDefault()
+    if (isAuthenticated) {
+      navigate('/explorers')
+    } else {
+      navigate('/signin', { state: { from: { pathname: '/explorers' } } })
+    }
+  }
+
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   const isOnDashboard = location.pathname === '/profile' || location.pathname === '/admin'
   const dashboardPath = user?.isAdmin ? '/admin' : '/profile'
 
@@ -111,6 +127,21 @@ export default function Navbar({ active = 'Home' }) {
               </a>
             )
           }
+<<<<<<< HEAD
+=======
+          if (item === 'Explorers') {
+            return (
+              <a
+                key={item}
+                href="#"
+                className={item === active ? 'active' : ''}
+                onClick={goToExplorers}
+              >
+                {item}
+              </a>
+            )
+          }
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
           if (item === 'Leaderboard') {
             return (
               <a
@@ -146,7 +177,11 @@ export default function Navbar({ active = 'Home' }) {
             onClick={() => setMenuOpen((v) => !v)}
           >
             <img
+<<<<<<< HEAD
               src={avatarUrlFor(user.username)}
+=======
+              src={avatarUrlFor(user.username, user.avatar)}
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
               alt={`${user.username}'s avatar`}
               className="navbar-avatar"
             />

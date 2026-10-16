@@ -3,8 +3,14 @@ import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useFavourites } from '../context/FavouritesContext.jsx'
+<<<<<<< HEAD
 import { authApi } from '../lib/api.js'
 import { avatarUrlFor } from '../lib/avatar.js'
+=======
+import { authApi, usersApi } from '../lib/api.js'
+import { avatarUrlFor } from '../lib/avatar.js'
+import AvatarPicker from '../components/AvatarPicker.jsx'
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 import { COUNTRIES, countryNameFor } from '../data/countries.js'
 import CountryFlag from '../components/CountryFlag.jsx'
 import { ACHIEVEMENTS, achievementProgress } from '../lib/achievements.js'
@@ -51,6 +57,10 @@ export default function Profile() {
   const { user, token, refreshUser } = useAuth()
   const { favourites, removeFavourite } = useFavourites()
   const [loading, setLoading] = useState(true)
+<<<<<<< HEAD
+=======
+  const [social, setSocial] = useState(null)
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   const [error, setError] = useState('')
   const [filter, setFilter] = useState('All')
 
@@ -58,6 +68,10 @@ export default function Profile() {
   const [bioDraft, setBioDraft] = useState('')
   const [locationDraft, setLocationDraft] = useState('')
   const [genderDraft, setGenderDraft] = useState('unspecified')
+<<<<<<< HEAD
+=======
+  const [avatarDraft, setAvatarDraft] = useState('')
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   const [countryDraft, setCountryDraft] = useState('')
   const [aboutError, setAboutError] = useState('')
   const [savingAbout, setSavingAbout] = useState(false)
@@ -83,6 +97,10 @@ export default function Profile() {
     setBioDraft(user.bio || '')
     setLocationDraft(user.location || '')
     setGenderDraft(user.gender || 'unspecified')
+<<<<<<< HEAD
+=======
+    setAvatarDraft(user.avatar || '')
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
     setCountryDraft(user.country || '')
     setAboutError('')
     setIsEditingAbout(true)
@@ -102,6 +120,10 @@ export default function Profile() {
         bio: bioDraft,
         location: locationDraft,
         gender: genderDraft,
+<<<<<<< HEAD
+=======
+        avatar: avatarDraft,
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
         country: countryDraft,
       })
       await refreshUser()
@@ -134,6 +156,22 @@ export default function Profile() {
     return true
   })
 
+<<<<<<< HEAD
+=======
+  // Follower / following counts for the header (the admin has none).
+  useEffect(() => {
+    if (!user || user.isAdmin) return
+    let cancelled = false
+    usersApi
+      .get(token, user.username)
+      .then((data) => !cancelled && setSocial({ followers: data.user.followersCount, following: data.user.followingCount }))
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [token, user?.username])
+
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   const xpPct = user.xpToNextLevel > 0 ? Math.min(100, Math.round((user.xp / user.xpToNextLevel) * 100)) : 0
 
   const favouritePlaces = favourites.map((id) => getPlaceById(id)).filter(Boolean)
@@ -149,7 +187,11 @@ export default function Profile() {
           <div className="profile-card profile-summary-card">
             <div className="profile-header-row">
               <img
+<<<<<<< HEAD
                 src={avatarUrlFor(user.username)}
+=======
+                src={avatarUrlFor(user.username, user.avatar)}
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
                 alt={`${user.username}'s avatar`}
                 className="profile-avatar"
               />
@@ -159,6 +201,16 @@ export default function Profile() {
                 <p className="profile-level-row">
                   Level {user.level} <span className="dot">•</span> {user.title}
                 </p>
+<<<<<<< HEAD
+=======
+                {social && (
+                  <p className="profile-social-row">
+                    <Link to="/explorers?tab=followers"><strong>{social.followers}</strong> {social.followers === 1 ? 'follower' : 'followers'}</Link>
+                    <span className="dot"> • </span>
+                    <Link to="/explorers?tab=following"><strong>{social.following}</strong> following</Link>
+                  </p>
+                )}
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
               </div>
             </div>
 
@@ -235,6 +287,7 @@ export default function Profile() {
                   <span className="field-icon"><MapPinIcon /></span>
                 </div>
 
+<<<<<<< HEAD
                 <label className="field-label" htmlFor="about-gender">Gender</label>
                 <div className="avatar-style-row">
                   <img
@@ -242,6 +295,13 @@ export default function Profile() {
                     alt="Avatar preview"
                     className="avatar-style-preview"
                   />
+=======
+                <label className="field-label">Avatar</label>
+                <AvatarPicker value={avatarDraft} onChange={setAvatarDraft} seed={user.username} />
+
+                <label className="field-label" htmlFor="about-gender">Gender</label>
+                <div className="avatar-style-row">
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
                   <div className="field avatar-style-field">
                     <select
                       id="about-gender"
@@ -255,14 +315,22 @@ export default function Profile() {
                   </div>
                 </div>
                 <p className="about-char-count" style={{ marginTop: -8, marginBottom: 14 }}>
+<<<<<<< HEAD
                   Your avatar above is generated automatically from your username. Gender isn't
                   shown publicly.
+=======
+                  Gender isn't shown publicly.
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
                 </p>
 
                 <label className="field-label" htmlFor="about-country">Country</label>
                 <div className="avatar-style-row">
                   <span className="country-flag-preview" aria-hidden="true">
+<<<<<<< HEAD
                     <CountryFlag code={countryDraft} size={40} />
+=======
+                    <CountryFlag code={countryDraft} size={48} />
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
                   </span>
                   <div className="field avatar-style-field">
                     <select

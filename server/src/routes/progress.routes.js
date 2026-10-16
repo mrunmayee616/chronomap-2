@@ -3,6 +3,10 @@ import mongoose from 'mongoose'
 import User from '../models/User.js'
 import { requireAuth } from '../middleware/auth.js'
 import { publicUser } from '../utils/publicUser.js'
+<<<<<<< HEAD
+=======
+import { adminPublicUser } from '../utils/admin.js'
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 import { getEffectivePlaceCountries, groupByCountry } from '../utils/placeOverrides.js'
 import { QUIZ_PASS_XP, applyXp } from '../utils/achievements.js'
 
@@ -12,6 +16,27 @@ const QUIZ_PASS_THRESHOLD = 80 // percent
 
 router.use(requireAuth)
 
+<<<<<<< HEAD
+=======
+// The admin can browse the site and play quizzes like anyone else, but its
+// activity is never recorded: no visited places, no completed quizzes, no XP
+// -- which also keeps it off the leaderboard. Answering 200 (rather than an
+// error) lets the client treat an admin run like a normal, uncounted one.
+router.use((req, res, next) => {
+  if (req.user?.role !== 'admin') return next()
+  if (req.path === '/quiz-result') {
+    return res.status(200).json({
+      user: adminPublicUser(),
+      counted: false,
+      xpGained: 0,
+      levelsGained: 0,
+      adminPreview: true,
+    })
+  }
+  return res.status(200).json({ user: adminPublicUser(), adminPreview: true })
+})
+
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 async function loadUser(req, res) {
   if (!mongoose.isValidObjectId(req.user.sub)) {
     res.status(404).json({ error: 'Account not found.' })

@@ -14,6 +14,12 @@
 //
 // Places added later from the admin dashboard aren't listed here; they fall
 // back to looking up an article with the same name as the place.
+<<<<<<< HEAD
+=======
+//
+// Used by server/src/utils/placeImageSync.js (runs automatically when the
+// server starts) and by server/scripts/sync-place-images.mjs (manual run).
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 export const PLACE_IMAGE_TOPICS = {
   colosseum: { title: 'Colosseum', extra: ['Arch of Titus', 'Roman Forum'] },
   rome: { title: 'Rome', extra: ['Pantheon, Rome', 'Roman Forum', 'Trevi Fountain'] },
@@ -31,7 +37,11 @@ export const PLACE_IMAGE_TOPICS = {
   cairo: { title: 'Cairo', extra: ['Al-Azhar Mosque', 'Citadel of Cairo'] },
   giza: { title: 'Giza pyramid complex', extra: ['Great Sphinx of Giza', 'Great Pyramid of Giza'] },
   alexandria: { title: 'Alexandria', extra: ['Lighthouse of Alexandria', 'Bibliotheca Alexandrina'] },
+<<<<<<< HEAD
   carthage: { title: 'Carthage', extra: ['Third Punic War', 'Punic Wars'] },
+=======
+  carthage: { title: 'Carthage', extra: ['Antonine Baths', 'Punic Ports of Carthage', 'Tophet of Carthage'] },
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   timbuktu: { title: 'Timbuktu', extra: ['Djinguereber Mosque', 'Sankore Madrasah'] },
   'great-zimbabwe': { title: 'Great Zimbabwe', extra: ['Kingdom of Zimbabwe', 'Zimbabwe Bird'] },
   cusco: { title: 'Cusco', extra: ['Sacsayhuamán', 'Qorikancha'] },

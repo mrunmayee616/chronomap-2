@@ -16,6 +16,11 @@ import Place from './pages/Place.jsx'
 import Quiz from './pages/Quiz.jsx'
 import Leaderboard from './pages/Leaderboard.jsx'
 import AdminDashboard from './pages/AdminDashboard.jsx'
+<<<<<<< HEAD
+=======
+import Explorers from './pages/Explorers.jsx'
+import UserProfile from './pages/UserProfile.jsx'
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 import About from './pages/About.jsx'
 import HowItWorks from './pages/HowItWorks.jsx'
 import './index.css'
@@ -68,6 +73,25 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                 }
               />
               <Route
+<<<<<<< HEAD
+=======
+                path="/explorers"
+                element={
+                  <RequireAuth>
+                    <Explorers />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/u/:username"
+                element={
+                  <RequireAuth>
+                    <UserProfile />
+                  </RequireAuth>
+                }
+              />
+              <Route
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
                 path="/admin"
                 element={
                   <RequireAdmin>

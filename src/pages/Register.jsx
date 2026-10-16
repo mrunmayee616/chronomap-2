@@ -3,7 +3,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import globeImg from '../assets/globe-register.png'
 import Navbar from '../components/Navbar.jsx'
 import { authApi, oauthUrl } from '../lib/api.js'
+<<<<<<< HEAD
 import { avatarUrlFor } from '../lib/avatar.js'
+=======
+import AvatarPicker from '../components/AvatarPicker.jsx'
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 import { COUNTRIES } from '../data/countries.js'
 import CountryFlag from '../components/CountryFlag.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -21,6 +25,10 @@ const INITIAL_FORM = {
   confirmPassword: '',
   agreeTerms: false,
   gender: '',
+<<<<<<< HEAD
+=======
+  avatar: '',
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   country: '',
 }
 
@@ -303,15 +311,28 @@ export default function Register() {
                 </div>
                 {fieldErrors.password && <p className="field-error">{fieldErrors.password}</p>}
 
+<<<<<<< HEAD
+=======
+                <label className="field-label">Avatar</label>
+                <AvatarPicker
+                  value={form.avatar}
+                  onChange={(id) => setForm((f) => ({ ...f, avatar: id }))}
+                  seed={form.username || form.fullName}
+                />
+
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
                 <label className="field-label" htmlFor="gender">
                   Gender<span className="required-star"> *</span>
                 </label>
                 <div className="avatar-style-row">
+<<<<<<< HEAD
                   <img
                     src={avatarUrlFor(form.username || form.fullName)}
                     alt="Avatar preview"
                     className="avatar-style-preview"
                   />
+=======
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
                   <div className={`field avatar-style-field${fieldErrors.gender ? ' field-invalid' : ''}`}>
                     <select
                       id="gender"
@@ -326,8 +347,12 @@ export default function Register() {
                   </div>
                 </div>
                 <p className="about-char-count" style={{ marginTop: -8, marginBottom: 14 }}>
+<<<<<<< HEAD
                   Your avatar above is generated automatically from your username. Gender isn't
                   shown publicly.
+=======
+                  Gender isn't shown publicly.
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
                 </p>
                 {fieldErrors.gender && <p className="field-error">{fieldErrors.gender}</p>}
 
@@ -336,7 +361,11 @@ export default function Register() {
                 </label>
                 <div className="avatar-style-row">
                   <span className="country-flag-preview" aria-hidden="true">
+<<<<<<< HEAD
                     <CountryFlag code={form.country} size={40} />
+=======
+                    <CountryFlag code={form.country} size={48} />
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
                   </span>
                   <div className={`field avatar-style-field${fieldErrors.country ? ' field-invalid' : ''}`}>
                     <select

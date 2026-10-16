@@ -7,6 +7,14 @@ import { PLACE_COUNTRIES } from '../data/places.js'
 import { slugify, validatePlaceForm, validatePlaceEdit, buildPlace, applyEditToPlace, resolvePlaceImage } from '../utils/placeBuilder.js'
 import { parseCsv } from '../utils/csvParse.js'
 import { buildPlacesFromCsvRows, REQUIRED_CSV_COLUMNS } from '../utils/csvImport.js'
+<<<<<<< HEAD
+=======
+import QuizQuestion from '../models/QuizQuestion.js'
+import Follow from '../models/Follow.js'
+import { syncPlaceImages, isSyncRunning } from '../utils/placeImageSync.js'
+import { getEffectivePlaceCountries } from '../utils/placeOverrides.js'
+import { validateQuizQuestion } from '../utils/quizQuestion.js'
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 
 const router = Router()
 
@@ -19,7 +27,11 @@ router.use(requireAuth, requireAdmin)
 // GET /api/admin/users
 router.get('/users', async (_req, res) => {
   const users = await User.find()
+<<<<<<< HEAD
     .select('fullName email username gender level xp countriesExplored quizzesCompleted createdAt')
+=======
+    .select('fullName email username gender avatar level xp countriesExplored quizzesCompleted createdAt')
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
     .sort({ createdAt: -1 })
     .lean()
 
@@ -30,6 +42,10 @@ router.get('/users', async (_req, res) => {
       email: u.email,
       username: u.username,
       gender: u.gender,
+<<<<<<< HEAD
+=======
+      avatar: u.avatar || '',
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
       level: u.level,
       xp: u.xp,
       countriesExplored: u.countriesExplored,
@@ -49,6 +65,12 @@ router.delete('/users/:id', async (req, res) => {
   if (!deleted) {
     return res.status(404).json({ error: 'User not found.' })
   }
+<<<<<<< HEAD
+=======
+  // Drop the deleted user's follows in both directions so nobody is left
+  // with a phantom follower or following count.
+  await Follow.deleteMany({ $or: [{ follower: id }, { following: id }] })
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   return res.status(200).json({ message: 'User deleted.', id })
 })
 
@@ -218,6 +240,11 @@ router.delete('/places/:id', async (req, res) => {
   const existingAdded = await PlaceOverride.findOne({ placeId: id, action: 'added' })
   if (existingAdded) {
     await PlaceOverride.deleteOne({ _id: existingAdded._id })
+<<<<<<< HEAD
+=======
+    // A custom place is gone for good, so its extra quiz questions go too.
+    await QuizQuestion.deleteMany({ placeId: id })
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
     return res.status(200).json({ message: 'Place deleted.', id })
   }
 
@@ -241,4 +268,82 @@ router.post('/places/:id/restore', async (req, res) => {
   return res.status(200).json({ message: 'Place restored.', id })
 })
 
+<<<<<<< HEAD
+=======
+// POST /api/admin/places/images/sync   Body: { force?: boolean }
+// Re-runs the Wikipedia photo lookup in the background (force: redo every
+// place, not just the ones missing a photo). Returns straight away.
+router.post('/places/images/sync', async (req, res) => {
+  if (isSyncRunning()) return res.status(202).json({ message: 'A photo sync is already running.' })
+  syncPlaceImages({ force: Boolean(req.body?.force) }).catch((err) => console.error('Place image sync failed:', err.message))
+  return res.status(202).json({ message: 'Photo sync started.' })
+})
+
+// ---------------------------------------------------------------------------
+// Quiz questions
+// ---------------------------------------------------------------------------
+
+// POST /api/admin/places/:id/questions
+// Body: { question, options: [..2-4 strings], answerIndex }
+// Adds one question to a place's quiz. Works for static and admin-added
+// places alike; the client appends these after the place's built-in
+// questions.
+router.post('/places/:id/questions', async (req, res) => {
+  const { id } = req.params
+  const placeCountries = await getEffectivePlaceCountries()
+  if (!Object.prototype.hasOwnProperty.call(placeCountries, id)) {
+    return res.status(404).json({ error: 'Unknown place.' })
+  }
+
+  const { fieldErrors, clean } = validateQuizQuestion(req.body || {})
+  if (Object.keys(fieldErrors).length > 0) {
+    return res.status(400).json({ error: 'Please fix the highlighted fields.', fieldErrors })
+  }
+
+  // Keep questions unique. The built-in quiz lives in the client bundle (the
+  // admin form checks against it), so here we guard what the server knows:
+  // no identical question text anywhere, and no second custom question for
+  // this place with the same correct answer.
+  const norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim()
+  const stored = await QuizQuestion.find().lean()
+  if (stored.some((q) => norm(q.question) === norm(clean.question))) {
+    return res.status(409).json({
+      error: 'That question already exists.',
+      fieldErrors: { question: 'A question with that wording already exists.' },
+    })
+  }
+  const wantedAnswer = norm(clean.options[clean.answerIndex])
+  if (stored.some((q) => q.placeId === id && norm(q.options[q.answerIndex]) === wantedAnswer)) {
+    return res.status(409).json({
+      error: 'That answer is already used in this quiz.',
+      fieldErrors: { answerIndex: 'Another question for this place already has that correct answer.' },
+    })
+  }
+
+  const created = await QuizQuestion.create({ placeId: id, ...clean })
+  return res.status(201).json({
+    question: {
+      id: String(created._id),
+      question: created.question,
+      options: created.options,
+      answerIndex: created.answerIndex,
+      custom: true,
+    },
+  })
+})
+
+// DELETE /api/admin/questions/:qid
+// Only admin-added questions live here, so this can never touch the
+// built-in quiz data.
+router.delete('/questions/:qid', async (req, res) => {
+  const { qid } = req.params
+  if (!mongoose.isValidObjectId(qid)) {
+    return res.status(404).json({ error: 'Question not found.' })
+  }
+  const deleted = await QuizQuestion.findByIdAndDelete(qid)
+  if (!deleted) return res.status(404).json({ error: 'Question not found.' })
+  return res.status(200).json({ message: 'Question deleted.', id: qid })
+})
+
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 export default router
