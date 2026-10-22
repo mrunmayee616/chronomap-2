@@ -1,4 +1,5 @@
 import colosseumImg from '../assets/colosseum.jpg'
+import { WORLD_PLACES } from './worldPlaces.js'
 
 // ---------------------------------------------------------------------------
 // Place dataset
@@ -6858,7 +6859,10 @@ export const PLACES = [
         answerIndex: 1,
       },
     ],
-  },]
+  },
+  // Africa, the Americas, Asia and Oceania -- built from src/data/worldEvents.js.
+  ...WORLD_PLACES,
+]
 
 export function getPlaceById(id) {
   return PLACES.find((p) => p.id === id)

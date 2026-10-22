@@ -1,3 +1,5 @@
+import { WORLD_EVENTS } from './worldEvents.js'
+
 // Which Wikipedia articles to pull photos from for each place.
 //
 //   title  - the article that best matches the place / event. Its lead image
@@ -89,4 +91,6 @@ export const PLACE_IMAGE_TOPICS = {
   chernobyl: { title: 'Chernobyl disaster', extra: ['Pripyat', 'Chernobyl Exclusion Zone'] },
   tikal: { title: 'Tikal', extra: ['Temple of the Great Jaguar', 'Maya civilization'] },
   'machu-picchu': { title: 'Machu Picchu', extra: ['Huayna Picchu', 'Sacred Valley'] },
+  // Places from src/data/worldEvents.js -- each names its own article.
+  ...Object.fromEntries(WORLD_EVENTS.map((p) => [p.id, { title: p.wiki, extra: [] }])),
 }
