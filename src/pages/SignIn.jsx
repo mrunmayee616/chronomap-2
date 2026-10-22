@@ -1,30 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import colosseumImg from '../assets/colosseum.jpg'
 import Navbar from '../components/Navbar.jsx'
-import { authApi, oauthUrl } from '../lib/api.js'
+import { authApi } from '../lib/api.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import Logo from '../components/Logo.jsx'
 
 function noop(e) {
   e.preventDefault()
-}
-
-// Error codes the server appends as /signin?oauth_error=<code> when a
-// Google/GitHub sign-in fails (see server/src/routes/oauth.routes.js).
-const OAUTH_ERRORS = {
-  not_configured: 'Google/GitHub sign-in is not set up on this server yet.',
-  access_denied: 'Sign-in was cancelled. You can try again, or log in with your email and password.',
-  invalid_state: 'Your sign-in session expired. Please try again.',
-  no_verified_email:
-    "We couldn't get a verified email address from that account. Verify your email with the provider, or sign in another way.",
-  email_exists:
-    'An account with this email already exists. Please log in with your email and password instead.',
-}
-
-function oauthErrorMessage(code) {
-  if (!code) return ''
-  return OAUTH_ERRORS[code] || 'Something went wrong signing in. Please try again.'
 }
 
 function MapIcon() {
@@ -100,25 +83,6 @@ function EyeIcon({ open }) {
   )
 }
 
-function GoogleIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24">
-      <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5c-.3 1.5-1.1 2.7-2.4 3.6v3h3.9c2.3-2.1 3.5-5.2 3.5-8.7z"/>
-      <path fill="#34A853" d="M12 24c3.2 0 6-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1C3.3 21.3 7.3 24 12 24z"/>
-      <path fill="#FBBC05" d="M5.4 14.4c-.2-.7-.4-1.4-.4-2.4s.1-1.6.4-2.4V6.6H1.4A11.9 11.9 0 0 0 0 12c0 1.9.5 3.8 1.4 5.4l4-3z"/>
-      <path fill="#EA4335" d="M12 4.7c1.8 0 3.3.6 4.5 1.8l3.4-3.4C17.9 1.2 15.1 0 12 0 7.3 0 3.3 2.7 1.4 6.6l4 3.1C6.3 6.8 8.9 4.7 12 4.7z"/>
-    </svg>
-  )
-}
-
-function GithubIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 .5C5.7.5.9 5.3.9 11.6c0 5 3.2 9.2 7.7 10.7.6.1.8-.2.8-.6v-2.2c-3.1.7-3.8-1.3-3.8-1.3-.5-1.3-1.2-1.7-1.2-1.7-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 1.7 2.6 1.2 3.2.9.1-.7.4-1.2.7-1.5-2.5-.3-5.1-1.2-5.1-5.5 0-1.2.4-2.2 1.1-3-.1-.3-.5-1.4.1-3 0 0 .9-.3 3 1.1a10.4 10.4 0 0 1 5.4 0c2.1-1.4 3-1.1 3-1.1.6 1.6.2 2.7.1 3 .7.8 1.1 1.8 1.1 3 0 4.3-2.6 5.2-5.1 5.5.4.4.8 1.1.8 2.2v3.3c0 .4.2.7.8.6 4.5-1.5 7.7-5.7 7.7-10.7C23.1 5.3 18.3.5 12 .5z"/>
-    </svg>
-  )
-}
-
 export default function SignIn() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -128,21 +92,9 @@ export default function SignIn() {
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
-  const [formError, setFormError] = useState(() =>
-    oauthErrorMessage(new URLSearchParams(location.search).get('oauth_error'))
-  )
+  const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  // Where Google/GitHub sign-in should return to (same place password login goes).
-  const afterLoginPath = location.state?.from?.pathname
-
-  // Drop ?oauth_error from the address bar so a refresh doesn't show it again.
-  useEffect(() => {
-    if (new URLSearchParams(location.search).has('oauth_error')) {
-      navigate(location.pathname, { replace: true, state: location.state })
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -300,14 +252,6 @@ export default function SignIn() {
               </button>
             </form>
 
-            <div className="divider"><span>or</span></div>
-
-            <a href={oauthUrl('google', afterLoginPath)} className="btn-oauth">
-              <GoogleIcon /> Continue with Google
-            </a>
-            <a href={oauthUrl('github', afterLoginPath)} className="btn-oauth">
-              <GithubIcon /> Continue with GitHub
-            </a>
 
             <p className="signup-row">
               Don't have an account?{' '}
