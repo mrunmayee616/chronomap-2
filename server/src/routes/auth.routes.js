@@ -3,7 +3,11 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import mongoose from 'mongoose'
 import User from '../models/User.js'
+<<<<<<< HEAD
 import { validateRegistration, validateLogin, hasErrors, isValidGender, isValidCountry } from '../utils/validators.js'
+=======
+import { validateRegistration, validateLogin, hasErrors, isValidGender, isValidCountry, isValidAvatar } from '../utils/validators.js'
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 import { requireAuth } from '../middleware/auth.js'
 import { publicUser } from '../utils/publicUser.js'
 import { ADMIN_EMAIL, ADMIN_USERNAME, ADMIN_PASSWORD, adminPublicUser } from '../utils/admin.js'
@@ -27,7 +31,11 @@ function issueToken(user) {
 // POST /api/auth/register
 // ---------------------------------------------------------------------------
 router.post('/register', async (req, res) => {
+<<<<<<< HEAD
   const { fullName, email, username, password, confirmPassword, agreeTerms, gender, country } = req.body || {}
+=======
+  const { fullName, email, username, password, confirmPassword, agreeTerms, gender, country, avatar } = req.body || {}
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 
   const normalizedEmail = (email || '').trim().toLowerCase()
   const normalizedUsername = (username || '').trim()
@@ -77,6 +85,10 @@ router.post('/register', async (req, res) => {
       passwordHash,
       gender: isValidGender(gender) ? gender : 'unspecified',
       country: isValidCountry(country) ? country.toUpperCase() : '',
+<<<<<<< HEAD
+=======
+      avatar: isValidAvatar(avatar) ? avatar : '',
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
     })
   } catch (err) {
     // Race condition on the unique index (two requests at once).
@@ -185,7 +197,11 @@ router.patch('/me', requireAuth, async (req, res) => {
     return res.status(404).json({ error: 'Account not found.' })
   }
 
+<<<<<<< HEAD
   const { bio, location, gender, country } = req.body || {}
+=======
+  const { bio, location, gender, country, avatar } = req.body || {}
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   const fieldErrors = {}
 
   if (bio !== undefined && typeof bio !== 'string') fieldErrors.bio = 'Bio must be text.'
@@ -193,6 +209,10 @@ router.patch('/me', requireAuth, async (req, res) => {
   if (location !== undefined && typeof location !== 'string') fieldErrors.location = 'Location must be text.'
   if (location !== undefined && location.length > 120) fieldErrors.location = 'Location must be 120 characters or fewer.'
   if (gender !== undefined && !isValidGender(gender)) fieldErrors.gender = 'Please select a valid option.'
+<<<<<<< HEAD
+=======
+  if (avatar !== undefined && !isValidAvatar(avatar)) fieldErrors.avatar = 'Please select a valid avatar.'
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   if (country !== undefined && country !== '' && !isValidCountry(country)) {
     fieldErrors.country = 'Please select a valid country.'
   }
@@ -207,6 +227,10 @@ router.patch('/me', requireAuth, async (req, res) => {
   if (bio !== undefined) user.bio = bio.trim()
   if (location !== undefined) user.location = location.trim()
   if (gender !== undefined) user.gender = gender
+<<<<<<< HEAD
+=======
+  if (avatar !== undefined) user.avatar = avatar
+>>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   if (country !== undefined) user.country = country ? country.toUpperCase() : ''
   await user.save()
 

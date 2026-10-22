@@ -27,7 +27,7 @@ incorporated without significantly modifying the existing system.
 - **Accounts**: email/password registration and login
 - **Profile** with avatar, favourites and unlocked achievements
 - **Admin dashboard**: manage users, add, edit, delete and restore places, and bulk-import places from CSV
-- **Place images** pulled from Wikipedia/Wikimedia via a sync script
+
 - **Share** button for places
 
 ## Tech stack
