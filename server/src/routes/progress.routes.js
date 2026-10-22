@@ -12,6 +12,17 @@ const QUIZ_PASS_THRESHOLD = 80 // percent
 
 router.use(requireAuth)
 
+// The admin can explore places and play quizzes, but never earns XP or
+// progress -- that keeps it off the leaderboard (which is built purely from
+// users' xpHistory). It has no User document anyway; this just turns what
+// would be a confusing "Account not found" into an explicit answer.
+router.use((req, res, next) => {
+  if (req.user.role === 'admin') {
+    return res.status(403).json({ error: 'Admin activity is not tracked.', adminNotTracked: true })
+  }
+  next()
+})
+
 async function loadUser(req, res) {
   if (!mongoose.isValidObjectId(req.user.sub)) {
     res.status(404).json({ error: 'Account not found.' })

@@ -46,7 +46,10 @@ function QuizHub() {
 /* ---------- an actual quiz for one place ---------- */
 
 function PlaceQuiz({ place }) {
-  const { token, refreshUser } = useAuth()
+  const { token, refreshUser, user } = useAuth()
+  // The admin can play any quiz (e.g. to check questions it wrote), but its
+  // results are never recorded -- no XP, no progress, no leaderboard spot.
+  const isAdminPractice = Boolean(user?.isAdmin)
   const questions = place.quiz
   const [step, setStep] = useState(0)
   const [selected, setSelected] = useState(null)
@@ -62,7 +65,7 @@ function PlaceQuiz({ place }) {
   // (pass or fail, higher score or lower) never inflate the dashboard count
   // or award XP a second time; only that first passing attempt counts.
   useEffect(() => {
-    if (!finished || !token) return
+    if (!finished || !token || isAdminPractice) return
     const scorePercent = Math.round((score / questions.length) * 100)
     progressApi
       .submitQuizResult(token, place.id, scorePercent)
@@ -107,6 +110,11 @@ function PlaceQuiz({ place }) {
         <p className="quiz-result-score">
           You scored <strong>{score}</strong> out of <strong>{questions.length}</strong>
         </p>
+        {isAdminPractice && (
+          <p className="quiz-result-xp quiz-result-xp-muted">
+            Admin practice run — not recorded, and admins don't appear on the leaderboard.
+          </p>
+        )}
         {xpResult && xpResult.xpGained > 0 && (
           <p className="quiz-result-xp">
             +{xpResult.xpGained} XP{xpResult.levelsGained > 0 ? ' · Level up!' : ''}
@@ -129,6 +137,11 @@ function PlaceQuiz({ place }) {
 
   return (
     <div className="quiz-card">
+      {isAdminPractice && (
+        <p className="quiz-admin-note">
+          Practice mode: you're signed in as admin, so this run won't earn XP or count toward the leaderboard.
+        </p>
+      )}
       <div className="quiz-progress-row">
         <span className="quiz-progress-label">Question {step + 1} of {questions.length}</span>
         <span className="quiz-progress-label">Score: {score}</span>

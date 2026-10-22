@@ -17,6 +17,7 @@ export function PlacesProvider({ children }) {
   const [removedIds, setRemovedIds] = useState([])
   const [addedPlaces, setAddedPlaces] = useState([])
   const [edits, setEdits] = useState({})
+  const [quizAdditions, setQuizAdditions] = useState({})
   const [loaded, setLoaded] = useState(false)
 
   const refresh = useCallback(async () => {
@@ -25,6 +26,7 @@ export function PlacesProvider({ children }) {
       setRemovedIds(data.removedIds || [])
       setAddedPlaces(data.addedPlaces || [])
       setEdits(data.edits || {})
+      setQuizAdditions(data.quizAdditions || {})
     } catch {
       // Server unreachable -- fall back to the static dataset, unmodified.
     } finally {
@@ -46,13 +48,18 @@ export function PlacesProvider({ children }) {
       const withRealImages = override ? { ...p, image: override.image, gallery: override.gallery } : p
       return edits[p.id] ? applyEditToPlace(withRealImages, edits[p.id]) : withRealImages
     })
-    return staticMerged.concat(addedPlaces).map((p) => ({ ...p, quiz: dedupeQuiz(p.quiz) }))
-  }, [removedIds, addedPlaces, edits])
+    // Admin-written questions (marked custom: true) go after the bundled ones.
+    // dedupeQuiz keeps the first of any repeat, so a bundled question always
+    // wins over a copy -- the dashboard warns before such a copy is saved.
+    return staticMerged
+      .concat(addedPlaces)
+      .map((p) => ({ ...p, quiz: dedupeQuiz([...(p.quiz || []), ...(quizAdditions[p.id] || [])]) }))
+  }, [removedIds, addedPlaces, edits, quizAdditions])
 
   const getPlaceById = useCallback((id) => places.find((p) => p.id === id), [places])
 
   return (
-    <PlacesContext.Provider value={{ places, getPlaceById, loaded, refresh, removedIds, addedPlaces, edits }}>
+    <PlacesContext.Provider value={{ places, getPlaceById, loaded, refresh, removedIds, addedPlaces, edits, quizAdditions }}>
       {children}
     </PlacesContext.Provider>
   )

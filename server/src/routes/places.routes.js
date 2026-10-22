@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import PlaceOverride from '../models/PlaceOverride.js'
+import { getQuizAdditions } from '../utils/quizQuestions.js'
 
 const router = Router()
 
@@ -17,7 +18,10 @@ router.get('/overrides', async (_req, res) => {
   const edits = overrides
     .filter((o) => o.action === 'edited' && o.data)
     .reduce((acc, o) => ({ ...acc, [o.placeId]: o.data }), {})
-  return res.status(200).json({ removedIds, addedPlaces, edits })
+  // Admin-written quiz questions, keyed by place id; appended to each
+  // place's bundled quiz on the client (see src/context/PlacesContext.jsx).
+  const quizAdditions = await getQuizAdditions()
+  return res.status(200).json({ removedIds, addedPlaces, edits, quizAdditions })
 })
 
 export default router

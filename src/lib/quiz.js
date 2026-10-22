@@ -27,3 +27,16 @@ export function dedupeQuiz(quiz) {
     return true
   })
 }
+
+// Same rule as dedupeQuiz, for one candidate against an existing quiz: returns
+// the existing question it repeats (and how), or null. Used by the admin
+// dashboard so a new question is never saved only to be silently dropped.
+export function findQuizRepeat(quiz, candidate) {
+  const question = normalizeQuestion(candidate.question)
+  const answer = normalize(candidate.options?.[candidate.answerIndex])
+  for (const q of quiz || []) {
+    if (normalizeQuestion(q.question) === question) return { existing: q, reason: 'question' }
+    if (answer && normalize(q.options?.[q.answerIndex]) === answer) return { existing: q, reason: 'answer' }
+  }
+  return null
+}

@@ -2,11 +2,15 @@ import { Router } from 'express'
 import mongoose from 'mongoose'
 import User from '../models/User.js'
 import PlaceOverride from '../models/PlaceOverride.js'
+import QuizQuestion from '../models/QuizQuestion.js'
 import { requireAuth, requireAdmin } from '../middleware/auth.js'
 import { PLACE_COUNTRIES } from '../data/places.js'
 import { slugify, validatePlaceForm, validatePlaceEdit, buildPlace, applyEditToPlace, resolvePlaceImage } from '../utils/placeBuilder.js'
 import { parseCsv } from '../utils/csvParse.js'
 import { buildPlacesFromCsvRows, REQUIRED_CSV_COLUMNS } from '../utils/csvImport.js'
+import { getEffectivePlaceCountries } from '../utils/placeOverrides.js'
+import { publicQuizQuestion } from '../utils/quizQuestions.js'
+import { validateQuizQuestion, hasErrors } from '../utils/validators.js'
 
 const router = Router()
 
@@ -209,15 +213,17 @@ router.post('/places/bulk', async (req, res) => {
 })
 
 // DELETE /api/admin/places/:id
-// A custom (admin-added) place is deleted outright. A static place is
-// "removed" -- recorded as hidden rather than actually deleted, since it
-// isn't stored here to begin with; see POST /:id/restore to undo this.
+// A custom (admin-added) place is deleted outright, along with any quiz
+// questions written for it. A static place is "removed" -- recorded as
+// hidden rather than actually deleted, since it isn't stored here to begin
+// with; its questions are kept so POST /:id/restore brings them back too.
 router.delete('/places/:id', async (req, res) => {
   const { id } = req.params
 
   const existingAdded = await PlaceOverride.findOne({ placeId: id, action: 'added' })
   if (existingAdded) {
     await PlaceOverride.deleteOne({ _id: existingAdded._id })
+    await QuizQuestion.deleteMany({ placeId: id })
     return res.status(200).json({ message: 'Place deleted.', id })
   }
 
@@ -239,6 +245,71 @@ router.post('/places/:id/restore', async (req, res) => {
   const { id } = req.params
   await PlaceOverride.deleteOne({ placeId: id, action: 'removed' })
   return res.status(200).json({ message: 'Place restored.', id })
+})
+
+// ---------------------------------------------------------------------------
+// Quiz questions
+// ---------------------------------------------------------------------------
+
+const normalizeText = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+
+// POST /api/admin/places/:id/quiz
+// Body: { question, options: [4 strings], answerIndex }
+// Adds an admin-written question to a place's quiz. The place can be a
+// bundled one or an admin-added one, but not a removed one. Repeats of the
+// admin's own earlier questions for this place are rejected here; repeats of
+// the bundled questions are checked in the dashboard, which has that data.
+router.post('/places/:id/quiz', async (req, res) => {
+  const { id } = req.params
+  const { question, options, answerIndex } = req.body || {}
+
+  const placeCountries = await getEffectivePlaceCountries()
+  if (!Object.prototype.hasOwnProperty.call(placeCountries, id)) {
+    return res.status(404).json({ error: 'Unknown place.' })
+  }
+
+  const fieldErrors = validateQuizQuestion({ question, options, answerIndex })
+  if (hasErrors(fieldErrors)) {
+    return res.status(400).json({ error: 'Please fix the highlighted fields.', fieldErrors })
+  }
+
+  const cleanQuestion = question.trim()
+  const cleanOptions = options.map((o) => o.trim())
+  const existing = await QuizQuestion.find({ placeId: id }).lean()
+  const sameQuestion = existing.find((q) => normalizeText(q.question) === normalizeText(cleanQuestion))
+  if (sameQuestion) {
+    return res.status(409).json({
+      error: 'This would repeat a question already in the quiz.',
+      fieldErrors: { question: `This quiz already asks: "${sameQuestion.question}"` },
+    })
+  }
+  // Same correct answer = the same fact asked twice (see src/lib/quiz.js).
+  const sameAnswer = existing.find(
+    (q) => normalizeText(q.options[q.answerIndex]) === normalizeText(cleanOptions[answerIndex])
+  )
+  if (sameAnswer) {
+    return res.status(409).json({
+      error: 'This would repeat a question already in the quiz.',
+      fieldErrors: {
+        [`option${answerIndex}`]: `"${cleanOptions[answerIndex]}" is already the answer to: "${sameAnswer.question}"`,
+      },
+    })
+  }
+
+  const created = await QuizQuestion.create({ placeId: id, question: cleanQuestion, options: cleanOptions, answerIndex })
+  return res.status(201).json({ question: publicQuizQuestion(created) })
+})
+
+// DELETE /api/admin/quiz/:questionId
+// Deletes an admin-written question. Bundled questions can't be deleted.
+router.delete('/quiz/:questionId', async (req, res) => {
+  const { questionId } = req.params
+  if (!mongoose.isValidObjectId(questionId)) {
+    return res.status(404).json({ error: 'Question not found.' })
+  }
+  const deleted = await QuizQuestion.findByIdAndDelete(questionId)
+  if (!deleted) return res.status(404).json({ error: 'Question not found.' })
+  return res.status(200).json({ message: 'Question deleted.', id: questionId })
 })
 
 export default router

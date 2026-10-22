@@ -54,7 +54,7 @@ export default function Place() {
   const { getPlaceById } = usePlaces()
   const place = getPlaceById(placeId || 'colosseum')
   const navigate = useNavigate()
-  const { isAuthenticated, token, refreshUser } = useAuth()
+  const { isAuthenticated, token, refreshUser, user } = useAuth()
   const { isFavourite, toggleFavourite } = useFavourites()
 
   const [activeTab, setActiveTab] = useState('Overview')
@@ -73,9 +73,10 @@ export default function Place() {
   // the browser. This fires once per place per page load; the server-side
   // visit list is idempotent, so re-visiting an already-visited place is a
   // harmless no-op. Guests can still browse freely, it just won't count
-  // until they sign in.
+  // until they sign in. The admin's activity is never tracked (the server
+  // refuses it too), so it isn't sent.
   useEffect(() => {
-    if (!place || !isAuthenticated || !token) return
+    if (!place || !isAuthenticated || !token || user?.isAdmin) return
     progressApi
       .visitPlace(token, place.id)
       .then(() => refreshUser())

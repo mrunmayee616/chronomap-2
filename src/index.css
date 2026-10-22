@@ -2922,6 +2922,17 @@ input[type='range']:focus-visible {
   padding: 32px;
 }
 
+.quiz-admin-note {
+  margin: 0 0 18px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  background: var(--violet-dim);
+  border: 1px solid #7b6cf655;
+}
+
 .quiz-progress-row {
   display: flex;
   justify-content: space-between;
@@ -3105,6 +3116,17 @@ input[type='range']:focus-visible {
   font-size: 15px;
   color: var(--text-dim);
   margin: 0;
+}
+
+.leaderboard-admin-note {
+  display: inline-block;
+  margin: 14px 0 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--text-dim);
+  background: var(--violet-dim);
+  border: 1px solid #7b6cf655;
 }
 
 .leaderboard-tabs {
@@ -3946,6 +3968,160 @@ input[type='range']:focus-visible {
 
 .admin-csv-details li {
   margin-bottom: 4px;
+}
+
+/* -- quizzes -- */
+
+.admin-quiz-place-field {
+  margin-bottom: 12px;
+}
+
+.admin-quiz-summary {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.admin-quiz-summary strong {
+  color: var(--text);
+}
+
+.admin-quiz-fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.admin-quiz-fieldset legend {
+  padding: 0;
+  margin-bottom: 10px;
+}
+
+/* Radio + text input sharing one bordered row; the row turns green when
+   its option is the one marked correct. */
+.admin-quiz-option-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff0a;
+  border: 1px solid #ffffff1f;
+  border-radius: 9px;
+  padding: 0 12px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.admin-quiz-option-input:focus-within {
+  border-color: var(--violet);
+}
+
+.admin-quiz-option-input.is-correct {
+  border-color: #4ade80;
+  background: #4ade8014;
+}
+
+.admin-quiz-option-input.field-invalid {
+  border-color: #f76c6c;
+}
+
+.admin-quiz-option-input input[type='radio'] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: #4ade80;
+  cursor: pointer;
+}
+
+.admin-quiz-option-input input[type='text'] {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  padding: 12px 0;
+}
+
+.admin-quiz-hint {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+.admin-quiz-list {
+  list-style: none;
+  margin: 0 0 24px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-quiz-item {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+
+.admin-quiz-item-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-quiz-question {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.admin-quiz-options {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px 16px;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.admin-quiz-options li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-quiz-options li.correct {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.admin-quiz-correct-tag {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4ade80;
+  background: #4ade801f;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.admin-quiz-builtin summary {
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 900px) {
+  .admin-quiz-options {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 900px) {

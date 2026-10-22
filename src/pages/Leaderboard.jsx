@@ -58,7 +58,8 @@ function PodiumColumn({ entry, place }) {
 }
 
 export default function Leaderboard() {
-  const { token } = useAuth()
+  const { token, user } = useAuth()
+  const isAdmin = Boolean(user?.isAdmin)
   const [period, setPeriod] = useState('week')
   const [leaderboard, setLeaderboard] = useState([])
   const [loading, setLoading] = useState(true)
@@ -102,6 +103,9 @@ export default function Leaderboard() {
           <p className="leaderboard-sub">
             Top explorers of history this {PERIOD_NOUN[period]} !!!
           </p>
+          {isAdmin && (
+            <p className="leaderboard-admin-note">You're viewing as admin — admin accounts aren't ranked.</p>
+          )}
         </div>
 
         <div className="leaderboard-tabs">
@@ -123,7 +127,8 @@ export default function Leaderboard() {
           <p className="leaderboard-status">Loading leaderboard…</p>
         ) : leaderboard.length === 0 ? (
           <p className="leaderboard-status">
-            No one has scored any points this {PERIOD_NOUN[period]} yet — take a quiz and be the first!
+            No one has scored any points this {PERIOD_NOUN[period]} yet
+            {isAdmin ? '.' : ' — take a quiz and be the first!'}
           </p>
         ) : (
           <div className="leaderboard-grid">

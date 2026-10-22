@@ -67,3 +67,37 @@ export function validateLogin({ identifier, password }) {
 export function hasErrors(errors) {
   return Object.keys(errors).length > 0
 }
+
+export const QUIZ_OPTION_COUNT = 4
+const QUIZ_QUESTION_MAX = 300
+const QUIZ_OPTION_MAX = 150
+
+// Validates an admin-written quiz question: { question, options[4], answerIndex }.
+// Option errors are keyed option0..option3 so the form can highlight the
+// exact input; duplicate options are rejected since two identical choices
+// make the question ambiguous.
+export function validateQuizQuestion({ question, options, answerIndex }) {
+  const errors = {}
+
+  if (typeof question !== 'string' || !question.trim()) errors.question = 'Write the question.'
+  else if (question.trim().length > QUIZ_QUESTION_MAX) errors.question = `Keep the question under ${QUIZ_QUESTION_MAX} characters.`
+
+  if (!Array.isArray(options) || options.length !== QUIZ_OPTION_COUNT) {
+    errors.options = `Provide exactly ${QUIZ_OPTION_COUNT} answer options.`
+  } else {
+    const seen = new Map()
+    options.forEach((opt, i) => {
+      const text = typeof opt === 'string' ? opt.trim() : ''
+      if (!text) errors[`option${i}`] = 'Fill in this option.'
+      else if (text.length > QUIZ_OPTION_MAX) errors[`option${i}`] = `Keep options under ${QUIZ_OPTION_MAX} characters.`
+      else if (seen.has(text.toLowerCase())) errors[`option${i}`] = `Same as option ${seen.get(text.toLowerCase()) + 1}.`
+      else seen.set(text.toLowerCase(), i)
+    })
+  }
+
+  if (!Number.isInteger(answerIndex) || answerIndex < 0 || answerIndex >= QUIZ_OPTION_COUNT) {
+    errors.answerIndex = 'Mark which option is correct.'
+  }
+
+  return errors
+}

@@ -95,6 +95,11 @@ export const adminApi = {
   // upload, since the whole app already speaks plain JSON.
   bulkImportPlaces: (token, csvText) =>
     request('/api/admin/places/bulk', { method: 'POST', body: { csv: csvText }, token }),
+  // payload: { question, options: [4 strings], answerIndex }
+  addQuizQuestion: (token, placeId, payload) =>
+    request(`/api/admin/places/${encodeURIComponent(placeId)}/quiz`, { method: 'POST', body: payload, token }),
+  deleteQuizQuestion: (token, questionId) =>
+    request(`/api/admin/quiz/${encodeURIComponent(questionId)}`, { method: 'DELETE', token }),
 }
 
 const TOKEN_KEY = 'chronomap_token'

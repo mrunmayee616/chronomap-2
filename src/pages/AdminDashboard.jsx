@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { usePlaces } from '../context/PlacesContext.jsx'
 import { adminApi } from '../lib/api.js'
 import { avatarUrlFor } from '../lib/avatar.js'
+import { findQuizRepeat } from '../lib/quiz.js'
 import { PLACES as STATIC_PLACES } from '../data/places.js'
 import Logo from '../components/Logo.jsx'
 
@@ -178,7 +179,7 @@ export default function AdminDashboard() {
 
       <div className="admin-wrap">
         <h1 className="admin-title">Admin Dashboard</h1>
-        <p className="admin-sub">Manage explorer accounts and the historical places dataset.</p>
+        <p className="admin-sub">Manage explorer accounts, the historical places dataset and its quizzes.</p>
 
         <AdminStats />
 
@@ -197,9 +198,18 @@ export default function AdminDashboard() {
           >
             Dataset
           </button>
+          <button
+            type="button"
+            className={tab === 'quizzes' ? 'admin-tab active' : 'admin-tab'}
+            onClick={() => setTab('quizzes')}
+          >
+            Quizzes
+          </button>
         </div>
 
-        {tab === 'users' ? <UsersPanel token={token} /> : <DatasetPanel token={token} />}
+        {tab === 'users' && <UsersPanel token={token} />}
+        {tab === 'dataset' && <DatasetPanel token={token} />}
+        {tab === 'quizzes' && <QuizPanel token={token} />}
       </div>
     </div>
   )
@@ -880,6 +890,245 @@ function AddPlaceForm({ token, onAdded }) {
       <button type="submit" className="btn-primary admin-add-submit" disabled={submitting}>
         <PlusIcon /> {submitting ? 'Adding…' : 'Add Place'}
       </button>
+    </form>
+  )
+}
+
+/* ---------- quizzes ---------- */
+
+const EMPTY_QUESTION = { question: '', options: ['', '', '', ''], answerIndex: null }
+
+function QuizPanel({ token }) {
+  const { places, quizAdditions, refresh } = usePlaces()
+  const sortedPlaces = [...places].sort((a, b) => a.name.localeCompare(b.name))
+  const [placeId, setPlaceId] = useState(sortedPlaces[0]?.id || '')
+  const [pendingId, setPendingId] = useState(null)
+  const [error, setError] = useState('')
+
+  // Falls back to the first place if the selected one disappears (removed
+  // in the Dataset tab, say).
+  const place = places.find((p) => p.id === placeId) || sortedPlaces[0]
+  if (!place) return <p className="admin-status">No places in the dataset yet.</p>
+
+  const customQuestions = quizAdditions[place.id] || []
+  const builtInQuestions = place.quiz.filter((q) => !q.custom)
+
+  async function handleDelete(q) {
+    setError('')
+    setPendingId(q.id)
+    try {
+      await adminApi.deleteQuizQuestion(token, q.id)
+      await refresh()
+    } catch (err) {
+      setError(err.error || 'Could not delete that question.')
+    } finally {
+      setPendingId(null)
+    }
+  }
+
+  return (
+    <div>
+      <div className="admin-add-form">
+        <label className="field-label" htmlFor="qz-place">Place</label>
+        <div className="field admin-quiz-place-field">
+          <select id="qz-place" value={place.id} onChange={(e) => setPlaceId(e.target.value)}>
+            {sortedPlaces.map((p) => (
+              <option key={p.id} value={p.id}>{p.name} — {p.location}</option>
+            ))}
+          </select>
+        </div>
+        <p className="admin-quiz-summary">
+          This quiz has <strong>{place.quiz.length}</strong> question{place.quiz.length === 1 ? '' : 's'}:{' '}
+          {builtInQuestions.length} built-in, {customQuestions.length} added by admin.
+        </p>
+      </div>
+
+      <AddQuestionForm key={place.id} token={token} place={place} onAdded={refresh} />
+
+      {error && <p className="admin-status admin-status-error">{error}</p>}
+
+      <h2 className="admin-panel-title">Questions added by admin</h2>
+      {customQuestions.length === 0 ? (
+        <p className="admin-status">No questions added for {place.name} yet.</p>
+      ) : (
+        <ol className="admin-quiz-list">
+          {customQuestions.map((q) => (
+            <li key={q.id} className="admin-quiz-item">
+              <div className="admin-quiz-item-head">
+                <p className="admin-quiz-question">{q.question}</p>
+                <button
+                  type="button"
+                  className="btn-admin-danger"
+                  disabled={pendingId === q.id}
+                  onClick={() => handleDelete(q)}
+                >
+                  <TrashIcon /> {pendingId === q.id ? 'Deleting…' : 'Delete'}
+                </button>
+              </div>
+              <QuizOptionList question={q} />
+            </li>
+          ))}
+        </ol>
+      )}
+
+      <details className="admin-csv-details admin-quiz-builtin">
+        <summary>Built-in questions ({builtInQuestions.length})</summary>
+        <ol className="admin-quiz-list">
+          {builtInQuestions.map((q, i) => (
+            <li key={i} className="admin-quiz-item">
+              <p className="admin-quiz-question">{q.question}</p>
+              <QuizOptionList question={q} />
+            </li>
+          ))}
+        </ol>
+      </details>
+    </div>
+  )
+}
+
+function QuizOptionList({ question }) {
+  return (
+    <ul className="admin-quiz-options">
+      {question.options.map((opt, i) => (
+        <li key={i} className={i === question.answerIndex ? 'correct' : undefined}>
+          {opt}
+          {i === question.answerIndex && <span className="admin-quiz-correct-tag">Correct</span>}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function AddQuestionForm({ token, place, onAdded }) {
+  const [form, setForm] = useState(EMPTY_QUESTION)
+  const [fieldErrors, setFieldErrors] = useState({})
+  const [formError, setFormError] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  function clearError(key) {
+    setFieldErrors((errs) => {
+      if (!errs[key]) return errs
+      const next = { ...errs }
+      delete next[key]
+      return next
+    })
+  }
+
+  function updateOption(i) {
+    return (e) => {
+      const value = e.target.value
+      setForm((f) => ({ ...f, options: f.options.map((o, j) => (j === i ? value : o)) }))
+      clearError(`option${i}`)
+    }
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setFormError('')
+    setSuccessMsg('')
+
+    // Checked here rather than only on the server because only the client has
+    // the bundled questions -- a repeat would otherwise be saved and then
+    // silently dropped from the quiz by dedupeQuiz.
+    const repeat = findQuizRepeat(place.quiz, form)
+    if (repeat) {
+      const { existing } = repeat
+      setFieldErrors(
+        repeat.reason === 'question'
+          ? { question: `This quiz already asks: "${existing.question}"` }
+          : {
+              [`option${form.answerIndex}`]: `"${existing.options[existing.answerIndex]}" is already the answer to: "${existing.question}"`,
+            }
+      )
+      setFormError('This would repeat a question already in the quiz.')
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      await adminApi.addQuizQuestion(token, place.id, {
+        question: form.question,
+        options: form.options,
+        answerIndex: form.answerIndex,
+      })
+      setForm(EMPTY_QUESTION)
+      setFieldErrors({})
+      setSuccessMsg(`Question added to the ${place.name} quiz.`)
+      await onAdded()
+    } catch (err) {
+      if (err.fieldErrors) setFieldErrors(err.fieldErrors)
+      setFormError(err.error || 'Could not add that question.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <form className="admin-add-form" onSubmit={handleSubmit}>
+      <h2 className="admin-panel-title"><PlusIcon /> Add a question to {place.name}</h2>
+      {formError && <p className="form-error" role="alert">{formError}</p>}
+      {successMsg && <p className="admin-success">{successMsg}</p>}
+
+      <label className="field-label" htmlFor="qz-question">Question</label>
+      <div className={`field admin-textarea-field${fieldErrors.question ? ' field-invalid' : ''}`}>
+        <textarea
+          id="qz-question"
+          rows={2}
+          maxLength={300}
+          placeholder={`e.g. In which century did the main event at ${place.name} happen?`}
+          value={form.question}
+          onChange={(e) => {
+            setForm((f) => ({ ...f, question: e.target.value }))
+            clearError('question')
+          }}
+        />
+      </div>
+      {fieldErrors.question && <p className="field-error">{fieldErrors.question}</p>}
+
+      <fieldset className="admin-quiz-fieldset">
+        <legend className="field-label">Answer options — select the correct one</legend>
+        {fieldErrors.options && <p className="field-error">{fieldErrors.options}</p>}
+        <div className="admin-form-grid">
+          {form.options.map((opt, i) => (
+            <div key={i}>
+              <label
+                className={`admin-quiz-option-input${form.answerIndex === i ? ' is-correct' : ''}${
+                  fieldErrors[`option${i}`] ? ' field-invalid' : ''
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="qz-correct"
+                  checked={form.answerIndex === i}
+                  onChange={() => {
+                    setForm((f) => ({ ...f, answerIndex: i }))
+                    clearError('answerIndex')
+                  }}
+                  aria-label={`Option ${i + 1} is the correct answer`}
+                />
+                <input
+                  type="text"
+                  maxLength={150}
+                  placeholder={`Option ${i + 1}`}
+                  value={opt}
+                  onChange={updateOption(i)}
+                  aria-label={`Option ${i + 1}`}
+                />
+              </label>
+              {fieldErrors[`option${i}`] && <p className="field-error">{fieldErrors[`option${i}`]}</p>}
+            </div>
+          ))}
+        </div>
+        {fieldErrors.answerIndex && <p className="field-error">{fieldErrors.answerIndex}</p>}
+      </fieldset>
+
+      <button type="submit" className="btn-primary admin-add-submit" disabled={submitting || form.answerIndex === null}>
+        <PlusIcon /> {submitting ? 'Adding…' : 'Add Question'}
+      </button>
+      {form.answerIndex === null && (
+        <p className="admin-quiz-hint">Select the correct option to enable this button.</p>
+      )}
     </form>
   )
 }
