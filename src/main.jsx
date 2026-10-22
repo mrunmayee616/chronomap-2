@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { FavouritesProvider } from './context/FavouritesContext.jsx'
 import { PlacesProvider } from './context/PlacesContext.jsx'
+import { ThemeProvider } from './context/ThemeContext.jsx'
 import RequireAuth from './components/RequireAuth.jsx'
 import RequireAdmin from './components/RequireAdmin.jsx'
 import Home from './pages/Home.jsx'
@@ -22,63 +23,65 @@ import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <AuthProvider>
-      <FavouritesProvider>
-        <PlacesProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/how-it-works" element={<HowItWorks />} />
-              <Route path="/signin" element={<SignIn />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/oauth/callback" element={<OAuthCallback />} />
-              <Route path="/explore" element={<Explore />} />
-              <Route path="/place/:placeId" element={<Place />} />
-              <Route
-                path="/quiz"
-                element={
-                  <RequireAuth>
-                    <Quiz />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/quiz/:placeId"
-                element={
-                  <RequireAuth>
-                    <Quiz />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <RequireAuth>
-                    <Profile />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/leaderboard"
-                element={
-                  <RequireAuth>
-                    <Leaderboard />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/admin"
-                element={
-                  <RequireAdmin>
-                    <AdminDashboard />
-                  </RequireAdmin>
-                }
-              />
-            </Routes>
-          </BrowserRouter>
-        </PlacesProvider>
-      </FavouritesProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <FavouritesProvider>
+          <PlacesProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/how-it-works" element={<HowItWorks />} />
+                <Route path="/signin" element={<SignIn />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/oauth/callback" element={<OAuthCallback />} />
+                <Route path="/explore" element={<Explore />} />
+                <Route path="/place/:placeId" element={<Place />} />
+                <Route
+                  path="/quiz"
+                  element={
+                    <RequireAuth>
+                      <Quiz />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/quiz/:placeId"
+                  element={
+                    <RequireAuth>
+                      <Quiz />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <RequireAuth>
+                      <Profile />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/leaderboard"
+                  element={
+                    <RequireAuth>
+                      <Leaderboard />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <RequireAdmin>
+                      <AdminDashboard />
+                    </RequireAdmin>
+                  }
+                />
+              </Routes>
+            </BrowserRouter>
+          </PlacesProvider>
+        </FavouritesProvider>
+      </AuthProvider>
+    </ThemeProvider>
   </React.StrictMode>,
 )

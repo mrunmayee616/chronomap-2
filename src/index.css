@@ -4316,3 +4316,309 @@ input[type='range']:focus-visible {
     flex-direction: column;
   }
 }
+
+
+/* ==================== Theme switcher button (navbar) ==================== */
+
+/* Wrapper that groups the theme pill + the avatar/signin button */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Pill-shaped theme cycle button */
+.btn-theme-cycle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--yellow-dim);
+  color: var(--yellow);
+  border: 1.5px solid var(--yellow);
+  border-radius: 999px;
+  padding: 7px 15px 7px 11px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-theme-cycle:hover {
+  background: var(--yellow);
+  color: #1a1300;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px #0006;
+}
+
+/* Prevents the hover color inversion on certain themes from looking odd */
+[data-theme='ancient'] .btn-theme-cycle:hover,
+[data-theme='obsidian'] .btn-theme-cycle:hover,
+[data-theme='aurora'] .btn-theme-cycle:hover {
+  color: var(--bg);
+}
+
+.btn-theme-icon {
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+}
+
+.btn-theme-label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ==================== Themed page backgrounds ==================== */
+
+/* ancient: warm parchment radial glow */
+[data-theme='ancient'] .page {
+  background:
+    radial-gradient(1200px 600px at 78% 45%, #2e1f08 0%, transparent 60%),
+    var(--bg);
+}
+
+/* obsidian: deep ember glow from bottom right */
+[data-theme='obsidian'] .page {
+  background:
+    radial-gradient(1000px 500px at 80% 70%, #200800 0%, transparent 65%),
+    var(--bg);
+}
+
+/* aurora: northern-lights green shimmer */
+[data-theme='aurora'] .page {
+  background:
+    radial-gradient(1200px 600px at 60% 30%, #00251a 0%, transparent 65%),
+    var(--bg);
+}
+
+/* ==================== Theme menu item (inside avatar dropdown) ==================== */
+
+.navbar-theme-item {
+  justify-content: space-between;
+}
+
+.navbar-theme-item-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  text-align: left;
+}
+
+.navbar-theme-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--yellow-dim);
+  color: var(--yellow);
+  border: 1px solid var(--yellow);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ---------- [data-theme='cosmos'] alias — same as :root default ---------- */
+[data-theme='cosmos'] {
+  --bg: #0a0e1e;
+  --bg-elev: #0d1226;
+  --card-bg: #0d1226e6;
+  --card-border: #ffffff1a;
+  --border: #ffffff14;
+  --text: #f5f6fa;
+  --text-dim: #a3aac0;
+  --text-faint: #8189a3;
+  --yellow: #f7c740;
+  --yellow-dim: #f7c74022;
+  --violet: #8b7ef8;
+  --violet-strong: #5f4fe0;
+  --violet-dim: #7b6cf633;
+  --danger: #f25a76;
+  --danger-dim: #ef466522;
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--yellow);
+  color-scheme: dark;
+}
+
+/* ---------- [data-theme='ancient'] warm parchment / historical ---------- */
+[data-theme='ancient'] {
+  --bg: #1c1508;
+  --bg-elev: #241c0c;
+  --card-bg: #2a2010e6;
+  --card-border: #d4a85433;
+  --border: #c9a04a22;
+  --text: #f0e6c8;
+  --text-dim: #c9aa7a;
+  --text-faint: #9e7f52;
+  --yellow: #e8a020;
+  --yellow-dim: #e8a02022;
+  --violet: #c87941;
+  --violet-strong: #a05a20;
+  --violet-dim: #c8794133;
+  --danger: #d45040;
+  --danger-dim: #d4504022;
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--yellow);
+  color-scheme: dark;
+}
+
+/* ---------- [data-theme='obsidian'] volcanic black + amber embers ---------- */
+[data-theme='obsidian'] {
+  --bg: #080808;
+  --bg-elev: #0f0f0f;
+  --card-bg: #111111e6;
+  --card-border: #ff6a0033;
+  --border: #ff6a0022;
+  --text: #f5f0ea;
+  --text-dim: #b09880;
+  --text-faint: #7a6050;
+  --yellow: #ff8c00;
+  --yellow-dim: #ff8c0022;
+  --violet: #ff6a00;
+  --violet-strong: #cc4800;
+  --violet-dim: #ff6a0033;
+  --danger: #ff3040;
+  --danger-dim: #ff304022;
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--yellow);
+  color-scheme: dark;
+}
+
+/* ---------- [data-theme='aurora'] northern lights teal-green ---------- */
+[data-theme='aurora'] {
+  --bg: #020d12;
+  --bg-elev: #041520;
+  --card-bg: #05182ae6;
+  --card-border: #00d4aa2e;
+  --border: #00d4aa1a;
+  --text: #e8f8f4;
+  --text-dim: #7abcaa;
+  --text-faint: #4a8a7a;
+  --yellow: #00e5aa;
+  --yellow-dim: #00e5aa22;
+  --violet: #00bfff;
+  --violet-strong: #007acc;
+  --violet-dim: #00bfff33;
+  --danger: #ff5577;
+  --danger-dim: #ff557722;
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--yellow);
+  color-scheme: dark;
+}
+
+/* ==================== Theme submenu / picker dropdown ==================== */
+
+/* Row inside avatar menu that reveals the submenu */
+.navbar-theme-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+}
+
+.navbar-theme-row-label {
+  flex: 1;
+  text-align: left;
+}
+
+.navbar-theme-badge-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--yellow-dim);
+  color: var(--yellow);
+  border: 1px solid var(--yellow);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+/* Inline submenu that expands below the Theme row */
+.navbar-theme-submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px;
+  margin: 2px 0 4px 0;
+  animation: submenu-in 0.15s ease;
+}
+
+@keyframes submenu-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Each individual theme option button */
+.navbar-theme-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.navbar-theme-option:hover {
+  background: var(--yellow-dim);
+  color: var(--text);
+}
+
+.navbar-theme-option.active {
+  background: var(--yellow-dim);
+  color: var(--yellow);
+  font-weight: 700;
+}
+
+.navbar-theme-option-icon {
+  font-size: 17px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.navbar-theme-option-label {
+  flex: 1;
+}
+
+/* Wrapper for the logged-out theme pill + its dropdown */
+.navbar-theme-picker-wrap {
+  position: relative;
+}
+
+/* Dropdown that appears below the pill for logged-out users */
+.navbar-theme-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  min-width: 180px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 16px 40px #00000066;
+  animation: submenu-in 0.15s ease;
+}
