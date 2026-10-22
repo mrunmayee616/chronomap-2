@@ -27,7 +27,7 @@ incorporated without significantly modifying the existing system.
 - **Accounts**: email/password registration and login
 - **Profile** with avatar, favourites and unlocked achievements
 - **Admin dashboard**: manage users, add, edit, delete and restore places, and bulk-import places from CSV
-- **Place images**: each place shows the lead photo of its own Wikipedia article. The server looks these up automatically in the background on startup (needs internet; set `PLACE_IMAGE_SYNC=off` to disable) and caches them in MongoDB. Until a place's photo is found it shows a neutral labelled card, never a random stock photo. Fix a wrong photo by correcting its article title in `server/src/data/placeImageTopics.js` (the place is re-looked-up on next start) or from the admin dashboard.
+
 - **Share** button for places
 
 ## Tech stack

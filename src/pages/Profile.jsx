@@ -1,16 +1,12 @@
+```jsx
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useFavourites } from '../context/FavouritesContext.jsx'
-<<<<<<< HEAD
-import { authApi } from '../lib/api.js'
-import { avatarUrlFor } from '../lib/avatar.js'
-=======
 import { authApi, usersApi } from '../lib/api.js'
 import { avatarUrlFor } from '../lib/avatar.js'
 import AvatarPicker from '../components/AvatarPicker.jsx'
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 import { COUNTRIES, countryNameFor } from '../data/countries.js'
 import CountryFlag from '../components/CountryFlag.jsx'
 import { ACHIEVEMENTS, achievementProgress } from '../lib/achievements.js'
@@ -50,17 +46,19 @@ const FILTERS = ['All', 'Unlocked', 'Locked']
 function formatJoinedDate(isoString) {
   if (!isoString) return ''
   const d = new Date(isoString)
-  return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return d.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
 }
 
 export default function Profile() {
   const { user, token, refreshUser } = useAuth()
   const { favourites, removeFavourite } = useFavourites()
+
   const [loading, setLoading] = useState(true)
-<<<<<<< HEAD
-=======
   const [social, setSocial] = useState(null)
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   const [error, setError] = useState('')
   const [filter, setFilter] = useState('All')
 
@@ -68,27 +66,32 @@ export default function Profile() {
   const [bioDraft, setBioDraft] = useState('')
   const [locationDraft, setLocationDraft] = useState('')
   const [genderDraft, setGenderDraft] = useState('unspecified')
-<<<<<<< HEAD
-=======
   const [avatarDraft, setAvatarDraft] = useState('')
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   const [countryDraft, setCountryDraft] = useState('')
   const [aboutError, setAboutError] = useState('')
   const [savingAbout, setSavingAbout] = useState(false)
 
   useEffect(() => {
     let cancelled = false
+
     setLoading(true)
+
     refreshUser()
       .catch(() => {
-        if (!cancelled) setError('Could not load your latest profile data.')
+        if (!cancelled) {
+          setError('Could not load your latest profile data.')
+        }
       })
       .finally(() => {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       })
+
     return () => {
       cancelled = true
     }
+
     // Only run once on mount - refreshUser identity is stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -97,10 +100,7 @@ export default function Profile() {
     setBioDraft(user.bio || '')
     setLocationDraft(user.location || '')
     setGenderDraft(user.gender || 'unspecified')
-<<<<<<< HEAD
-=======
     setAvatarDraft(user.avatar || '')
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
     setCountryDraft(user.country || '')
     setAboutError('')
     setIsEditingAbout(true)
@@ -115,32 +115,60 @@ export default function Profile() {
     e.preventDefault()
     setAboutError('')
     setSavingAbout(true)
+
     try {
       await authApi.updateProfile(token, {
         bio: bioDraft,
         location: locationDraft,
         gender: genderDraft,
-<<<<<<< HEAD
-=======
         avatar: avatarDraft,
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
         country: countryDraft,
       })
+
       await refreshUser()
       setIsEditingAbout(false)
     } catch (err) {
-      setAboutError(err.error || 'Could not save your changes. Please try again.')
+      setAboutError(
+        err.error || 'Could not save your changes. Please try again.'
+      )
     } finally {
       setSavingAbout(false)
     }
   }
+
+  // Follower / following counts for the header (the admin has none).
+  useEffect(() => {
+    if (!user || user.isAdmin) return
+
+    let cancelled = false
+
+    usersApi
+      .get(token, user.username)
+      .then(
+        (data) =>
+          !cancelled &&
+          setSocial({
+            followers: data.user.followersCount,
+            following: data.user.followingCount,
+          })
+      )
+      .catch(() => {})
+
+    return () => {
+      cancelled = true
+    }
+  }, [token, user?.username, user?.isAdmin])
 
   if (!user) {
     return (
       <div className="page signin-page">
         <Navbar active="Profile" />
         <div className="verify-wrap">
-          <p className="verify-message">{loading ? 'Loading your profile…' : 'We could not load your profile.'}</p>
+          <p className="verify-message">
+            {loading
+              ? 'Loading your profile…'
+              : 'We could not load your profile.'}
+          </p>
         </div>
       </div>
     )
@@ -148,7 +176,9 @@ export default function Profile() {
 
   const unlockedSet = new Set(user.unlockedAchievements || [])
   const totalAchievements = ACHIEVEMENTS.length
-  const unlockedCount = ACHIEVEMENTS.filter((a) => unlockedSet.has(a.id)).length
+  const unlockedCount = ACHIEVEMENTS.filter((a) =>
+    unlockedSet.has(a.id)
+  ).length
 
   const visibleAchievements = ACHIEVEMENTS.filter((a) => {
     if (filter === 'Unlocked') return unlockedSet.has(a.id)
@@ -156,25 +186,14 @@ export default function Profile() {
     return true
   })
 
-<<<<<<< HEAD
-=======
-  // Follower / following counts for the header (the admin has none).
-  useEffect(() => {
-    if (!user || user.isAdmin) return
-    let cancelled = false
-    usersApi
-      .get(token, user.username)
-      .then((data) => !cancelled && setSocial({ followers: data.user.followersCount, following: data.user.followingCount }))
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
-  }, [token, user?.username])
+  const xpPct =
+    user.xpToNextLevel > 0
+      ? Math.min(100, Math.round((user.xp / user.xpToNextLevel) * 100))
+      : 0
 
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
-  const xpPct = user.xpToNextLevel > 0 ? Math.min(100, Math.round((user.xp / user.xpToNextLevel) * 100)) : 0
-
-  const favouritePlaces = favourites.map((id) => getPlaceById(id)).filter(Boolean)
+  const favouritePlaces = favourites
+    .map((id) => getPlaceById(id))
+    .filter(Boolean)
 
   return (
     <div className="page profile-page">
@@ -187,57 +206,77 @@ export default function Profile() {
           <div className="profile-card profile-summary-card">
             <div className="profile-header-row">
               <img
-<<<<<<< HEAD
-                src={avatarUrlFor(user.username)}
-=======
                 src={avatarUrlFor(user.username, user.avatar)}
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
                 alt={`${user.username}'s avatar`}
                 className="profile-avatar"
               />
+
               <div>
                 <h2 className="profile-name">{user.fullName}</h2>
                 <p className="profile-username">@{user.username}</p>
+
                 <p className="profile-level-row">
-                  Level {user.level} <span className="dot">•</span> {user.title}
+                  Level {user.level} <span className="dot">•</span>{' '}
+                  {user.title}
                 </p>
-<<<<<<< HEAD
-=======
+
                 {social && (
                   <p className="profile-social-row">
-                    <Link to="/explorers?tab=followers"><strong>{social.followers}</strong> {social.followers === 1 ? 'follower' : 'followers'}</Link>
+                    <Link to="/explorers?tab=followers">
+                      <strong>{social.followers}</strong>{' '}
+                      {social.followers === 1 ? 'follower' : 'followers'}
+                    </Link>
+
                     <span className="dot"> • </span>
-                    <Link to="/explorers?tab=following"><strong>{social.following}</strong> following</Link>
+
+                    <Link to="/explorers?tab=following">
+                      <strong>{social.following}</strong> following
+                    </Link>
                   </p>
                 )}
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
               </div>
             </div>
 
             <div className="xp-bar-wrap">
               <div className="xp-bar-track">
-                <div className="xp-bar-fill" style={{ width: `${xpPct}%` }} />
+                <div
+                  className="xp-bar-fill"
+                  style={{ width: `${xpPct}%` }}
+                />
               </div>
+
               <p className="xp-bar-label">
-                {user.xp.toLocaleString()} / {user.xpToNextLevel.toLocaleString()} XP
+                {user.xp.toLocaleString()} /{' '}
+                {user.xpToNextLevel.toLocaleString()} XP
               </p>
             </div>
 
             <div className="profile-stat-grid">
               <div className="profile-stat">
-                <p className="profile-stat-value">{user.countriesExplored}</p>
+                <p className="profile-stat-value">
+                  {user.countriesExplored}
+                </p>
                 <p className="profile-stat-label">Countries Explored</p>
               </div>
+
               <div className="profile-stat">
-                <p className="profile-stat-value">{user.eventsDiscovered}</p>
+                <p className="profile-stat-value">
+                  {user.eventsDiscovered}
+                </p>
                 <p className="profile-stat-label">Events Discovered</p>
               </div>
+
               <div className="profile-stat">
-                <p className="profile-stat-value">{user.quizzesCompleted}</p>
+                <p className="profile-stat-value">
+                  {user.quizzesCompleted}
+                </p>
                 <p className="profile-stat-label">Quizzes Completed</p>
               </div>
+
               <div className="profile-stat">
-                <p className="profile-stat-value">{user.currentStreak}</p>
+                <p className="profile-stat-value">
+                  {user.currentStreak}
+                </p>
                 <p className="profile-stat-label">Current Streak</p>
               </div>
             </div>
@@ -246,6 +285,7 @@ export default function Profile() {
           <div className="profile-card profile-about-card">
             <div className="profile-about-header">
               <h3 className="profile-about-title">About Me</h3>
+
               {!isEditingAbout && (
                 <button
                   type="button"
@@ -260,9 +300,19 @@ export default function Profile() {
 
             {isEditingAbout ? (
               <form onSubmit={saveAbout} className="about-edit-form">
-                {aboutError && <p className="field-error" style={{ margin: '0 0 10px' }}>{aboutError}</p>}
+                {aboutError && (
+                  <p
+                    className="field-error"
+                    style={{ margin: '0 0 10px' }}
+                  >
+                    {aboutError}
+                  </p>
+                )}
 
-                <label className="field-label" htmlFor="about-bio">Bio</label>
+                <label className="field-label" htmlFor="about-bio">
+                  Bio
+                </label>
+
                 <textarea
                   id="about-bio"
                   className="about-textarea"
@@ -272,9 +322,15 @@ export default function Profile() {
                   rows={4}
                   placeholder="Tell other explorers about yourself…"
                 />
-                <p className="about-char-count">{bioDraft.length}/280</p>
 
-                <label className="field-label" htmlFor="about-location">Location</label>
+                <p className="about-char-count">
+                  {bioDraft.length}/280
+                </p>
+
+                <label className="field-label" htmlFor="about-location">
+                  Location
+                </label>
+
                 <div className="field">
                   <input
                     id="about-location"
@@ -284,54 +340,58 @@ export default function Profile() {
                     maxLength={120}
                     placeholder="City, Country"
                   />
-                  <span className="field-icon"><MapPinIcon /></span>
+                  <span className="field-icon">
+                    <MapPinIcon />
+                  </span>
                 </div>
 
-<<<<<<< HEAD
-                <label className="field-label" htmlFor="about-gender">Gender</label>
-                <div className="avatar-style-row">
-                  <img
-                    src={avatarUrlFor(user.username)}
-                    alt="Avatar preview"
-                    className="avatar-style-preview"
-                  />
-=======
                 <label className="field-label">Avatar</label>
-                <AvatarPicker value={avatarDraft} onChange={setAvatarDraft} seed={user.username} />
 
-                <label className="field-label" htmlFor="about-gender">Gender</label>
+                <AvatarPicker
+                  value={avatarDraft}
+                  onChange={setAvatarDraft}
+                  seed={user.username}
+                />
+
+                <label className="field-label" htmlFor="about-gender">
+                  Gender
+                </label>
+
                 <div className="avatar-style-row">
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
                   <div className="field avatar-style-field">
                     <select
                       id="about-gender"
                       value={genderDraft}
                       onChange={(e) => setGenderDraft(e.target.value)}
                     >
-                      <option value="unspecified">Prefer not to say</option>
+                      <option value="unspecified">
+                        Prefer not to say
+                      </option>
                       <option value="male">Male</option>
                       <option value="female">Female</option>
                     </select>
                   </div>
                 </div>
-                <p className="about-char-count" style={{ marginTop: -8, marginBottom: 14 }}>
-<<<<<<< HEAD
-                  Your avatar above is generated automatically from your username. Gender isn't
-                  shown publicly.
-=======
+
+                <p
+                  className="about-char-count"
+                  style={{ marginTop: -8, marginBottom: 14 }}
+                >
                   Gender isn't shown publicly.
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
                 </p>
 
-                <label className="field-label" htmlFor="about-country">Country</label>
+                <label className="field-label" htmlFor="about-country">
+                  Country
+                </label>
+
                 <div className="avatar-style-row">
-                  <span className="country-flag-preview" aria-hidden="true">
-<<<<<<< HEAD
-                    <CountryFlag code={countryDraft} size={40} />
-=======
+                  <span
+                    className="country-flag-preview"
+                    aria-hidden="true"
+                  >
                     <CountryFlag code={countryDraft} size={48} />
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
                   </span>
+
                   <div className="field avatar-style-field">
                     <select
                       id="about-country"
@@ -339,6 +399,7 @@ export default function Profile() {
                       onChange={(e) => setCountryDraft(e.target.value)}
                     >
                       <option value="">Prefer not to say</option>
+
                       {COUNTRIES.map((c) => (
                         <option key={c.code} value={c.code}>
                           {c.name}
@@ -347,14 +408,25 @@ export default function Profile() {
                     </select>
                   </div>
                 </div>
-                <p className="about-char-count" style={{ marginTop: -8, marginBottom: 14 }}>
+
+                <p
+                  className="about-char-count"
+                  style={{ marginTop: -8, marginBottom: 14 }}
+                >
                   Shown on the leaderboard next to your name.
                 </p>
 
                 <div className="about-edit-actions">
-                  <button type="submit" className="icon-btn icon-btn-save" disabled={savingAbout} aria-label="Save">
-                    <CheckIcon /> {savingAbout ? 'Saving…' : 'Save'}
+                  <button
+                    type="submit"
+                    className="icon-btn icon-btn-save"
+                    disabled={savingAbout}
+                    aria-label="Save"
+                  >
+                    <CheckIcon />{' '}
+                    {savingAbout ? 'Saving…' : 'Save'}
                   </button>
+
                   <button
                     type="button"
                     className="icon-btn icon-btn-cancel"
@@ -369,7 +441,9 @@ export default function Profile() {
             ) : (
               <>
                 <p className="profile-about-bio">
-                  {user.bio ? user.bio : `I'm ${user.fullName.split(' ')[0]} and I'm an explorer.`}
+                  {user.bio
+                    ? user.bio
+                    : `I'm ${user.fullName.split(' ')[0]} and I'm an explorer.`}
                 </p>
 
                 {user.location && (
@@ -377,14 +451,19 @@ export default function Profile() {
                     <MapPinIcon /> <span>{user.location}</span>
                   </p>
                 )}
+
                 {user.country && (
                   <p className="profile-meta-row">
                     <CountryFlag code={user.country} size={16} />
-                    <span>{countryNameFor(user.country) || user.country}</span>
+                    <span>
+                      {countryNameFor(user.country) || user.country}
+                    </span>
                   </p>
                 )}
+
                 <p className="profile-meta-row">
-                  <CalendarIcon /> <span>Joined on {formatJoinedDate(user.joinedAt)}</span>
+                  <CalendarIcon />{' '}
+                  <span>Joined on {formatJoinedDate(user.joinedAt)}</span>
                 </p>
               </>
             )}
@@ -393,31 +472,45 @@ export default function Profile() {
 
         <div className="favourites-header-row">
           <h3 className="favourites-title">Favourites</h3>
+
           <p className="favourites-count">
-            <span className="favourites-count-strong">{favouritePlaces.length}</span> Saved Places
+            <span className="favourites-count-strong">
+              {favouritePlaces.length}
+            </span>{' '}
+            Saved Places
           </p>
         </div>
 
         {favouritePlaces.length === 0 ? (
           <p className="favourites-empty">
-            You haven't saved any places yet. Head to <Link to="/explore">Explore</Link> and tap the
-            heart on a place to add it here.
+            You haven't saved any places yet. Head to{' '}
+            <Link to="/explore">Explore</Link> and tap the heart on a place
+            to add it here.
           </p>
         ) : (
           <div className="favourites-grid">
             {favouritePlaces.map((place) => (
               <div key={place.id} className="favourite-card">
-                <Link to={`/place/${place.id}`} className="favourite-card-media">
+                <Link
+                  to={`/place/${place.id}`}
+                  className="favourite-card-media"
+                >
                   <img src={place.image} alt={place.name} />
                 </Link>
+
                 <div className="favourite-card-body">
-                  <Link to={`/place/${place.id}`} className="favourite-card-name">
+                  <Link
+                    to={`/place/${place.id}`}
+                    className="favourite-card-name"
+                  >
                     {place.name}
                   </Link>
+
                   <p className="favourite-card-location">
                     <MapPinIcon size={13} /> {place.location}
                   </p>
                 </div>
+
                 <button
                   type="button"
                   className="favourite-card-remove"
@@ -433,8 +526,12 @@ export default function Profile() {
 
         <div className="achievements-header-row">
           <h3 className="achievements-title">Achievements</h3>
+
           <p className="achievements-count">
-            <span className="achievements-count-strong">{unlockedCount}/{totalAchievements}</span> Achievements Unlocked
+            <span className="achievements-count-strong">
+              {unlockedCount}/{totalAchievements}
+            </span>{' '}
+            Achievements Unlocked
           </p>
         </div>
 
@@ -443,7 +540,9 @@ export default function Profile() {
             <button
               key={f}
               type="button"
-              className={f === filter ? 'filter-pill active' : 'filter-pill'}
+              className={
+                f === filter ? 'filter-pill active' : 'filter-pill'
+              }
               onClick={() => setFilter(f)}
             >
               {f}
@@ -456,21 +555,36 @@ export default function Profile() {
             const Icon = ACHIEVEMENT_ICONS[a.icon]
             const isUnlocked = unlockedSet.has(a.id)
             const progress = achievementProgress(a, user)
+
             return (
               <div
                 key={a.id}
-                className={isUnlocked ? 'achievement-card unlocked' : 'achievement-card locked'}
-                style={{ '--progress': progress, '--progress-color': a.color }}
+                className={
+                  isUnlocked
+                    ? 'achievement-card unlocked'
+                    : 'achievement-card locked'
+                }
+                style={{
+                  '--progress': progress,
+                  '--progress-color': a.color,
+                }}
                 title={`${progress}% complete`}
               >
                 <div
                   className="achievement-icon-badge"
-                  style={isUnlocked ? { background: a.color, color: '#151527' } : undefined}
+                  style={
+                    isUnlocked
+                      ? { background: a.color, color: '#151527' }
+                      : undefined
+                  }
                 >
                   {isUnlocked ? <Icon /> : <LockIcon />}
                 </div>
+
                 <p className="achievement-title">{a.title}</p>
-                <p className="achievement-description">{a.description}</p>
+                <p className="achievement-description">
+                  {a.description}
+                </p>
                 <p className="achievement-progress">{progress}%</p>
               </div>
             )
@@ -480,3 +594,4 @@ export default function Profile() {
     </div>
   )
 }
+```

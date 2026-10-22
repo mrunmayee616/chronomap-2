@@ -1,14 +1,3 @@
-<<<<<<< HEAD
-:root {
-  --bg: #0a0e1e;
-  --bg-elev: #0d1226;
-  --yellow: #f7c740;
-  --yellow-dim: #f7c74022;
-  --text: #f5f6fa;
-  --text-dim: #9aa1b8;
-  --text-faint: #6b7290;
-  --border: #ffffff14;
-=======
 /* Design tokens. Every text colour below clears WCAG AA (4.5:1) against
    --bg and --card-bg, so pick from these rather than ad-hoc greys or
    translucent whites. Text is never set smaller than 12px. */
@@ -34,7 +23,6 @@
   --danger-dim: #ef466522;
 
   --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--yellow);
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color-scheme: dark;
 }
 
@@ -68,8 +56,6 @@ button {
   cursor: pointer;
 }
 
-<<<<<<< HEAD
-=======
 /* Keyboard focus: a visible ring on every interactive control. Mouse
    clicks don't trigger :focus-visible on buttons/links, so this only
    shows up for keyboard users. Text inputs keep their border highlight. */
@@ -98,7 +84,6 @@ input[type='range']:focus-visible {
   }
 }
 
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 /* ---------- Layout shell ---------- */
 
 .page {
@@ -222,11 +207,7 @@ input[type='range']:focus-visible {
 }
 
 .hero-sub {
-<<<<<<< HEAD
-  font-size: 16.5px;
-=======
   font-size: 16px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   line-height: 1.6;
   color: var(--text-dim);
   max-width: 460px;
@@ -314,11 +295,7 @@ input[type='range']:focus-visible {
 }
 
 .stat-label {
-<<<<<<< HEAD
-  font-size: 12.5px;
-=======
   font-size: 13px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text-faint);
   white-space: nowrap;
 }
@@ -379,16 +356,6 @@ input[type='range']:focus-visible {
 
 /* ==================== Sign In page ==================== */
 
-<<<<<<< HEAD
-:root {
-  --violet: #7b6cf6;
-  --violet-dim: #7b6cf633;
-  --card-bg: #0d1226e6;
-  --card-border: #ffffff1a;
-}
-
-=======
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 .signin-page {
   display: flex;
   flex-direction: column;
@@ -462,11 +429,7 @@ input[type='range']:focus-visible {
 
 .signin-sub {
   color: var(--text-dim);
-<<<<<<< HEAD
-  font-size: 14.5px;
-=======
   font-size: 15px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   line-height: 1.6;
   max-width: 340px;
   margin: 0 0 26px;
@@ -519,11 +482,7 @@ input[type='range']:focus-visible {
 }
 
 .stat-value.small {
-<<<<<<< HEAD
-  font-size: 14.5px;
-=======
   font-size: 15px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 }
 
 /* -- Right form card -- */
@@ -555,21 +514,13 @@ input[type='range']:focus-visible {
 .signin-card-sub {
   text-align: center;
   color: var(--text-faint);
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   margin: 0 0 26px;
 }
 
 .field-label {
   display: block;
-<<<<<<< HEAD
-  font-size: 12.5px;
-=======
   font-size: 13px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 600;
   color: var(--text-dim);
   margin: 0 0 8px;
@@ -593,11 +544,7 @@ input[type='range']:focus-visible {
 }
 
 .field input::placeholder {
-<<<<<<< HEAD
-  color: #6b7290;
-=======
   color: var(--text-faint);
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 }
 
 .field input:focus {
@@ -669,12 +616,6 @@ input[type='range']:focus-visible {
   overflow: hidden;
 }
 
-<<<<<<< HEAD
-.country-flag-img {
-  border-radius: 4px;
-  object-fit: cover;
-  box-shadow: 0 0 0 1px #ffffff1a;
-=======
 /* Circular flags. The hairline ring keeps white-heavy flags (Japan,
    Switzerland...) from dissolving into light surfaces. */
 .country-flag-img {
@@ -685,15 +626,10 @@ input[type='range']:focus-visible {
   object-position: center;
   box-shadow: 0 0 0 1px #ffffff26;
   vertical-align: middle;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 }
 
 .country-flag-fallback {
   display: inline-flex;
-<<<<<<< HEAD
-  align-items: center;
-  justify-content: center;
-=======
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
@@ -705,7 +641,6 @@ input[type='range']:focus-visible {
 /* inside the round 52px preview badge, the flag fills the whole circle */
 .country-flag-preview .country-flag-img {
   box-shadow: none;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 }
 
 .field-icon {
@@ -749,11 +684,7 @@ input[type='range']:focus-visible {
 
 .btn-login {
   width: 100%;
-<<<<<<< HEAD
-  background: linear-gradient(135deg, #8b7cf8, #6c5ce8);
-=======
   background: linear-gradient(135deg, #6c5ce8, var(--violet-strong));
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: #fff;
   font-weight: 700;
   font-size: 15px;
@@ -773,11 +704,7 @@ input[type='range']:focus-visible {
   align-items: center;
   gap: 12px;
   color: var(--text-faint);
-<<<<<<< HEAD
-  font-size: 12.5px;
-=======
   font-size: 13px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   margin: 20px 0;
 }
 
@@ -1000,11 +927,7 @@ input[type='range']:focus-visible {
 
 .register-sub {
   color: var(--text-dim);
-<<<<<<< HEAD
-  font-size: 14.5px;
-=======
   font-size: 15px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   line-height: 1.6;
   max-width: 360px;
   margin: 16px 0 28px;
@@ -1019,11 +942,7 @@ input[type='range']:focus-visible {
   align-items: flex-start;
   gap: 10px;
   margin: -4px 0 22px;
-<<<<<<< HEAD
-  font-size: 12.5px;
-=======
   font-size: 13px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   line-height: 1.5;
   color: var(--text-dim);
   cursor: pointer;
@@ -1102,11 +1021,7 @@ input[type='range']:focus-visible {
   border: none;
   outline: none;
   color: var(--text);
-<<<<<<< HEAD
-  font-size: 14.5px;
-=======
   font-size: 15px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-family: inherit;
 }
 
@@ -1126,11 +1041,7 @@ input[type='range']:focus-visible {
   border: 1px solid #ffffff1f;
   border-radius: 12px;
   padding: 13px 20px;
-<<<<<<< HEAD
-  font-size: 14.5px;
-=======
   font-size: 15px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
@@ -1160,11 +1071,7 @@ input[type='range']:focus-visible {
 }
 
 .filter-panel-title {
-<<<<<<< HEAD
-  font-size: 11.5px;
-=======
   font-size: 12px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -1177,11 +1084,7 @@ input[type='range']:focus-visible {
   background: none;
   border: none;
   color: var(--text);
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 500;
   padding: 9px 8px;
   border-radius: 8px;
@@ -1214,11 +1117,7 @@ input[type='range']:focus-visible {
   background: none;
   border: none;
   color: var(--text-dim);
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 700;
   padding: 9px 18px;
   border-radius: 9px;
@@ -1257,11 +1156,7 @@ input[type='range']:focus-visible {
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 10px;
-<<<<<<< HEAD
-  width: 84px;
-=======
   width: 96px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   flex-shrink: 0;
   align-self: flex-start;
 }
@@ -1290,11 +1185,7 @@ input[type='range']:focus-visible {
 }
 
 .sidebar-label {
-<<<<<<< HEAD
-  font-size: 10.5px;
-=======
   font-size: 12px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 600;
   line-height: 1.2;
   text-align: center;
@@ -1334,11 +1225,7 @@ input[type='range']:focus-visible {
 .leaflet-mount .leaflet-control-attribution {
   background: #05070fcc;
   color: var(--text-faint);
-<<<<<<< HEAD
-  font-size: 10.5px;
-=======
   font-size: 12px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 }
 
 .leaflet-mount .leaflet-control-attribution a {
@@ -1365,11 +1252,7 @@ input[type='range']:focus-visible {
 
 .cesium-mount .cesium-credit-container,
 .cesium-mount .cesium-viewer-bottom {
-<<<<<<< HEAD
-  font-size: 9px !important;
-=======
   font-size: 12px !important;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   opacity: 0.65;
 }
 
@@ -1381,11 +1264,7 @@ input[type='range']:focus-visible {
   background: #05070fcc;
   border: 1px solid var(--card-border);
   color: var(--text-faint);
-<<<<<<< HEAD
-  font-size: 12.5px;
-=======
   font-size: 13px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   padding: 8px 16px;
   border-radius: 999px;
   backdrop-filter: blur(8px);
@@ -1401,11 +1280,7 @@ input[type='range']:focus-visible {
   background: #05070fcc;
   border: 1px solid var(--card-border);
   color: var(--text-faint);
-<<<<<<< HEAD
-  font-size: 11.5px;
-=======
   font-size: 12px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   padding: 7px 13px;
   border-radius: 999px;
   backdrop-filter: blur(8px);
@@ -1485,11 +1360,7 @@ input[type='range']:focus-visible {
 .timeline-label {
   font-family: 'Sora', sans-serif;
   font-weight: 700;
-<<<<<<< HEAD
-  font-size: 14.5px;
-=======
   font-size: 15px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   flex-shrink: 0;
 }
 
@@ -1617,13 +1488,10 @@ input[type='range']:focus-visible {
   .sidebar-item {
     flex-shrink: 0;
   }
-<<<<<<< HEAD
-=======
   /* mouse-only instructions; meaningless on touch and too wide for phones */
   .map-hint {
     display: none;
   }
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   .timeline-bar {
     flex-direction: column;
     align-items: stretch;
@@ -1659,11 +1527,7 @@ input[type='range']:focus-visible {
 
 .field-error {
   color: #f76c6c;
-<<<<<<< HEAD
-  font-size: 12.5px;
-=======
   font-size: 13px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   margin: -12px 0 14px;
 }
 
@@ -1720,11 +1584,7 @@ input[type='range']:focus-visible {
 }
 
 .verify-message {
-<<<<<<< HEAD
-  font-size: 14.5px;
-=======
   font-size: 15px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   line-height: 1.6;
   margin: 0 0 22px;
 }
@@ -1748,11 +1608,7 @@ input[type='range']:focus-visible {
 
 .navbar-avatar-link.active,
 .navbar-avatar-link:hover {
-<<<<<<< HEAD
-  border-color: var(--violet, #7b6cf6);
-=======
   border-color: var(--violet);
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 }
 
 .navbar-avatar {
@@ -1787,11 +1643,7 @@ input[type='range']:focus-visible {
   background: none;
   border: none;
   color: var(--text-dim);
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   text-align: left;
   padding: 9px 10px;
   border-radius: 8px;
@@ -1853,21 +1705,13 @@ input[type='range']:focus-visible {
 }
 
 .profile-username {
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text-dim);
   margin: 0 0 6px;
 }
 
 .profile-level-row {
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text-dim);
   margin: 0;
 }
@@ -1898,11 +1742,7 @@ input[type='range']:focus-visible {
 }
 
 .xp-bar-label {
-<<<<<<< HEAD
-  font-size: 12.5px;
-=======
   font-size: 13px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text-dim);
   margin: 0;
 }
@@ -1929,11 +1769,7 @@ input[type='range']:focus-visible {
 }
 
 .profile-stat-label {
-<<<<<<< HEAD
-  font-size: 11.5px;
-=======
   font-size: 12px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text-dim);
   margin: 0;
   line-height: 1.3;
@@ -1952,11 +1788,7 @@ input[type='range']:focus-visible {
 }
 
 .profile-about-bio {
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text-dim);
   line-height: 1.6;
   margin: 0 0 18px;
@@ -1992,11 +1824,7 @@ input[type='range']:focus-visible {
 }
 
 .favourites-count {
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text-dim);
   margin: 0;
 }
@@ -2007,11 +1835,7 @@ input[type='range']:focus-visible {
 }
 
 .favourites-empty {
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text-dim);
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -2066,11 +1890,7 @@ input[type='range']:focus-visible {
 
 .favourite-card-name {
   display: block;
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 700;
   color: var(--text);
   margin: 0 0 6px;
@@ -2085,11 +1905,7 @@ input[type='range']:focus-visible {
   display: flex;
   align-items: center;
   gap: 6px;
-<<<<<<< HEAD
-  font-size: 11.5px;
-=======
   font-size: 12px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text-dim);
   margin: 0;
 }
@@ -2136,11 +1952,7 @@ input[type='range']:focus-visible {
 }
 
 .achievements-count {
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text-dim);
   margin: 0;
 }
@@ -2168,13 +1980,8 @@ input[type='range']:focus-visible {
 }
 
 .filter-pill.active {
-<<<<<<< HEAD
-  background: var(--violet, #7b6cf6);
-  border-color: var(--violet, #7b6cf6);
-=======
   background: var(--violet-strong);
   border-color: var(--violet);
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: #fff;
 }
 
@@ -2210,11 +2017,7 @@ input[type='range']:focus-visible {
 }
 
 .achievement-progress {
-<<<<<<< HEAD
-  font-size: 10.5px;
-=======
   font-size: 12px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 700;
   color: var(--progress-color);
   margin: 8px 0 0;
@@ -2238,22 +2041,14 @@ input[type='range']:focus-visible {
 }
 
 .achievement-title {
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 700;
   color: var(--text);
   margin: 0 0 4px;
 }
 
 .achievement-description {
-<<<<<<< HEAD
-  font-size: 11.5px;
-=======
   font-size: 12px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text-dim);
   margin: 0;
   line-height: 1.4;
@@ -2293,11 +2088,7 @@ input[type='range']:focus-visible {
   color: var(--text-dim);
   border-radius: 8px;
   padding: 6px 10px;
-<<<<<<< HEAD
-  font-size: 12.5px;
-=======
   font-size: 13px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
@@ -2313,22 +2104,13 @@ input[type='range']:focus-visible {
 }
 
 .icon-btn-save {
-<<<<<<< HEAD
-  background: var(--violet, #7b6cf6);
-  border-color: var(--violet, #7b6cf6);
-=======
   background: var(--violet-strong);
   border-color: var(--violet-strong);
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: #fff;
 }
 
 .icon-btn-save:hover {
-<<<<<<< HEAD
-  background: var(--violet, #7b6cf6);
-=======
   background: var(--violet-strong);
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: #fff;
   opacity: 0.9;
 }
@@ -2348,11 +2130,7 @@ input[type='range']:focus-visible {
   border: 1px solid #ffffff1f;
   border-radius: 9px;
   padding: 12px 14px;
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text);
   outline: none;
   resize: vertical;
@@ -2362,19 +2140,11 @@ input[type='range']:focus-visible {
 }
 
 .about-textarea:focus {
-<<<<<<< HEAD
-  border-color: var(--violet, #7b6cf6);
-}
-
-.about-char-count {
-  font-size: 11px;
-=======
   border-color: var(--violet);
 }
 
 .about-char-count {
   font-size: 12px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text-faint);
   text-align: right;
   margin: 0 0 16px;
@@ -2412,11 +2182,7 @@ input[type='range']:focus-visible {
   color: var(--text);
   border: 1px solid var(--card-border);
   font-family: 'Manrope', sans-serif;
-<<<<<<< HEAD
-  font-size: 12.5px;
-=======
   font-size: 13px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 600;
   padding: 6px 10px;
   border-radius: 8px;
@@ -2564,11 +2330,7 @@ input[type='range']:focus-visible {
 .place-figure-name {
   margin: 0 0 2px;
   font-weight: 700;
-<<<<<<< HEAD
-  font-size: 14.5px;
-=======
   font-size: 15px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text);
 }
 
@@ -2643,11 +2405,7 @@ input[type='range']:focus-visible {
 }
 
 .place-badge-filled {
-<<<<<<< HEAD
-  background: var(--violet, #7b6cf6);
-=======
   background: var(--violet-strong);
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: #fff;
 }
 
@@ -2715,11 +2473,7 @@ input[type='range']:focus-visible {
 
 .share-menu-title {
   margin: 0 0 10px;
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 700;
   color: var(--text);
 }
@@ -2736,11 +2490,7 @@ input[type='range']:focus-visible {
   border: 1px solid #ffffff1f;
   border-radius: 9px;
   padding: 9px 11px;
-<<<<<<< HEAD
-  font-size: 12.5px;
-=======
   font-size: 13px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-family: inherit;
   color: var(--text-dim);
   outline: none;
@@ -2761,11 +2511,7 @@ input[type='range']:focus-visible {
   border: 1px solid var(--yellow);
   background: var(--yellow);
   color: #16130a;
-<<<<<<< HEAD
-  font-size: 12.5px;
-=======
   font-size: 13px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
@@ -2799,11 +2545,7 @@ input[type='range']:focus-visible {
   border-radius: 9px;
   background: none;
   color: var(--text);
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 500;
   font-family: inherit;
   text-align: left;
@@ -2886,11 +2628,7 @@ input[type='range']:focus-visible {
 
 .login-toast-text {
   margin: 2px 0 0;
-<<<<<<< HEAD
-  font-size: 12.5px;
-=======
   font-size: 13px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text-dim);
   line-height: 1.35;
 }
@@ -2954,11 +2692,7 @@ input[type='range']:focus-visible {
   align-items: center;
   gap: 10px;
   color: var(--text-dim);
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   margin-bottom: 16px;
 }
 
@@ -2973,11 +2707,7 @@ input[type='range']:focus-visible {
 }
 
 .place-summary {
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text-dim);
   line-height: 1.6;
   margin: 0 0 26px;
@@ -3028,11 +2758,7 @@ input[type='range']:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 }
 
 .place-facts-label {
@@ -3046,11 +2772,7 @@ input[type='range']:focus-visible {
 
 .btn-start-quiz {
   width: 100%;
-<<<<<<< HEAD
-  background: var(--violet, #7b6cf6);
-=======
   background: var(--violet-strong);
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: #fff;
   font-weight: 700;
   font-size: 15px;
@@ -3181,15 +2903,9 @@ input[type='range']:focus-visible {
 
 .quiz-hub-card-count {
   margin: 0;
-<<<<<<< HEAD
-  font-size: 11.5px;
-  font-weight: 700;
-  color: var(--violet, #7b6cf6);
-=======
   font-size: 12px;
   font-weight: 700;
   color: var(--violet);
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 }
 
 .quiz-place-label {
@@ -3209,11 +2925,7 @@ input[type='range']:focus-visible {
 .quiz-progress-row {
   display: flex;
   justify-content: space-between;
-<<<<<<< HEAD
-  font-size: 12.5px;
-=======
   font-size: 13px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text-dim);
   margin-bottom: 10px;
 }
@@ -3230,11 +2942,7 @@ input[type='range']:focus-visible {
 .quiz-progress-fill {
   height: 100%;
   border-radius: 999px;
-<<<<<<< HEAD
-  background: linear-gradient(90deg, var(--violet, #7b6cf6), #a99bff);
-=======
   background: linear-gradient(90deg, var(--violet), #a99bff);
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   transition: width 0.3s ease;
 }
 
@@ -3258,11 +2966,7 @@ input[type='range']:focus-visible {
   background: #ffffff08;
   border: 1.5px solid var(--card-border);
   color: var(--text);
-<<<<<<< HEAD
-  font-size: 14.5px;
-=======
   font-size: 15px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 600;
   padding: 14px 18px;
   border-radius: 12px;
@@ -3398,11 +3102,7 @@ input[type='range']:focus-visible {
 }
 
 .leaderboard-sub {
-<<<<<<< HEAD
-  font-size: 14.5px;
-=======
   font-size: 15px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text-dim);
   margin: 0;
 }
@@ -3431,22 +3131,14 @@ input[type='range']:focus-visible {
 }
 
 .leaderboard-tab.active {
-<<<<<<< HEAD
-  background: linear-gradient(135deg, var(--violet, #7b6cf6), #9b3ff0);
-=======
   background: linear-gradient(135deg, var(--violet-strong), #9b3ff0);
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   border-color: transparent;
   color: #fff;
 }
 
 .leaderboard-status {
   color: var(--text-dim);
-<<<<<<< HEAD
-  font-size: 14.5px;
-=======
   font-size: 15px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   padding: 40px 0;
   text-align: center;
 }
@@ -3512,11 +3204,7 @@ input[type='range']:focus-visible {
 }
 
 .podium-name {
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 700;
   font-style: italic;
   color: var(--text);
@@ -3576,30 +3264,18 @@ input[type='range']:focus-visible {
 }
 
 .leaderboard-row-you {
-<<<<<<< HEAD
-  background: var(--violet-dim, #7b6cf633);
-}
-
-.leaderboard-row-you:hover {
-  background: var(--violet-dim, #7b6cf633);
-=======
   background: var(--violet-dim);
 }
 
 .leaderboard-row-you:hover {
   background: var(--violet-dim);
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 }
 
 .leaderboard-rank {
   display: flex;
   align-items: center;
   justify-content: center;
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 700;
   color: var(--text-dim);
 }
@@ -3627,17 +3303,10 @@ input[type='range']:focus-visible {
 }
 
 .leaderboard-you-tag {
-<<<<<<< HEAD
-  font-size: 10.5px;
-  font-weight: 700;
-  color: var(--violet, #7b6cf6);
-  background: var(--violet-dim, #7b6cf633);
-=======
   font-size: 12px;
   font-weight: 700;
   color: var(--violet);
   background: var(--violet-dim);
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   border-radius: 999px;
   padding: 2px 8px;
   flex-shrink: 0;
@@ -3703,14 +3372,6 @@ input[type='range']:focus-visible {
 
 /* ==================== Admin dashboard ==================== */
 
-<<<<<<< HEAD
-:root {
-  --danger: #ef4665;
-  --danger-dim: #ef466522;
-}
-
-=======
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 .admin-page {
   min-height: 100vh;
 }
@@ -3727,15 +3388,9 @@ input[type='range']:focus-visible {
 }
 
 .admin-badge {
-<<<<<<< HEAD
-  background: var(--violet, #7b6cf6);
-  color: #fff;
-  font-size: 11px;
-=======
   background: var(--violet-strong);
   color: #fff;
   font-size: 12px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -3774,11 +3429,7 @@ input[type='range']:focus-visible {
 }
 
 .admin-sub {
-<<<<<<< HEAD
-  font-size: 14.5px;
-=======
   font-size: 15px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text-dim);
   margin: 0 0 28px;
 }
@@ -3823,11 +3474,7 @@ input[type='range']:focus-visible {
 }
 
 .admin-stat-label {
-<<<<<<< HEAD
-  font-size: 12.5px;
-=======
   font-size: 13px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text-dim);
   margin: 0;
 }
@@ -3857,11 +3504,7 @@ input[type='range']:focus-visible {
 }
 
 .admin-tab.active {
-<<<<<<< HEAD
-  background: linear-gradient(135deg, var(--violet, #7b6cf6), #9b3ff0);
-=======
   background: linear-gradient(135deg, var(--violet-strong), #9b3ff0);
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   border-color: transparent;
   color: #fff;
 }
@@ -3870,11 +3513,7 @@ input[type='range']:focus-visible {
 
 .admin-status {
   color: var(--text-dim);
-<<<<<<< HEAD
-  font-size: 14.5px;
-=======
   font-size: 15px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   padding: 32px 0;
   text-align: center;
 }
@@ -3885,11 +3524,7 @@ input[type='range']:focus-visible {
 
 .admin-success {
   color: #4ade80;
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   margin: 0 0 14px;
 }
 
@@ -3987,11 +3622,7 @@ input[type='range']:focus-visible {
 }
 
 .admin-table-header {
-<<<<<<< HEAD
-  font-size: 11.5px;
-=======
   font-size: 12px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -4050,11 +3681,7 @@ input[type='range']:focus-visible {
 
 .admin-cell-dim {
   color: var(--text-dim);
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4062,11 +3689,7 @@ input[type='range']:focus-visible {
 
 .admin-status-pill {
   display: inline-block;
-<<<<<<< HEAD
-  font-size: 11.5px;
-=======
   font-size: 12px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 999px;
@@ -4088,11 +3711,7 @@ input[type='range']:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-<<<<<<< HEAD
-  font-size: 12.5px;
-=======
   font-size: 13px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 700;
   padding: 8px 12px;
   border-radius: 8px;
@@ -4212,11 +3831,7 @@ input[type='range']:focus-visible {
   align-items: center;
   gap: 6px;
   padding: 12px 16px;
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   white-space: nowrap;
 }
 
@@ -4294,11 +3909,7 @@ input[type='range']:focus-visible {
 }
 
 .admin-csv-help {
-<<<<<<< HEAD
-  font-size: 13.5px;
-=======
   font-size: 14px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text-dim);
   line-height: 1.6;
   margin: 0 0 18px;
@@ -4308,11 +3919,7 @@ input[type='range']:focus-visible {
   background: #ffffff10;
   padding: 1px 6px;
   border-radius: 5px;
-<<<<<<< HEAD
-  font-size: 12.5px;
-=======
   font-size: 13px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text);
 }
 
@@ -4400,13 +4007,8 @@ input[type='range']:focus-visible {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-<<<<<<< HEAD
-  color: var(--violet, #7b6cf6);
-  background: var(--violet-dim, #7b6cf633);
-=======
   color: var(--violet);
   background: var(--violet-dim);
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   padding: 7px 16px;
   border-radius: 999px;
   margin-bottom: 22px;
@@ -4489,11 +4091,7 @@ input[type='range']:focus-visible {
 .about-section-sub {
   text-align: center;
   color: var(--text-dim);
-<<<<<<< HEAD
-  font-size: 14.5px;
-=======
   font-size: 15px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   max-width: 560px;
   margin: 0 auto 32px;
   line-height: 1.6;
@@ -4524,11 +4122,7 @@ input[type='range']:focus-visible {
   height: 84px;
   border-radius: 999px;
   background: var(--bg-elev);
-<<<<<<< HEAD
-  border: 2px solid var(--violet, #7b6cf6);
-=======
   border: 2px solid var(--violet);
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   margin-bottom: 16px;
 }
 
@@ -4539,11 +4133,7 @@ input[type='range']:focus-visible {
 }
 
 .about-team-role {
-<<<<<<< HEAD
-  font-size: 12.5px;
-=======
   font-size: 13px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   color: var(--text-faint);
   margin: 0;
   text-transform: uppercase;
@@ -4664,22 +4254,13 @@ input[type='range']:focus-visible {
   width: 46px;
   height: 46px;
   border-radius: 12px;
-<<<<<<< HEAD
-  background: var(--violet-dim, #7b6cf633);
-  color: var(--violet, #7b6cf6);
-=======
   background: var(--violet-dim);
   color: var(--violet);
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   margin-bottom: 16px;
 }
 
 .hiw-step-card h3 {
-<<<<<<< HEAD
-  font-size: 16.5px;
-=======
   font-size: 16px;
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   font-weight: 800;
   margin: 0 0 8px;
 }
@@ -4735,8 +4316,6 @@ input[type='range']:focus-visible {
     flex-direction: column;
   }
 }
-<<<<<<< HEAD
-=======
 
 /* ---------- avatar picker ---------- */
 
@@ -4951,4 +4530,3 @@ input[type='range']:focus-visible {
   .explorer-level { display: none; }
   .user-profile-action { margin-left: 0; }
 }
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
