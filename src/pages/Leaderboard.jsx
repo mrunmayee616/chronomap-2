@@ -1,8 +1,5 @@
 import { useEffect, useState } from 'react'
-<<<<<<< HEAD
-=======
 import { Link } from 'react-router-dom'
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 import Navbar from '../components/Navbar.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { leaderboardApi } from '../lib/api.js'
@@ -45,11 +42,7 @@ function PodiumColumn({ entry, place }) {
   return (
     <div className="podium-col" style={{ order: place === 1 ? 2 : place === 2 ? 3 : 1 }}>
       <img
-<<<<<<< HEAD
-        src={avatarUrlFor(entry.username)}
-=======
         src={avatarUrlFor(entry.username, entry.avatar)}
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
         alt={`${entry.fullName}'s avatar`}
         className={`podium-avatar podium-avatar-${place}`}
       />
@@ -58,13 +51,9 @@ function PodiumColumn({ entry, place }) {
         style={{ height: heightByPlace[place], background: style.bg, borderColor: style.border }}
       >
         <span className="podium-medal"><MedalIcon place={place} /></span>
-<<<<<<< HEAD
-        <p className="podium-name">{entry.fullName}</p>
-=======
         <p className="podium-name">
           <Link to={`/u/${encodeURIComponent(entry.username)}`} className="lb-profile-link">{entry.fullName}</Link>
         </p>
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
         <p className="podium-xp">{entry.xp.toLocaleString()} XP</p>
       </div>
     </div>
@@ -169,13 +158,6 @@ export default function Leaderboard() {
                     </span>
                     <span className="leaderboard-user">
                       <img
-<<<<<<< HEAD
-                        src={avatarUrlFor(entry.username)}
-                        alt={`${entry.fullName}'s avatar`}
-                        className="leaderboard-avatar"
-                      />
-                      {entry.fullName}
-=======
                         src={avatarUrlFor(entry.username, entry.avatar)}
                         alt={`${entry.fullName}'s avatar`}
                         className="leaderboard-avatar"
@@ -183,7 +165,6 @@ export default function Leaderboard() {
                       <Link to={`/u/${encodeURIComponent(entry.username)}`} className="lb-profile-link">
                         {entry.fullName}
                       </Link>
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
                       {entry.isYou && <span className="leaderboard-you-tag">You</span>}
                     </span>
                     <span className="leaderboard-xp">{entry.xp.toLocaleString()}</span>

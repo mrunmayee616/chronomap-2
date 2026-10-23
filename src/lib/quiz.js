@@ -27,3 +27,13 @@ export function dedupeQuiz(quiz) {
     return true
   })
 }
+
+// Lower-cases and strips punctuation/extra spaces so two questions that only
+// differ in capitalisation or punctuation count as the same question.
+export function normalizeQuestionText(text) {
+  return String(text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}

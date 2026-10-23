@@ -4,10 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { usePlaces } from '../context/PlacesContext.jsx'
 import { adminApi } from '../lib/api.js'
 import { avatarUrlFor } from '../lib/avatar.js'
-<<<<<<< HEAD
-=======
 import { normalizeQuestionText } from '../lib/quiz.js'
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 import { PLACES as STATIC_PLACES } from '../data/places.js'
 import Logo from '../components/Logo.jsx'
 
@@ -26,11 +23,8 @@ const EMPTY_FORM = {
   image: '',
 }
 
-<<<<<<< HEAD
-=======
 const EMPTY_QUESTION = { placeId: '', question: '', options: ['', '', '', ''], answerIndex: 0 }
 
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 const REQUIRED_CSV_COLUMNS = [
   'place_name',
   'country',
@@ -187,11 +181,7 @@ export default function AdminDashboard() {
 
       <div className="admin-wrap">
         <h1 className="admin-title">Admin Dashboard</h1>
-<<<<<<< HEAD
-        <p className="admin-sub">Manage explorer accounts and the historical places dataset.</p>
-=======
         <p className="admin-sub">Manage explorer accounts, the historical places dataset, and quiz questions.</p>
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 
         <AdminStats />
 
@@ -210,11 +200,6 @@ export default function AdminDashboard() {
           >
             Dataset
           </button>
-<<<<<<< HEAD
-        </div>
-
-        {tab === 'users' ? <UsersPanel token={token} /> : <DatasetPanel token={token} />}
-=======
           <button
             type="button"
             className={tab === 'quizzes' ? 'admin-tab active' : 'admin-tab'}
@@ -227,7 +212,6 @@ export default function AdminDashboard() {
         {tab === 'users' && <UsersPanel token={token} />}
         {tab === 'dataset' && <DatasetPanel token={token} />}
         {tab === 'quizzes' && <QuizzesPanel token={token} />}
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
       </div>
     </div>
   )
@@ -374,11 +358,7 @@ function UsersPanel({ token }) {
           {filtered.map((u) => (
             <div className="admin-table-row admin-users-grid" key={u.id}>
               <span className="admin-user-cell">
-<<<<<<< HEAD
-                <img src={avatarUrlFor(u.username)} alt="" className="admin-user-avatar" />
-=======
                 <img src={avatarUrlFor(u.username, u.avatar)} alt="" className="admin-user-avatar" />
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
                 <span>
                   <span className="admin-user-name">{u.fullName}</span>
                   <span className="admin-user-handle">@{u.username}</span>
@@ -406,8 +386,6 @@ function UsersPanel({ token }) {
   )
 }
 
-<<<<<<< HEAD
-=======
 /* ---------- quizzes panel ---------- */
 
 function QuizzesPanel({ token }) {
@@ -624,7 +602,6 @@ function QuizzesPanel({ token }) {
   )
 }
 
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 /* ---------- dataset panel ---------- */
 
 function DatasetPanel({ token }) {

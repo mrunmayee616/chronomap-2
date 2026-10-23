@@ -1,16 +1,8 @@
-<<<<<<< HEAD
-// A generic, consistent avatar for a given user: a solid-colour circle with
-// their initials, in the style of Slack/GitHub's default avatars. The same
-// user always gets the same colour and initials - there's no per-user
-// cartoon face, just one clean look drawn from a small, fixed palette that
-// matches the app's dark/gold theme.
-=======
 // Avatars. By default a user gets a generic one: a solid-colour circle with
 // their initials, in the style of Slack/GitHub's default avatars -- the same
 // user always gets the same colour and initials. Users can also pick one of
 // the preset avatars below (a coloured circle with a history-themed glyph);
 // the chosen preset id is stored on their account (`user.avatar`).
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 //
 // Rendered as an inline SVG data URI, so there's no network request and
 // nothing that can fail to load: `avatarUrlFor(...)` can be dropped
@@ -53,12 +45,6 @@ function escapeXml(text) {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-<<<<<<< HEAD
-// `gender` is accepted (and ignored) so every existing call site --
-// Navbar, Profile, AdminDashboard, Leaderboard, Register, About -- keeps
-// working unchanged; it no longer affects the avatar's appearance.
-export function avatarUrlFor(seed, _gender) {
-=======
 // Preset avatars users can choose from. Each is a colour plus a simple
 // 24x24 stroke glyph. Keep the ids in sync with server/src/data/avatars.js,
 // which is what the server validates a chosen avatar against.
@@ -95,7 +81,6 @@ export function avatarUrlFor(seed, avatarId) {
     return `data:image/svg+xml,${encodeURIComponent(svg)}`
   }
 
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   const safeSeed = seed || 'chronomap'
   const hash = hashSeed(safeSeed)
   const color = PALETTE[hash % PALETTE.length]

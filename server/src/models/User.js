@@ -46,12 +46,9 @@ const userSchema = new mongoose.Schema(
     // Used only to pick a visually distinct (and consistently gendered)
     // avatar style -- see src/lib/avatar.js on the client.
     gender: { type: String, enum: ['male', 'female', 'unspecified'], default: 'unspecified' },
-<<<<<<< HEAD
-=======
     // Chosen avatar preset id (see server/src/data/avatars.js). Empty means
     // the user hasn't picked one, so the client shows initials instead.
     avatar: { type: String, default: '' },
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
     // ISO 3166-1 alpha-2 code (e.g. "IN", "US"). Empty string means not set
     // (only possible for accounts created before this field existed).
     // See server/src/data/countries.js for the canonical list of codes.

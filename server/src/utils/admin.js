@@ -22,10 +22,7 @@ export function adminPublicUser() {
     bio: '',
     location: '',
     gender: 'unspecified',
-<<<<<<< HEAD
-=======
     avatar: '',
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
     country: '',
     joinedAt: null,
     level: 0,

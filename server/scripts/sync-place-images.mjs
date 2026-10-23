@@ -7,11 +7,7 @@
 //   node scripts/sync-place-images.mjs
 //
 // Safe to re-run any time (e.g. after adding a place to
-<<<<<<< HEAD
-// src/data/placeImageTopics.js) -- it always looks up every topic fresh and
-=======
 // server/src/data/placeImageTopics.js) -- it always looks up every topic fresh and
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 // overwrites the generated file. It never touches src/data/places.js
 // itself. A place that can't be resolved (network hiccup, no matching
 // article) simply keeps whatever image it already has -- nothing on the
@@ -20,11 +16,7 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import { fetchPlaceImageSet } from '../src/utils/wikimediaImages.js'
-<<<<<<< HEAD
-import { PLACE_IMAGE_TOPICS } from '../../src/data/placeImageTopics.js'
-=======
 import { PLACE_IMAGE_TOPICS } from '../src/data/placeImageTopics.js'
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PLACES_FILE = path.resolve(__dirname, '../../src/data/places.js')
@@ -105,11 +97,7 @@ async function main() {
   if (ok < ids.length) {
     console.log(
       `\n${ids.length - ok} place(s) were skipped and keep their previous image. Re-run this script to retry them` +
-<<<<<<< HEAD
-        ' (a transient network error is the most common cause), or adjust the topic in src/data/placeImageTopics.js if a title is wrong.'
-=======
         ' (a transient network error is the most common cause), or adjust the topic in server/src/data/placeImageTopics.js if a title is wrong.'
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
     )
   }
 }

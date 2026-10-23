@@ -71,8 +71,6 @@ export const leaderboardApi = {
     request(`/api/leaderboard?period=${encodeURIComponent(period)}`, { token }),
 }
 
-<<<<<<< HEAD
-=======
 export const usersApi = {
   // Search explorers by username or name (2+ characters).
   search: (token, q) => request(`/api/users/search?q=${encodeURIComponent(q)}`, { token }),
@@ -87,17 +85,13 @@ export const usersApi = {
   following: (token, username) => request(`/api/users/${encodeURIComponent(username)}/following`, { token }),
 }
 
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 export const placesApi = {
   // Public -- the delta (hidden static places + admin-added ones) that
   // every client merges into the bundled static dataset. See
   // src/context/PlacesContext.jsx.
   overrides: () => request('/api/places/overrides'),
-<<<<<<< HEAD
-=======
   // Real Wikipedia photos found by the server for the built-in places.
   images: () => request('/api/places/images'),
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 }
 
 export const adminApi = {
@@ -115,15 +109,12 @@ export const adminApi = {
   // csvText is the raw file content (already read client-side via
   // FileReader) -- sent as a JSON string field rather than a multipart
   // upload, since the whole app already speaks plain JSON.
-<<<<<<< HEAD
-=======
   // Quiz questions are stored separately from places and appended to a
   // place's built-in quiz on the client (see PlacesContext).
   addQuestion: (token, placeId, payload) =>
     request(`/api/admin/places/${encodeURIComponent(placeId)}/questions`, { method: 'POST', body: payload, token }),
   deleteQuestion: (token, questionId) =>
     request(`/api/admin/questions/${encodeURIComponent(questionId)}`, { method: 'DELETE', token }),
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   bulkImportPlaces: (token, csvText) =>
     request('/api/admin/places/bulk', { method: 'POST', body: { csv: csvText }, token }),
 }

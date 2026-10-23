@@ -12,10 +12,7 @@ export function publicUser(user) {
     bio: user.bio || '',
     location: user.location || '',
     gender: user.gender || 'unspecified',
-<<<<<<< HEAD
-=======
     avatar: user.avatar || '',
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
     country: user.country || '',
     joinedAt: user.createdAt,
     level: user.level,

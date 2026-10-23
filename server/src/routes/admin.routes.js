@@ -7,14 +7,11 @@ import { PLACE_COUNTRIES } from '../data/places.js'
 import { slugify, validatePlaceForm, validatePlaceEdit, buildPlace, applyEditToPlace, resolvePlaceImage } from '../utils/placeBuilder.js'
 import { parseCsv } from '../utils/csvParse.js'
 import { buildPlacesFromCsvRows, REQUIRED_CSV_COLUMNS } from '../utils/csvImport.js'
-<<<<<<< HEAD
-=======
 import QuizQuestion from '../models/QuizQuestion.js'
 import Follow from '../models/Follow.js'
 import { syncPlaceImages, isSyncRunning } from '../utils/placeImageSync.js'
 import { getEffectivePlaceCountries } from '../utils/placeOverrides.js'
 import { validateQuizQuestion } from '../utils/quizQuestion.js'
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 
 const router = Router()
 
@@ -27,11 +24,7 @@ router.use(requireAuth, requireAdmin)
 // GET /api/admin/users
 router.get('/users', async (_req, res) => {
   const users = await User.find()
-<<<<<<< HEAD
-    .select('fullName email username gender level xp countriesExplored quizzesCompleted createdAt')
-=======
     .select('fullName email username gender avatar level xp countriesExplored quizzesCompleted createdAt')
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
     .sort({ createdAt: -1 })
     .lean()
 
@@ -42,10 +35,7 @@ router.get('/users', async (_req, res) => {
       email: u.email,
       username: u.username,
       gender: u.gender,
-<<<<<<< HEAD
-=======
       avatar: u.avatar || '',
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
       level: u.level,
       xp: u.xp,
       countriesExplored: u.countriesExplored,
@@ -65,12 +55,9 @@ router.delete('/users/:id', async (req, res) => {
   if (!deleted) {
     return res.status(404).json({ error: 'User not found.' })
   }
-<<<<<<< HEAD
-=======
   // Drop the deleted user's follows in both directions so nobody is left
   // with a phantom follower or following count.
   await Follow.deleteMany({ $or: [{ follower: id }, { following: id }] })
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
   return res.status(200).json({ message: 'User deleted.', id })
 })
 
@@ -240,11 +227,8 @@ router.delete('/places/:id', async (req, res) => {
   const existingAdded = await PlaceOverride.findOne({ placeId: id, action: 'added' })
   if (existingAdded) {
     await PlaceOverride.deleteOne({ _id: existingAdded._id })
-<<<<<<< HEAD
-=======
     // A custom place is gone for good, so its extra quiz questions go too.
     await QuizQuestion.deleteMany({ placeId: id })
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
     return res.status(200).json({ message: 'Place deleted.', id })
   }
 
@@ -268,8 +252,6 @@ router.post('/places/:id/restore', async (req, res) => {
   return res.status(200).json({ message: 'Place restored.', id })
 })
 
-<<<<<<< HEAD
-=======
 // POST /api/admin/places/images/sync   Body: { force?: boolean }
 // Re-runs the Wikipedia photo lookup in the background (force: redo every
 // place, not just the ones missing a photo). Returns straight away.
@@ -345,5 +327,4 @@ router.delete('/questions/:qid', async (req, res) => {
   return res.status(200).json({ message: 'Question deleted.', id: qid })
 })
 
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 export default router

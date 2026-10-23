@@ -1,8 +1,5 @@
 import { COUNTRY_CODES } from '../data/countries.js'
-<<<<<<< HEAD
-=======
 import { AVATAR_IDS } from '../data/avatars.js'
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/
@@ -17,14 +14,11 @@ export function isValidGender(gender) {
   return GENDER_VALUES.includes(gender)
 }
 
-<<<<<<< HEAD
-=======
 // '' is allowed and means "no avatar chosen" (show initials).
 export function isValidAvatar(avatar) {
   return avatar === '' || (typeof avatar === 'string' && AVATAR_IDS.includes(avatar))
 }
 
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 export function isValidCountry(country) {
   return typeof country === 'string' && COUNTRY_CODE_SET.has(country.toUpperCase())
 }

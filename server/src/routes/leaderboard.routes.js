@@ -31,13 +31,10 @@ function startOfPeriod(period) {
 // xpHistory log -- there's no separate stored "rank", so a user's position
 // moves the moment their summed XP overtakes someone else's, and a user
 // with zero XP in the period simply doesn't appear.
-<<<<<<< HEAD
-=======
 //
 // The admin account is never on this board: it has no User document (see
 // utils/admin.js) and progress.routes.js never records XP for it, so there's
 // nothing here to rank.
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 // ---------------------------------------------------------------------------
 router.get('/', requireAuth, async (req, res) => {
   const period = VALID_PERIODS.includes(req.query.period) ? req.query.period : 'week'
@@ -53,10 +50,7 @@ router.get('/', requireAuth, async (req, res) => {
         fullName: { $first: '$fullName' },
         username: { $first: '$username' },
         gender: { $first: '$gender' },
-<<<<<<< HEAD
-=======
         avatar: { $first: '$avatar' },
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
         country: { $first: '$country' },
       },
     },
@@ -74,10 +68,7 @@ router.get('/', requireAuth, async (req, res) => {
     fullName: row.fullName,
     username: row.username,
     gender: row.gender || 'unspecified',
-<<<<<<< HEAD
-=======
     avatar: row.avatar || '',
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
     country: row.country || '',
     xp: row.xp,
     isYou: currentUserId ? String(row._id) === String(currentUserId) : false,

@@ -11,13 +11,9 @@ import progressRoutes from './routes/progress.routes.js'
 import leaderboardRoutes from './routes/leaderboard.routes.js'
 import placesRoutes from './routes/places.routes.js'
 import adminRoutes from './routes/admin.routes.js'
-<<<<<<< HEAD
-import { connectDB } from './db/index.js'
-=======
 import usersRoutes from './routes/users.routes.js'
 import { connectDB } from './db/index.js'
 import { syncPlaceImages } from './utils/placeImageSync.js'
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -43,10 +39,7 @@ app.use('/api/auth/oauth', authLimiter, oauthRoutes)
 app.use('/api/auth', authLimiter, authRoutes)
 app.use('/api/progress', progressRoutes)
 app.use('/api/leaderboard', leaderboardRoutes)
-<<<<<<< HEAD
-=======
 app.use('/api/users', usersRoutes)
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 app.use('/api/places', placesRoutes)
 app.use('/api/admin', adminRoutes)
 
@@ -62,15 +55,12 @@ async function start() {
   app.listen(PORT, () => {
     console.log(`ChronoMap API listening on http://localhost:${PORT}`)
   })
-<<<<<<< HEAD
-=======
   // Fill in real Wikipedia photos for any built-in place that doesn't have
   // one yet. Background only -- never delays startup. Set PLACE_IMAGE_SYNC=off
   // to disable (e.g. on a server with no outbound internet).
   if (process.env.PLACE_IMAGE_SYNC !== 'off') {
     syncPlaceImages().catch((err) => console.error('Place image sync failed:', err.message))
   }
->>>>>>> 3450fa5 (feat: Fixes for admin user and loading accurate images for locations)
 }
 
 start()
