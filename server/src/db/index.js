@@ -1,22 +1,57 @@
+// import mongoose from 'mongoose'
+
+// const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/chronomap'
+
+// mongoose.set('strictQuery', true)
+
+// export async function connectDB() {
+//   mongoose.connection.on('error', (err) => {
+//     console.error('MongoDB connection error:', err.message)
+//   })
+
+//   try {
+//     await mongoose.connect(MONGODB_URI)
+//     console.log(`✔ MongoDB connected -> ${mongoose.connection.name}`)
+//   } catch (err) {
+//     console.error('✘ Could not connect to MongoDB:', err.message)
+//     console.error(`  Tried: ${MONGODB_URI}`)
+//     console.error('  Is mongod running locally, or is MONGODB_URI set correctly in server/.env?')
+//     process.exit(1)
+//   }
+// }
+
+// export default mongoose
 import mongoose from 'mongoose'
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/chronomap'
 
 mongoose.set('strictQuery', true)
 
+// Register the error listener once, not on every connectDB() call.
+let listenerAttached = false
+
 export async function connectDB() {
-  mongoose.connection.on('error', (err) => {
-    console.error('MongoDB connection error:', err.message)
-  })
+  if (!listenerAttached) {
+    mongoose.connection.on('error', (err) => {
+      console.error('MongoDB connection error:', err.message)
+    })
+    listenerAttached = true
+  }
+
+  // Already connected (or connecting) -- reuse it. Important on serverless,
+  // where warm instances handle many requests.
+  if (mongoose.connection.readyState === 1) return mongoose.connection
 
   try {
-    await mongoose.connect(MONGODB_URI)
+    await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 8000 })
     console.log(`✔ MongoDB connected -> ${mongoose.connection.name}`)
+    return mongoose.connection
   } catch (err) {
     console.error('✘ Could not connect to MongoDB:', err.message)
-    console.error(`  Tried: ${MONGODB_URI}`)
-    console.error('  Is mongod running locally, or is MONGODB_URI set correctly in server/.env?')
-    process.exit(1)
+    console.error('  Is mongod running locally, or is MONGODB_URI set correctly (server/.env locally, Project Settings on Vercel)?')
+    // Throw instead of process.exit(1): exiting would kill a serverless
+    // function. server.js catches this and exits itself when running locally.
+    throw err
   }
 }
 
