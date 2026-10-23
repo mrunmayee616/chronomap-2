@@ -1,8 +1,8 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import Navbar from '../components/Navbar.jsx'
+import { MapHoverCard, MapStats, PlaceInfoPanel } from '../components/PlaceMapInfo.jsx'
 import { usePlaces } from '../context/PlacesContext.jsx'
 
 /* ---------- constants ---------- */
@@ -159,11 +159,14 @@ function pct(y) {
    instead of a hand-drawn SVG world. Panning, pinch/scroll zoom, momentum
    and tile loading are all handled by Leaflet itself. */
 
-const LeafletMap2D = forwardRef(function LeafletMap2D({ mode, places = [] }, ref) {
+const LeafletMap2D = forwardRef(function LeafletMap2D({ mode, places = [], selectedId, onSelect, onHover }, ref) {
   const mountRef = useRef(null)
   const mapRef = useRef(null)
   const markersLayerRef = useRef(null)
-  const navigate = useNavigate()
+  // Latest callbacks, read from inside Leaflet's event handlers so those
+  // handlers don't have to be re-bound every time the parent re-renders.
+  const handlersRef = useRef({ onSelect, onHover })
+  handlersRef.current = { onSelect, onHover }
 
   useEffect(() => {
     if (!mountRef.current || mapRef.current) return undefined
@@ -191,6 +194,11 @@ const LeafletMap2D = forwardRef(function LeafletMap2D({ mode, places = [] }, ref
 
     markersLayerRef.current = L.layerGroup().addTo(map)
     mapRef.current = map
+    // Clicking empty map closes the info panel (marker clicks don't bubble
+    // up to the map); any pan/zoom hides the hover card, whose position
+    // would otherwise drift away from its pin.
+    map.on('click', () => handlersRef.current.onSelect?.(null))
+    map.on('movestart zoomstart', () => handlersRef.current.onHover?.(null))
     // Leaflet measures its container on creation; if that happened while the
     // panel was still mid-layout (e.g. right after a page transition), the
     // tiles come in misaligned until something nudges it -- so nudge it once
@@ -212,17 +220,21 @@ const LeafletMap2D = forwardRef(function LeafletMap2D({ mode, places = [] }, ref
     }
   }, [mode])
 
-  // Plot one pin per dataset entry -- re-runs whenever `places` changes, so
-  // swapping in the real dataset later just makes these pins update.
+  // Plot one pin per dataset entry -- re-runs whenever `places` or the
+  // selection changes (74-ish markers, so rebuilding is cheap). Hovering a
+  // pin reports its on-screen tip so the page can float the hover card over
+  // it; clicking selects it, which opens the info panel.
   useEffect(() => {
+    const map = mapRef.current
     const layer = markersLayerRef.current
-    if (!layer) return
+    if (!map || !layer) return
     layer.clearLayers()
 
     places.forEach((place) => {
       if (!place.coords) return
+      const selected = place.id === selectedId
       const icon = L.divIcon({
-        className: 'place-pin-icon',
+        className: selected ? 'place-pin-icon is-selected' : 'place-pin-icon',
         html: `
           <svg class="place-pin" width="26" height="34" viewBox="0 0 26 34" xmlns="http://www.w3.org/2000/svg">
             <path
@@ -238,12 +250,22 @@ const LeafletMap2D = forwardRef(function LeafletMap2D({ mode, places = [] }, ref
         iconSize: [26, 34],
         iconAnchor: [13, 34],
       })
-      const marker = L.marker([place.coords.lat, place.coords.lng], { icon })
-      marker.bindTooltip(place.name, { direction: 'top', offset: [0, -30] })
-      marker.on('click', () => navigate(`/place/${place.id}`))
+      const marker = L.marker([place.coords.lat, place.coords.lng], {
+        icon,
+        keyboard: true,
+        title: place.name,
+        zIndexOffset: selected ? 1000 : 0,
+      })
+      marker.on('mouseover', () => {
+        const point = map.latLngToContainerPoint(marker.getLatLng())
+        handlersRef.current.onHover?.({ place, x: point.x, y: point.y })
+      })
+      marker.on('mouseout', () => handlersRef.current.onHover?.(null))
+      // Leaflet also fires 'click' for Enter on a keyboard-focused marker.
+      marker.on('click', () => handlersRef.current.onSelect?.(place.id))
       marker.addTo(layer)
     })
-  }, [places, navigate])
+  }, [places, selectedId])
 
   useImperativeHandle(ref, () => ({
     zoomIn() {
@@ -254,6 +276,15 @@ const LeafletMap2D = forwardRef(function LeafletMap2D({ mode, places = [] }, ref
     },
     reset() {
       mapRef.current?.setView([20, 0], 2)
+    },
+    // offset: how far (px) the place should sit from the map's centre, so it
+    // lands in the part of the map the info panel doesn't cover.
+    flyTo(place, offset = { x: 0, y: 0 }) {
+      const map = mapRef.current
+      if (!map || !place?.coords) return
+      const zoom = Math.max(map.getZoom(), 5)
+      const center = map.project([place.coords.lat, place.coords.lng], zoom).subtract([offset.x, offset.y])
+      map.flyTo(map.unproject(center, zoom), zoom, { duration: 0.8 })
     },
   }))
 
@@ -299,13 +330,16 @@ function buildPinDataUrl() {
    Once created, the viewer is kept alive (just hidden with CSS) so switching
    back and forth between 2D/3D doesn't lose your place on the globe. */
 
-const CesiumGlobe3D = forwardRef(function CesiumGlobe3D({ mode, places = [] }, ref) {
+const CesiumGlobe3D = forwardRef(function CesiumGlobe3D({ mode, places = [], selectedId, onSelect, onHover }, ref) {
   const mountRef = useRef(null)
   const viewerRef = useRef(null)
   const cesiumRef = useRef(null)
   const initStarted = useRef(false)
   const [ready, setReady] = useState(false)
-  const navigate = useNavigate()
+  const handlersRef = useRef({ onSelect, onHover })
+  handlersRef.current = { onSelect, onHover }
+  const placesRef = useRef(places)
+  placesRef.current = places
 
   useEffect(() => {
     if (mode !== '3D' || initStarted.current) return undefined
@@ -401,6 +435,7 @@ const CesiumGlobe3D = forwardRef(function CesiumGlobe3D({ mode, places = [] }, r
 
     places.forEach((place) => {
       if (!place.coords) return
+      const selected = place.id === selectedId
       viewer.entities.add({
         id: `place-${place.id}`,
         position: Cesium.Cartesian3.fromDegrees(place.coords.lng, place.coords.lat, 200),
@@ -408,21 +443,35 @@ const CesiumGlobe3D = forwardRef(function CesiumGlobe3D({ mode, places = [] }, r
           image: pinImage,
           width: 26,
           height: 34,
+          // The selected pin is drawn larger, with a yellow ring on the
+          // ground beneath it, matching the 2D map's highlighted marker.
+          scale: selected ? 1.4 : 1,
           verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
           horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
           disableDepthTestDistance: 0,
           scaleByDistance: new Cesium.NearFarScalar(1.0e6, 1, 2.5e7, 0.5),
         },
+        ellipse: selected
+          ? {
+              semiMajorAxis: 60000,
+              semiMinorAxis: 60000,
+              material: Cesium.Color.fromCssColorString('#f7c740').withAlpha(0.35),
+              outline: true,
+              outlineColor: Cesium.Color.fromCssColorString('#f7c740'),
+              height: 0,
+            }
+          : undefined,
       })
     })
 
     return () => {
       viewer.entities.removeAll()
     }
-  }, [places, ready])
+  }, [places, ready, selectedId])
 
-  // Click a pin to open its place page (same behavior as the 2D markers),
-  // and swap in a pointer cursor while hovering one.
+  // Click a pin to select it (opens the info panel, same as the 2D markers),
+  // click empty globe to deselect; hovering a pin reports it for the hover
+  // card and swaps in a pointer cursor.
   useEffect(() => {
     const viewer = viewerRef.current
     const Cesium = cesiumRef.current
@@ -436,13 +485,21 @@ const CesiumGlobe3D = forwardRef(function CesiumGlobe3D({ mode, places = [] }, r
     }
 
     function onClick(movement) {
-      const placeId = placeIdFromPick(viewer.scene.pick(movement.position))
-      if (placeId) navigate(`/place/${placeId}`)
+      handlersRef.current.onSelect?.(placeIdFromPick(viewer.scene.pick(movement.position)))
     }
 
+    let hoveredId = null
     function onMove(movement) {
       const placeId = placeIdFromPick(viewer.scene.pick(movement.endPosition))
       viewer.scene.canvas.style.cursor = placeId ? 'pointer' : ''
+      if (placeId) {
+        const place = placesRef.current.find((p) => p.id === placeId)
+        // The cursor sits somewhere on the pin, so anchor the card to it.
+        if (place) handlersRef.current.onHover?.({ place, x: movement.endPosition.x, y: movement.endPosition.y })
+      } else if (hoveredId) {
+        handlersRef.current.onHover?.(null)
+      }
+      hoveredId = placeId
     }
 
     handler.setInputAction(onClick, Cesium.ScreenSpaceEventType.LEFT_CLICK)
@@ -452,7 +509,7 @@ const CesiumGlobe3D = forwardRef(function CesiumGlobe3D({ mode, places = [] }, r
       handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK)
       handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE)
     }
-  }, [ready, navigate])
+  }, [ready])
 
   // Only torn down when the page itself unmounts, not on every 2D/3D toggle.
   useEffect(
@@ -476,6 +533,18 @@ const CesiumGlobe3D = forwardRef(function CesiumGlobe3D({ mode, places = [] }, r
     },
     reset() {
       viewerRef.current?.camera.flyHome(0.6)
+    },
+    flyTo(place) {
+      const viewer = viewerRef.current
+      const Cesium = cesiumRef.current
+      if (!viewer || !Cesium || !place?.coords) return
+      // Come in close enough to see the region, but never zoom back out if
+      // the camera is already nearer than that.
+      const height = Math.min(viewer.camera.positionCartographic.height, 3.5e6)
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(place.coords.lng, place.coords.lat, height),
+        duration: 1.2,
+      })
     },
   }))
 
@@ -592,12 +661,17 @@ export default function Explore() {
   const [search, setSearch] = useState('')
   const [filterOpen, setFilterOpen] = useState(false)
   const [range, setRange] = useState([MIN_YEAR, MAX_YEAR])
+  // The pin whose info panel is open, and the pin under the cursor (with its
+  // position in map-panel pixels) for the hover card.
+  const [selectedId, setSelectedId] = useState(null)
+  const [hover, setHover] = useState(null)
 
   // Imperative handles onto the real map engines -- Leaflet owns the 2D
   // pan/zoom state, Cesium owns the 3D camera, so the zoom buttons and
   // reset-view button just delegate to whichever one is active.
   const leafletApiRef = useRef(null)
   const cesiumApiRef = useRef(null)
+  const mapPanelRef = useRef(null)
 
   function zoomButton(direction) {
     if (mode === '2D') {
@@ -640,6 +714,41 @@ export default function Explore() {
     setRange(preset.range)
     setFilterOpen(false)
   }
+
+  // A filter change can hide the selected place -- the panel closes with it.
+  const selectedPlace = selectedId ? filteredPlaces.find((p) => p.id === selectedId) || null : null
+
+  function handleSelect(placeId) {
+    setHover(null)
+    setSelectedId(placeId)
+    const place = placeId ? PLACES.find((p) => p.id === placeId) : null
+    if (!place) return
+    if (mode === '2D') leafletApiRef.current?.flyTo(place, panelOffset())
+    else cesiumApiRef.current?.flyTo(place)
+  }
+
+  // Where the info panel sits (see .map-info-panel): a 360px column on the
+  // left on wide screens, a bottom sheet up to 65% tall below 980px. Shift
+  // the selected place to the centre of the uncovered part of the map.
+  function panelOffset() {
+    const panel = mapPanelRef.current
+    if (!panel) return { x: 0, y: 0 }
+    if (window.innerWidth > 980) return { x: (360 + 16) / 2, y: 0 }
+    return { x: 0, y: -(panel.clientHeight * 0.65) / 2 }
+  }
+
+  // Esc closes the info panel.
+  useEffect(() => {
+    if (!selectedId) return undefined
+    function onKey(e) {
+      if (e.key === 'Escape') setSelectedId(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selectedId])
+
+  // Switching engines leaves the old engine's hover card stranded.
+  useEffect(() => setHover(null), [mode])
 
   return (
     <div className="page explore-page">
@@ -723,15 +832,42 @@ export default function Explore() {
           ))}
         </aside>
 
-        <div className="map-panel">
-          <LeafletMap2D ref={leafletApiRef} mode={mode} places={filteredPlaces} />
-          <CesiumGlobe3D ref={cesiumApiRef} mode={mode} places={filteredPlaces} />
+        <div className={selectedPlace ? 'map-panel has-info' : 'map-panel'} ref={mapPanelRef}>
+          <LeafletMap2D
+            ref={leafletApiRef}
+            mode={mode}
+            places={filteredPlaces}
+            selectedId={selectedId}
+            onSelect={handleSelect}
+            onHover={setHover}
+          />
+          <CesiumGlobe3D
+            ref={cesiumApiRef}
+            mode={mode}
+            places={filteredPlaces}
+            selectedId={selectedId}
+            onSelect={handleSelect}
+            onHover={setHover}
+          />
+
+          <MapStats places={filteredPlaces} range={range} />
 
           {filteredPlaces.length === 0 && (
             <div className="map-empty-note">
               No places match the current filters — try widening the timeline or clearing the search.
             </div>
           )}
+
+          {hover && hover.place.id !== selectedId && (
+            <MapHoverCard
+              place={hover.place}
+              x={hover.x}
+              y={hover.y}
+              bounds={mapPanelRef.current?.clientWidth || 0}
+            />
+          )}
+
+          <PlaceInfoPanel place={selectedPlace} onClose={() => setSelectedId(null)} />
 
           <div className="map-hint">
             {mode === '2D'

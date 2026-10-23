@@ -1169,9 +1169,14 @@ input[type='range']:focus-visible {
 /* Leaflet's real OSM slippy map -- fills the whole panel, no artificial
    crop. Toggled with display:none/block (see LeafletMap2D) rather than
    unmounted, so switching to 3D and back keeps your place on the map. */
+/* z-index makes each map its own stacking context. Without it, Leaflet's
+   internal panes (z-index 200-1000) compete directly with the overlays in
+   .map-panel and cover them -- the info panel, hover card, stats chip, zoom
+   buttons, compass and hint (z-index 3-6) all ended up behind the map. */
 .leaflet-mount {
   position: absolute;
   inset: 0;
+  z-index: 0;
 }
 
 .leaflet-mount .leaflet-container {
@@ -1202,6 +1207,7 @@ input[type='range']:focus-visible {
 .cesium-mount {
   position: absolute;
   inset: 0;
+  z-index: 0;
 }
 
 .cesium-mount .cesium-viewer,
@@ -2134,24 +2140,348 @@ input[type='range']:focus-visible {
   transform-origin: 50% 100%;
 }
 
-.place-pin-icon:hover .place-pin {
+.place-pin-icon:hover .place-pin,
+.place-pin-icon:focus-visible .place-pin {
   transform: scale(1.15);
 }
 
-.leaflet-mount .leaflet-tooltip {
-  background: #05070fee;
-  color: var(--text);
-  border: 1px solid var(--card-border);
-  font-family: 'Manrope', sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 6px 10px;
-  border-radius: 8px;
-  box-shadow: 0 4px 14px #0008;
+/* The pin whose info panel is open: larger, with a yellow glow. */
+.place-pin-icon.is-selected .place-pin {
+  transform: scale(1.35);
+  filter: drop-shadow(0 0 6px #f7c740) drop-shadow(0 2px 6px #000a);
 }
 
-.leaflet-mount .leaflet-tooltip-top::before {
-  border-top-color: #05070fee;
+/* ==================== Explore map: on-map place info ==================== */
+
+/* Shared look for everything floating over the map. */
+.map-stats,
+.map-hover-card,
+.map-info-panel {
+  background: #070b18f0;
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px #0009;
+}
+
+.map-stats {
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.map-stats strong {
+  color: var(--text);
+}
+
+.map-stats-sep {
+  color: var(--text-faint);
+}
+
+/* -- hover card -- */
+
+.map-hover-card {
+  position: absolute;
+  z-index: 6;
+  width: 260px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+}
+
+.map-hover-card.is-below {
+  transform: translate(-50%, 0);
+}
+
+.map-hover-name {
+  margin: 0 0 6px;
+  font-family: 'Sora', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text);
+}
+
+.map-hover-meta {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.map-hover-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--yellow);
+}
+
+.map-info-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/* -- info panel -- */
+
+.map-info-panel {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  bottom: 16px;
+  z-index: 5;
+  width: 360px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  outline: none;
+}
+
+/* The panel replaces the stats chip and hint, which sit underneath it. */
+.map-panel.has-info .map-stats,
+.map-panel.has-info .map-hint {
+  display: none;
+}
+
+.map-info-hero {
+  position: relative;
+  flex-shrink: 0;
+  height: 170px;
+  background: #0d1226;
+}
+
+.map-info-hero img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.map-info-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid #ffffff33;
+  background: #05070fcc;
+  color: var(--text);
+}
+
+.map-info-close:hover {
+  background: #05070f;
+}
+
+.map-info-body {
+  padding: 16px 18px 4px;
+}
+
+.map-info-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.map-info-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: var(--text-dim);
+  background: #ffffff0f;
+  border: 1px solid #ffffff1f;
+}
+
+.map-info-badge-category {
+  color: #fff;
+  background: var(--violet-strong);
+  border-color: transparent;
+}
+
+.map-info-title {
+  margin: 0 0 14px;
+  font-family: 'Sora', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.map-info-facts {
+  margin: 0 0 14px;
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #ffffff08;
+  border: 1px solid #ffffff14;
+}
+
+.map-info-facts div {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.map-info-facts dt {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+
+.map-info-facts dd {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.map-info-facts .map-info-location {
+  color: var(--text);
+}
+
+.map-info-icon-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.map-info-icon-row svg {
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
+.map-info-summary {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+
+.map-info-section {
+  margin-bottom: 16px;
+}
+
+.map-info-heading {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+
+/* Vertical timeline: a rail on the left with a dot per event. */
+.map-info-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 18px;
+  border-left: 2px solid #ffffff1a;
+  display: grid;
+  gap: 14px;
+}
+
+.map-info-timeline li {
+  position: relative;
+}
+
+.map-info-timeline li::before {
+  content: '';
+  position: absolute;
+  left: -24px;
+  top: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--yellow);
+  box-shadow: 0 0 0 3px #070b18;
+}
+
+.map-info-year {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--yellow);
+}
+
+.map-info-event {
+  margin: 2px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.map-info-detail {
+  margin: 3px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.map-info-figures {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+/* Pinned to the bottom of the panel while the content scrolls. */
+.map-info-actions {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px 18px 16px;
+  background: linear-gradient(to top, #070b18 70%, #070b1800);
+}
+
+.map-info-actions a {
+  justify-content: center;
+  text-align: center;
+  padding: 11px 12px;
+  font-size: 14px;
+}
+
+/* Phones/tablets: the panel becomes a bottom sheet over the map. */
+@media (max-width: 980px) {
+  .map-info-panel {
+    left: 10px;
+    right: 10px;
+    top: auto;
+    bottom: 10px;
+    width: auto;
+    max-height: 65%;
+  }
+  .map-info-hero {
+    height: 120px;
+  }
+  .map-stats {
+    left: 10px;
+    top: 10px;
+    font-size: 12px;
+  }
 }
 
 /* ==================== Place detail page ==================== */

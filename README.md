@@ -154,4 +154,6 @@ npm run dev
 ## Notes
 
 - Built-in places live in `src/data/places.js`. Admin edits are stored as overrides in MongoDB and layered on top.
+- More places (Africa, the Americas, Asia, Oceania) are kept as plain rows in `src/data/worldEvents.js` and turned into full places, quiz included, by `src/data/worldPlaces.js`. To add one, add a row there and its id → country to `PLACE_COUNTRIES` in `server/src/data/places.js`.
+- Every timeline event has a paragraph-length explanation in `src/data/eventDetails/` (one file per region), keyed by place id and the event's exact label. Add one there for any new event.
 - The `/admin` route is restricted to admin users.

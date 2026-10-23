@@ -17,6 +17,7 @@ import path from 'node:path'
 import fs from 'node:fs/promises'
 import { fetchPlaceImageSet } from '../src/utils/wikimediaImages.js'
 import { PLACE_IMAGE_TOPICS } from '../src/data/placeImageTopics.js'
+import { WORLD_EVENTS } from '../../src/data/worldEvents.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PLACES_FILE = path.resolve(__dirname, '../../src/data/places.js')
@@ -37,6 +38,8 @@ async function readPlaceNames() {
   const re = /^ {4}id: +(['"])((?:(?!\1).)+)\1,\s*\n {4}name: +(['"])((?:(?!\3).)+)\3/gm
   let match
   while ((match = re.exec(text))) names.set(match[2], match[4])
+  // Places generated from worldEvents.js aren't written out in places.js.
+  for (const p of WORLD_EVENTS) names.set(p.id, p.name)
   return names
 }
 const GALLERY_SIZE = 6

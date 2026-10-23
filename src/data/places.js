@@ -1,4 +1,6 @@
 import colosseumImg from '../assets/colosseum.jpg'
+import { WORLD_PLACES } from './worldPlaces.js'
+import { withEventDetails } from './eventDetails/index.js'
 
 // ---------------------------------------------------------------------------
 // Place dataset
@@ -31,7 +33,9 @@ import colosseumImg from '../assets/colosseum.jpg'
 //   quiz        - multiple-choice questions used by the Quiz page
 // ---------------------------------------------------------------------------
 
-export const PLACES = [
+// Every timeline event's one-line detail is swapped for a full paragraph
+// from ./eventDetails (see withEventDetails).
+export const PLACES = withEventDetails([
   {
     id: 'colosseum',
     name: 'The Colosseum',
@@ -6858,7 +6862,10 @@ export const PLACES = [
         answerIndex: 1,
       },
     ],
-  },]
+  },
+  // Africa, the Americas, Asia and Oceania -- built from src/data/worldEvents.js.
+  ...WORLD_PLACES,
+])
 
 export function getPlaceById(id) {
   return PLACES.find((p) => p.id === id)
