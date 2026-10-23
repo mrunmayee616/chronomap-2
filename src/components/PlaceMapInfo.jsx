@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import CountryFlag from './CountryFlag.jsx'
+import FavouriteButton from './FavouriteButton.jsx'
 import { formatCoords, formatYearLabel, placeCountry, pluralize } from '../lib/placeInfo.js'
 
 // The on-map information for a place on the Explore page: a compact card
@@ -101,6 +102,7 @@ export function PlaceInfoPanel({ place, onClose }) {
     >
       <div className="map-info-hero">
         {place.image && <img src={place.image} alt="" />}
+        <FavouriteButton place={place} className="map-info-fav" />
         <button type="button" className="map-info-close" onClick={onClose} aria-label="Close details">
           <CloseIcon />
         </button>

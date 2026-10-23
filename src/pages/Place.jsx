@@ -3,24 +3,11 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import ShareButton from '../components/ShareButton.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
-import { useFavourites } from '../context/FavouritesContext.jsx'
+import FavouriteButton from '../components/FavouriteButton.jsx'
 import { progressApi } from '../lib/api.js'
 import { usePlaces } from '../context/PlacesContext.jsx'
 
 const TABS = ['Overview', 'Timeline', 'Key Figures', 'Gallery']
-
-function HeartIcon({ filled }) {
-  return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'}>
-      <path
-        d="M12 20.5s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 3.6c2.2-.6 4.4.3 6.5 2.6 2.1-2.3 4.3-3.2 6.5-2.6C22 4.5 23.5 8 22 11.2c-2.5 4.7-10 9.3-10 9.3z"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
 
 function PinIcon() {
   return (
@@ -55,18 +42,8 @@ export default function Place() {
   const place = getPlaceById(placeId || 'colosseum')
   const navigate = useNavigate()
   const { isAuthenticated, token, refreshUser, user } = useAuth()
-  const { isFavourite, toggleFavourite } = useFavourites()
 
   const [activeTab, setActiveTab] = useState('Overview')
-  const [showLoginNotice, setShowLoginNotice] = useState(false)
-  const liked = place ? isFavourite(place.id) : false
-
-  // Auto-dismiss the "please log in" notice so it doesn't linger forever.
-  useEffect(() => {
-    if (!showLoginNotice) return
-    const timer = setTimeout(() => setShowLoginNotice(false), 4000)
-    return () => clearTimeout(timer)
-  }, [showLoginNotice])
 
   // Visiting a place's page is what counts toward countries explored -- but
   // only for a signed-in account, since the count lives on the account, not
@@ -105,16 +82,6 @@ export default function Place() {
     } else {
       navigate('/signin', { state: { from: { pathname: `/quiz/${place.id}` } } })
     }
-  }
-
-  // Favouriting is just a bookmark now -- visiting (above) is what counts
-  // toward countries explored, so this no longer needs to call the API.
-  function handleToggleFavourite() {
-    if (!isAuthenticated) {
-      setShowLoginNotice(true)
-      return
-    }
-    toggleFavourite(place.id)
   }
 
   return (
@@ -198,15 +165,7 @@ export default function Place() {
               </div>
 
               <div className="place-actions">
-                <button
-                  type="button"
-                  className={liked ? 'place-icon-btn liked' : 'place-icon-btn'}
-                  aria-label="Save place"
-                  aria-pressed={liked}
-                  onClick={handleToggleFavourite}
-                >
-                  <HeartIcon filled={liked} />
-                </button>
+                <FavouriteButton place={place} />
                 <ShareButton
                   title={place.name}
                   text={`${place.name} (${place.location}) — explore its history on ChronoMap.`}
@@ -252,32 +211,6 @@ export default function Place() {
         </div>
       </div>
 
-      {showLoginNotice && (
-        <div className="login-toast" role="alert">
-          <span className="login-toast-icon">
-            <HeartIcon filled={false} />
-          </span>
-          <div className="login-toast-body">
-            <p className="login-toast-title">Log in to save favourites</p>
-            <p className="login-toast-text">Create a free account or sign in to start saving places.</p>
-          </div>
-          <button
-            type="button"
-            className="login-toast-cta"
-            onClick={() => navigate('/signin', { state: { from: { pathname: `/place/${place.id}` } } })}
-          >
-            Log In
-          </button>
-          <button
-            type="button"
-            className="login-toast-close"
-            aria-label="Dismiss"
-            onClick={() => setShowLoginNotice(false)}
-          >
-            ×
-          </button>
-        </div>
-      )}
     </div>
   )
 }
