@@ -37,7 +37,7 @@ incorporated without significantly modifying the existing system.
 | Frontend | React 18, React Router 6, Vite 5, Cesium, Leaflet |
 | Backend | Node.js, Express 4, Mongoose 8 |
 | Database | MongoDB (local or Atlas) |
-| Auth | JWT, bcryptjs, Google and GitHub OAuth |
+| Auth | JWT, bcryptjs (email/username + password) |
 
 ## Project structure
 
@@ -51,7 +51,7 @@ chronomap-2/
 │   └── lib/                 # API client, achievements, avatar helpers
 ├── server/                  # Express API
 │   ├── src/
-│   │   ├── routes/          # auth, oauth, places, progress, leaderboard, admin
+│   │   ├── routes/          # auth, places, progress, leaderboard, admin
 │   │   ├── models/          # User, PlaceOverride
 │   │   ├── middleware/      # auth (JWT)
 │   │   ├── utils/           # mailer, achievements, CSV import, Wikimedia images, ...
@@ -94,24 +94,12 @@ VITE_API_URL=http://localhost:5000
 ```env
 PORT=5000
 CLIENT_ORIGIN=http://localhost:5173
-SERVER_URL=http://localhost:5000
 
 JWT_SECRET=replace-this-with-a-long-random-string
 JWT_EXPIRES_IN=7d
 
 MONGODB_URI=mongodb://127.0.0.1:27017/chronomap
-
-# Optional: Google / GitHub sign-in
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-GITHUB_CLIENT_ID=
-GITHUB_CLIENT_SECRET=
 ```
-
-OAuth callback URLs to register with each provider:
-
-- Google: `http://localhost:5000/api/auth/oauth/google/callback`
-- GitHub: `http://localhost:5000/api/auth/oauth/github/callback`
 
 > Never commit `.env` files or real secrets. Only the `.env.example` files belong in the repo.
 
@@ -152,7 +140,6 @@ npm run dev
 | Area | Base path | Endpoints |
 |------|-----------|-----------|
 | Auth | `/api/auth` | `POST /register`, `POST /login`, `GET /me`, `PATCH /me` |
-| OAuth | `/api/auth/oauth` | `GET /:provider`, `GET /:provider/callback` (Google, GitHub) |
 | Places | `/api/places` | `GET /overrides` |
 | Progress | `/api/progress` | `POST /visit-place`, `POST /quiz-result` |
 | Leaderboard | `/api/leaderboard` | `GET /` (auth required) |

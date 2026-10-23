@@ -699,50 +699,11 @@ input[type='range']:focus-visible {
   transform: translateY(-1px);
 }
 
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--text-faint);
-  font-size: 13px;
-  margin: 20px 0;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: #ffffff1a;
-}
-
-.btn-oauth {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  background: #ffffff08;
-  border: 1px solid #ffffff22;
-  border-radius: 10px;
-  padding: 11px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 12px;
-  transition: background 0.15s ease, border-color 0.15s ease;
-}
-
-.btn-oauth:hover {
-  background: #ffffff12;
-  border-color: #ffffff3a;
-}
-
 .signup-row {
   text-align: center;
   font-size: 13px;
   color: var(--text-dim);
-  margin: 16px 0 0;
+  margin: 20px 0 0;
 }
 
 /* -- Footer -- */

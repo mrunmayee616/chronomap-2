@@ -10,7 +10,6 @@ import RequireAdmin from './components/RequireAdmin.jsx'
 import Home from './pages/Home.jsx'
 import SignIn from './pages/SignIn.jsx'
 import Register from './pages/Register.jsx'
-import OAuthCallback from './pages/OAuthCallback.jsx'
 import Explore from './pages/Explore.jsx'
 import Profile from './pages/Profile.jsx'
 import Place from './pages/Place.jsx'
@@ -36,7 +35,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                 <Route path="/how-it-works" element={<HowItWorks />} />
                 <Route path="/signin" element={<SignIn />} />
                 <Route path="/register" element={<Register />} />
-                <Route path="/oauth/callback" element={<OAuthCallback />} />
                 <Route path="/explore" element={<Explore />} />
                 <Route path="/place/:placeId" element={<Place />} />
                 <Route
