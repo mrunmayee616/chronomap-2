@@ -474,6 +474,9 @@ function QuizzesPanel({ token }) {
     }
   }
 
+  const selectedPlace = form.placeId ? getPlaceById(form.placeId) : null
+  const builtInQuestions = (selectedPlace?.quiz || []).filter((q) => !q.custom)
+
   const rows = Object.entries(extraQuestions)
     .flatMap(([placeId, qs]) => qs.map((q) => ({ ...q, placeId, placeName: getPlaceById(placeId)?.name || placeId })))
     .sort((a, b) => a.placeName.localeCompare(b.placeName))
@@ -566,6 +569,28 @@ function QuizzesPanel({ token }) {
           )}
         </div>
       </form>
+
+      {/* The selected place's built-in questions, so the admin can see what
+          the quiz already asks before writing a new one. */}
+      {selectedPlace && builtInQuestions.length > 0 && (
+        <details className="admin-builtin-questions">
+          <summary>
+            Built-in questions for {selectedPlace.name} ({builtInQuestions.length})
+          </summary>
+          <div className="admin-table-card">
+            <div className="admin-table-header admin-builtin-grid">
+              <span>Question</span>
+              <span>Correct answer</span>
+            </div>
+            {builtInQuestions.map((q, i) => (
+              <div className="admin-table-row admin-builtin-grid" key={i}>
+                <span>{q.question}</span>
+                <span className="admin-cell-dim">{q.options[q.answerIndex]}</span>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
 
       {listError && <p className="admin-status admin-status-error">{listError}</p>}
 

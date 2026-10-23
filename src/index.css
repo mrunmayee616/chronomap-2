@@ -3213,6 +3213,18 @@ input[type='range']:focus-visible {
   padding: 36px 40px 40px;
 }
 
+/* Shown to the admin while playing: its results aren't recorded. */
+.quiz-admin-note {
+  margin: 0 0 18px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  background: var(--violet-dim);
+  border: 1px solid #7b6cf655;
+}
+
 /* ---- Progress header ---- */
 .quiz-progress-row {
   display: flex;
@@ -3680,6 +3692,17 @@ input[type='range']:focus-visible {
   font-size: 15px;
   color: var(--text-dim);
   margin: 0;
+}
+
+.leaderboard-admin-note {
+  display: inline-block;
+  margin: 14px 0 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--text-dim);
+  background: var(--violet-dim);
+  border: 1px solid #7b6cf655;
 }
 
 .leaderboard-tabs {
@@ -4937,6 +4960,27 @@ input[type='range']:focus-visible {
 
 .admin-questions-grid {
   grid-template-columns: 1fr 2.4fr 1.2fr 120px;
+}
+
+/* Collapsible list of the selected place's built-in quiz questions. */
+.admin-builtin-questions {
+  margin: -8px 0 24px;
+}
+
+.admin-builtin-questions summary {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+.admin-builtin-questions summary:hover {
+  color: var(--text);
+}
+
+.admin-builtin-grid {
+  grid-template-columns: 2.4fr 1.2fr;
 }
 
 .admin-option-list {

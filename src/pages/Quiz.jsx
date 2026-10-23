@@ -330,6 +330,12 @@ function PlaceQuiz({ place }) {
   return (
     <div className="quiz-card" ref={cardRef}>
 
+      {isAdmin && (
+        <p className="quiz-admin-note">
+          Practice mode: you're signed in as admin, so this run won't earn XP or count toward the leaderboard.
+        </p>
+      )}
+
       {/* ---- Progress header ---- */}
       <div className="quiz-progress-row">
         <span className="quiz-progress-label">Question <strong>{step + 1}</strong> of {questions.length}</span>
