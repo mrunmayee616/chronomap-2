@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
+import { useT, richText } from '../i18n/LanguageContext.jsx'
 import { TrophyIcon, ClockIcon, QuizIcon, CrownIcon, MapPinIcon } from '../components/Icons.jsx'
 
 function ArrowIcon() {
@@ -38,86 +39,69 @@ function HeartIcon() {
 const STEPS = [
   {
     icon: <GlobeIcon />,
-    title: 'Explore the map',
-    body: 'Head to Explore and spin the interactive 3D globe or switch to the flat 2D map — both show every historical place as a pin you can click.',
+    key: 'explore',
   },
   {
     icon: <FilterIcon />,
-    title: 'Filter and search',
-    body: 'Narrow things down by category — Battles, Kingdoms, Discoveries, Revolution, Monuments, Treaties — drag the era slider to a time period, or just search a place by name.',
+    key: 'filter',
   },
   {
     icon: <MapPinIcon size={22} />,
-    title: 'Open a place',
-    body: 'Click any pin to see its story: an overview, a chronological timeline of everything that happened there, quick facts, and a photo gallery.',
+    key: 'open',
   },
   {
     icon: <QuizIcon size={22} />,
-    title: 'Take the quiz',
-    body: 'Every place has a short quiz about what you just read. Score 80% or higher to have it count — you can always retake a quiz, but only your first pass earns XP.',
+    key: 'quiz',
   },
   {
     icon: <TrophyIcon size={22} />,
-    title: 'Earn XP and level up',
-    body: 'Passing a quiz for the first time earns you XP. Rack up enough and you level up — your title and level show on your profile and next to your name.',
+    key: 'xp',
   },
   {
     icon: <CrownIcon size={22} />,
-    title: 'Climb the leaderboard',
-    body: 'The leaderboard ranks explorers by XP earned this week, month, or year — recalculated live, so it always reflects real activity, not a stale snapshot.',
+    key: 'leaderboard',
   },
   {
     icon: <HeartIcon />,
-    title: 'Track your journey',
-    body: 'Favorite the places you love, and watch your "Countries Explored" count grow on your profile — a country only counts once you\u2019ve visited every place pinned there.',
+    key: 'journey',
   },
 ]
 
 export default function HowItWorks() {
+  const t = useT()
   return (
     <div className="page howitworks-page">
       <Navbar active="Home" />
 
       <div className="hiw-hero">
         <span className="hiw-eyebrow">
-          <ClockIcon size={16} /> How it works
+          <ClockIcon size={16} /> {t('howItWorks.eyebrow')}
         </span>
-        <h1 className="hiw-title">
-          From <span className="accent">curious</span> to <span className="accent">expert</span>,
-          <br />
-          one place at a time.
-        </h1>
-        <p className="hiw-sub">
-          ChronoMap blends a map, a timeline, and a quiz into one loop: explore a place,
-          learn its story, prove what you learned, and watch your progress grow.
-        </p>
+        <h1 className="hiw-title">{richText(t('howItWorks.title'), { accent: (text) => <span className="accent">{text}</span> })}</h1>
+        <p className="hiw-sub">{t('howItWorks.subtitle')}</p>
       </div>
 
       <section className="hiw-steps">
         {STEPS.map((step, i) => (
-          <div className="hiw-step-card" key={step.title}>
+          <div className="hiw-step-card" key={step.key}>
             <span className="hiw-step-number">{String(i + 1).padStart(2, '0')}</span>
             <span className="hiw-step-icon">{step.icon}</span>
-            <h3>{step.title}</h3>
-            <p>{step.body}</p>
+            <h3>{t(`howItWorks.steps.${step.key}.title`)}</h3>
+            <p>{t(`howItWorks.steps.${step.key}.body`)}</p>
           </div>
         ))}
       </section>
 
       <section className="hiw-note">
-        <p>
-          Browsing is open to everyone — but visiting places, taking quizzes, favoriting,
-          and appearing on the leaderboard all need a free account, since that progress is
-          tied to you, not your browser.
-        </p>
+        <p>{t('howItWorks.note')}</p>
       </section>
 
       <section className="hiw-cta">
         <Link to="/explore" className="btn-primary">
-          Start Exploring <ArrowIcon />
+          {t('common.startExploring')} <ArrowIcon />
         </Link>
         <Link to="/register" className="btn-secondary">
-          Create an Account
+          {t('howItWorks.createAccount')}
         </Link>
       </section>
     </div>

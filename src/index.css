@@ -113,6 +113,7 @@ input[type='range']:focus-visible {
 .brand {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
   gap: 10px;
   font-family: 'Sora', sans-serif;
   font-weight: 700;
@@ -137,6 +138,7 @@ input[type='range']:focus-visible {
 
 .nav-links a {
   color: var(--text-dim);
+  white-space: nowrap;
   padding-bottom: 6px;
   border-bottom: 2px solid transparent;
   transition: color 0.15s ease;
@@ -321,6 +323,17 @@ input[type='range']:focus-visible {
 }
 
 /* ---------- Responsive ---------- */
+
+/* Between tablet and wide desktop the full navbar (links, language and
+   theme pickers, sign-in) is tight -- especially with longer French and
+   German labels -- so tighten spacing and show the theme pill as an icon. */
+@media (max-width: 1280px) {
+  .navbar { padding: 22px 28px; gap: 20px; }
+  .nav-links { gap: 22px; font-size: 14px; }
+  .navbar-right { gap: 8px; }
+  .btn-theme-label { display: none; }
+  .btn-theme-cycle { padding: 7px 10px; }
+}
 
 @media (max-width: 980px) {
   .nav-links { display: none; }
@@ -1117,7 +1130,7 @@ input[type='range']:focus-visible {
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 10px;
-  width: 96px;
+  width: 104px;
   flex-shrink: 0;
   align-self: flex-start;
 }
@@ -1130,7 +1143,7 @@ input[type='range']:focus-visible {
   background: none;
   border: none;
   border-radius: 12px;
-  padding: 12px 4px;
+  padding: 12px 2px;
   color: var(--text-dim);
   transition: background 0.15s ease, color 0.15s ease;
 }
@@ -1150,6 +1163,13 @@ input[type='range']:focus-visible {
   font-weight: 600;
   line-height: 1.2;
   text-align: center;
+  max-width: 100%;
+  /* Long category names in other languages ("Descubrimientos",
+     "Entdeckungen") carry soft hyphens in the dictionaries, so they break
+     at a syllable with a visible hyphen; anything else only breaks as a
+     last resort. */
+  hyphens: manual;
+  overflow-wrap: anywhere;
 }
 
 /* -- Map panel -- */
@@ -5178,6 +5198,60 @@ input[type='range']:focus-visible {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+/* -- Language picker: globe button + current language code -- */
+.btn-lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px 7px 10px;
+  border-radius: 999px;
+  border: 1.5px solid var(--card-border);
+  background: transparent;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.btn-lang:hover,
+.btn-lang[aria-expanded='true'] {
+  color: var(--text);
+  border-color: var(--text-faint);
+  background: #ffffff0a;
+}
+
+.navbar-lang-dropdown {
+  min-width: 170px;
+}
+
+.navbar-lang-option-code {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  padding: 2px 5px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+  background: #ffffff10;
+}
+
+@media (max-width: 560px) {
+  .btn-lang-code {
+    display: none;
+  }
+  .btn-lang {
+    padding: 7px 9px;
+  }
 }
 
 /* Pill-shaped theme cycle button */

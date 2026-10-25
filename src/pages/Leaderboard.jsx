@@ -5,16 +5,11 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { leaderboardApi } from '../lib/api.js'
 import { avatarUrlFor } from '../lib/avatar.js'
 import { countryNameFor } from '../data/countries.js'
+import { useLanguage, countryName } from '../i18n/LanguageContext.jsx'
 import CountryFlag from '../components/CountryFlag.jsx'
 import { CrownIcon, TrophyIcon } from '../components/Icons.jsx'
 
-const PERIODS = [
-  { key: 'week', label: 'This Week' },
-  { key: 'month', label: 'This Month' },
-  { key: 'year', label: 'This Year' },
-]
-
-const PERIOD_NOUN = { week: 'week', month: 'month', year: 'year' }
+const PERIODS = ['week', 'month', 'year']
 
 function MedalIcon({ place }) {
   // place: 1, 2 or 3
@@ -31,6 +26,7 @@ function MedalIcon({ place }) {
 }
 
 function PodiumColumn({ entry, place }) {
+  const { t, locale } = useLanguage()
   const heightByPlace = { 1: 168, 2: 128, 3: 100 }
   const colorByPlace = {
     1: { bg: 'linear-gradient(180deg, #f7c74033, #f7c74014)', border: '#f7c74055' },
@@ -43,7 +39,7 @@ function PodiumColumn({ entry, place }) {
     <div className="podium-col" style={{ order: place === 1 ? 2 : place === 2 ? 3 : 1 }}>
       <img
         src={avatarUrlFor(entry.username, entry.avatar)}
-        alt={`${entry.fullName}'s avatar`}
+        alt={t('common.avatarOf', { name: entry.fullName })}
         className={`podium-avatar podium-avatar-${place}`}
       />
       <div
@@ -54,7 +50,7 @@ function PodiumColumn({ entry, place }) {
         <p className="podium-name">
           <Link to={`/u/${encodeURIComponent(entry.username)}`} className="lb-profile-link">{entry.fullName}</Link>
         </p>
-        <p className="podium-xp">{entry.xp.toLocaleString()} XP</p>
+        <p className="podium-xp">{entry.xp.toLocaleString(locale)} XP</p>
       </div>
     </div>
   )
@@ -62,6 +58,7 @@ function PodiumColumn({ entry, place }) {
 
 export default function Leaderboard() {
   const { token, user } = useAuth()
+  const { t, locale } = useLanguage()
   const isAdmin = Boolean(user?.isAdmin)
   const [period, setPeriod] = useState('week')
   const [leaderboard, setLeaderboard] = useState([])
@@ -82,7 +79,7 @@ export default function Leaderboard() {
       })
       .catch((err) => {
         if (cancelled) return
-        setError(err.error || 'Could not load the leaderboard.')
+        setError(err.error || t('leaderboard.loadError'))
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -102,24 +99,22 @@ export default function Leaderboard() {
 
       <div className="leaderboard-wrap">
         <div className="leaderboard-header">
-          <h1 className="leaderboard-title"><TrophyIcon size={30} /> Leaderboard</h1>
-          <p className="leaderboard-sub">
-            Top explorers of history this {PERIOD_NOUN[period]} !!!
-          </p>
+          <h1 className="leaderboard-title"><TrophyIcon size={30} /> {t('leaderboard.title')}</h1>
+          <p className="leaderboard-sub">{t(`leaderboard.subtitle.${period}`)}</p>
           {isAdmin && (
-            <p className="leaderboard-admin-note">You're viewing as admin — admin accounts aren't ranked.</p>
+            <p className="leaderboard-admin-note">{t('leaderboard.adminNote')}</p>
           )}
         </div>
 
         <div className="leaderboard-tabs">
           {PERIODS.map((p) => (
             <button
-              key={p.key}
+              key={p}
               type="button"
-              className={p.key === period ? 'leaderboard-tab active' : 'leaderboard-tab'}
-              onClick={() => setPeriod(p.key)}
+              className={p === period ? 'leaderboard-tab active' : 'leaderboard-tab'}
+              onClick={() => setPeriod(p)}
             >
-              {p.label}
+              {t(`leaderboard.tabs.${p}`)}
             </button>
           ))}
         </div>
@@ -127,11 +122,11 @@ export default function Leaderboard() {
         {error && <p className="form-error" style={{ marginTop: 20 }}>{error}</p>}
 
         {loading ? (
-          <p className="leaderboard-status">Loading leaderboard…</p>
+          <p className="leaderboard-status">{t('leaderboard.loading')}</p>
         ) : leaderboard.length === 0 ? (
           <p className="leaderboard-status">
-            No one has scored any points this {PERIOD_NOUN[period]} yet
-            {isAdmin ? '.' : ' — take a quiz and be the first!'}
+            {t(`leaderboard.empty.${period}`)}
+            {isAdmin ? '' : ` ${t('leaderboard.emptyCta')}`}
           </p>
         ) : (
           <div className="leaderboard-grid">
@@ -148,9 +143,9 @@ export default function Leaderboard() {
             <div className="leaderboard-table-card">
               <div className="leaderboard-table-header">
                 <span>#</span>
-                <span>User</span>
+                <span>{t('leaderboard.colUser')}</span>
                 <span>XP</span>
-                <span>Country</span>
+                <span>{t('leaderboard.colCountry')}</span>
               </div>
               <div className="leaderboard-table-body">
                 {leaderboard.map((entry) => (
@@ -164,20 +159,20 @@ export default function Leaderboard() {
                     <span className="leaderboard-user">
                       <img
                         src={avatarUrlFor(entry.username, entry.avatar)}
-                        alt={`${entry.fullName}'s avatar`}
+                        alt={t('common.avatarOf', { name: entry.fullName })}
                         className="leaderboard-avatar"
                       />
                       <Link to={`/u/${encodeURIComponent(entry.username)}`} className="lb-profile-link">
                         {entry.fullName}
                       </Link>
-                      {entry.isYou && <span className="leaderboard-you-tag">You</span>}
+                      {entry.isYou && <span className="leaderboard-you-tag">{t('leaderboard.you')}</span>}
                     </span>
-                    <span className="leaderboard-xp">{entry.xp.toLocaleString()}</span>
+                    <span className="leaderboard-xp">{entry.xp.toLocaleString(locale)}</span>
                     <span className="leaderboard-country">
                       {entry.country ? (
                         <>
                           <CountryFlag code={entry.country} size={18} className="leaderboard-flag" />
-                          {countryNameFor(entry.country) || entry.country}
+                          {countryName(entry.country, locale, countryNameFor(entry.country) || entry.country)}
                         </>
                       ) : (
                         <span className="leaderboard-country-unset">—</span>

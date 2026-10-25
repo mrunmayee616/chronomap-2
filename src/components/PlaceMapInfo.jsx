@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import CountryFlag from './CountryFlag.jsx'
 import FavouriteButton from './FavouriteButton.jsx'
-import { formatCoords, formatYearLabel, placeCountry, pluralize } from '../lib/placeInfo.js'
+import { formatCoords, placeCountry } from '../lib/placeInfo.js'
+import { useLanguage, countryName } from '../i18n/LanguageContext.jsx'
 
 // The on-map information for a place on the Explore page: a compact card
 // that follows the cursor while hovering a pin, and a full panel that opens
@@ -36,11 +37,15 @@ function CloseIcon() {
 }
 
 function Location({ place }) {
+  const { locale } = useLanguage()
   const country = placeCountry(place)
+  // "City, Country" with the country named in the current language.
+  const city = country.name ? place.location.slice(0, -(country.name.length + 2)) : place.location
+  const label = country.code ? `${city}, ${countryName(country.code, locale, country.name)}` : place.location
   return (
     <span className="map-info-location">
       {country.code && <CountryFlag code={country.code} size={16} />}
-      <span>{place.location}</span>
+      <span>{label}</span>
     </span>
   )
 }
@@ -53,6 +58,7 @@ const PIN_HEIGHT = 34
 // x/y are the pin's tip in map-panel pixels; bounds is the panel width, used
 // to keep the card from hanging off either edge.
 export function MapHoverCard({ place, x, y, bounds }) {
+  const { t, tValue } = useLanguage()
   if (!place) return null
   const left = Math.min(Math.max(x, HOVER_CARD_HALF_WIDTH + 8), Math.max(bounds - HOVER_CARD_HALF_WIDTH - 8, 0))
   const below = y < 150 // too close to the top edge: show it under the pin instead
@@ -67,10 +73,10 @@ export function MapHoverCard({ place, x, y, bounds }) {
       <p className="map-hover-name">{place.name}</p>
       <Location place={place} />
       <p className="map-hover-meta">
-        {place.dateLabel} · {place.category}
-        {events > 0 && ` · ${pluralize(events, 'event')}`}
+        {place.dateLabel} · {tValue('categories', place.category)}
+        {events > 0 && ` · ${t('map.events', { count: events })}`}
       </p>
-      <p className="map-hover-hint">Click for details</p>
+      <p className="map-hover-hint">{t('map.clickForDetails')}</p>
     </div>
   )
 }
@@ -78,6 +84,7 @@ export function MapHoverCard({ place, x, y, bounds }) {
 /* ---------- info panel ---------- */
 
 export function PlaceInfoPanel({ place, onClose }) {
+  const { t, tValue } = useLanguage()
   const panelRef = useRef(null)
 
   // New place: start reading from the top and move focus into the panel so
@@ -97,36 +104,36 @@ export function PlaceInfoPanel({ place, onClose }) {
     <aside
       ref={panelRef}
       className="map-info-panel"
-      aria-label={`${place.name} details`}
+      aria-label={t('map.detailsLabel', { name: place.name })}
       tabIndex={-1}
     >
       <div className="map-info-hero">
         {place.image && <img src={place.image} alt="" />}
         <FavouriteButton place={place} className="map-info-fav" />
-        <button type="button" className="map-info-close" onClick={onClose} aria-label="Close details">
+        <button type="button" className="map-info-close" onClick={onClose} aria-label={t('map.closeDetails')}>
           <CloseIcon />
         </button>
       </div>
 
       <div className="map-info-body">
         <div className="map-info-badges">
-          <span className="map-info-badge map-info-badge-category">{place.category}</span>
-          {place.era && <span className="map-info-badge">{place.era}</span>}
+          <span className="map-info-badge map-info-badge-category">{tValue('categories', place.category)}</span>
+          {place.era && <span className="map-info-badge">{tValue('eras', place.era)}</span>}
         </div>
 
         <h2 className="map-info-title">{place.name}</h2>
 
         <dl className="map-info-facts">
           <div>
-            <dt>Location</dt>
+            <dt>{t('place.facts.location')}</dt>
             <dd><Location place={place} /></dd>
           </div>
           <div>
-            <dt>Date</dt>
+            <dt>{t('place.facts.date')}</dt>
             <dd className="map-info-icon-row"><CalendarIcon /> {place.dateLabel}</dd>
           </div>
           <div>
-            <dt>Coordinates</dt>
+            <dt>{t('map.coordinates')}</dt>
             <dd className="map-info-icon-row"><CrosshairIcon /> {formatCoords(place.coords)}</dd>
           </div>
         </dl>
@@ -135,7 +142,7 @@ export function PlaceInfoPanel({ place, onClose }) {
 
         {timeline.length > 0 && (
           <section className="map-info-section">
-            <h3 className="map-info-heading">Timeline · {pluralize(timeline.length, 'event')}</h3>
+            <h3 className="map-info-heading">{t('place.tabs.timeline')} · {t('map.events', { count: timeline.length })}</h3>
             <ol className="map-info-timeline">
               {timeline.map((event, i) => (
                 <li key={`${event.year}-${i}`}>
@@ -154,7 +161,7 @@ export function PlaceInfoPanel({ place, onClose }) {
 
         {figures.length > 0 && (
           <section className="map-info-section">
-            <h3 className="map-info-heading">Key figures</h3>
+            <h3 className="map-info-heading">{t('place.tabs.keyFigures')}</h3>
             <ul className="map-info-figures">
               {figures.map((fig) => (
                 <li key={fig.id || fig.name}>
@@ -168,10 +175,10 @@ export function PlaceInfoPanel({ place, onClose }) {
       </div>
 
       <div className="map-info-actions">
-        <Link to={`/place/${place.id}`} className="btn-primary">View full details</Link>
+        <Link to={`/place/${place.id}`} className="btn-primary">{t('map.viewDetails')}</Link>
         {quizCount > 0 && (
           <Link to={`/quiz/${place.id}`} className="btn-secondary">
-            Take the quiz · {quizCount}
+            {t('map.takeQuiz')} · {quizCount}
           </Link>
         )}
       </div>
@@ -182,14 +189,16 @@ export function PlaceInfoPanel({ place, onClose }) {
 /* ---------- stats chip ---------- */
 
 export function MapStats({ places, range }) {
+  const { t } = useLanguage()
+  const year = (y) => (y < 0 ? t('years.bce', { year: -Math.round(y) }) : t('years.ce', { year: Math.max(Math.round(y), 1) }))
   const countries = new Set(places.map((p) => placeCountry(p).name).filter(Boolean))
   return (
     <div className="map-stats" aria-live="polite">
-      <strong>{pluralize(places.length, 'place')}</strong>
+      <strong>{t('map.places', { count: places.length })}</strong>
       <span className="map-stats-sep" aria-hidden="true">·</span>
-      <span>{pluralize(countries.size, 'country', 'countries')}</span>
+      <span>{t('map.countries', { count: countries.size })}</span>
       <span className="map-stats-sep" aria-hidden="true">·</span>
-      <span>{formatYearLabel(range[0])} – {formatYearLabel(range[1])}</span>
+      <span>{year(range[0])} – {year(range[1])}</span>
     </div>
   )
 }

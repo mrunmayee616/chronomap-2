@@ -3,9 +3,11 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
 import { avatarUrlFor } from '../lib/avatar.js'
+import { useLanguage } from '../i18n/LanguageContext.jsx'
 import Logo from './Logo.jsx'
 
 const NAV_ITEMS = ['Home', 'Explore', 'Quiz', 'Leaderboard', 'Explorers', 'About']
+const NAV_KEYS = { Home: 'home', Explore: 'explore', Quiz: 'quiz', Leaderboard: 'leaderboard', Explorers: 'explorers', About: 'about' }
 
 function noop(e) {
   e.preventDefault()
@@ -56,6 +58,81 @@ function ChevronIcon({ open }) {
   )
 }
 
+function GlobeIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+// Globe button + menu of interface languages, shown to everyone (signed in
+// or not). Each language is listed in its own name so people can find it.
+function LanguagePicker() {
+  const { language, languages, setLanguage, t } = useLanguage()
+  const location = useLocation()
+  const [open, setOpen] = useState(false)
+  const wrapRef = useRef(null)
+
+  useEffect(() => {
+    function onClickOutside(e) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false)
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onClickOutside)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [])
+
+  useEffect(() => setOpen(false), [location.pathname])
+
+  return (
+    <div className="navbar-theme-picker-wrap navbar-lang-wrap" ref={wrapRef}>
+      <button
+        type="button"
+        className="btn-lang"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={t('nav.language')}
+        title={t('nav.language')}
+      >
+        <GlobeIcon />
+        <span className="btn-lang-code">{language.toUpperCase()}</span>
+      </button>
+
+      {open && (
+        <div className="navbar-theme-dropdown navbar-lang-dropdown" role="listbox" aria-label={t('nav.language')}>
+          {languages.map((l) => (
+            <button
+              key={l.id}
+              type="button"
+              lang={l.id}
+              className={`navbar-theme-option${l.id === language ? ' active' : ''}`}
+              role="option"
+              aria-selected={l.id === language}
+              onClick={() => {
+                setLanguage(l.id)
+                setOpen(false)
+              }}
+            >
+              <span className="navbar-lang-option-code">{l.id.toUpperCase()}</span>
+              <span className="navbar-theme-option-label">{l.native}</span>
+              {l.id === language && <CheckIcon />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function CheckIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
@@ -67,6 +144,8 @@ function CheckIcon() {
 export default function Navbar({ active = 'Home' }) {
   const { isAuthenticated, user, logout } = useAuth()
   const { theme, themes, setTheme } = useTheme()
+  const { t } = useLanguage()
+  const themeLabel = (th) => t(`themes.${th.id}`)
   const location = useLocation()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -166,14 +245,14 @@ export default function Navbar({ active = 'Home' }) {
                 to={item === 'Home' ? '/' : item === 'Explore' ? '/explore' : '/about'}
                 className={item === active ? 'active' : ''}
               >
-                {item}
+                {t(`nav.${NAV_KEYS[item]}`)}
               </Link>
             )
           }
           if (item === 'Quiz') {
             return (
               <a key={item} href="#" className={item === active ? 'active' : ''} onClick={goToQuiz}>
-                {item}
+                {t(`nav.${NAV_KEYS[item]}`)}
               </a>
             )
           }
@@ -185,39 +264,40 @@ export default function Navbar({ active = 'Home' }) {
                 className={item === active ? 'active' : ''}
                 onClick={goToExplorers}
               >
-                {item}
+                {t(`nav.${NAV_KEYS[item]}`)}
               </a>
             )
           }
           if (item === 'Leaderboard') {
             return (
               <a key={item} href="#" className={item === active ? 'active' : ''} onClick={goToLeaderboard}>
-                {item}
+                {t(`nav.${NAV_KEYS[item]}`)}
               </a>
             )
           }
           return (
             <a key={item} href="#" className={item === active ? 'active' : ''} onClick={noop}>
-              {item}
+              {t(`nav.${NAV_KEYS[item]}`)}
             </a>
           )
         })}
       </div>
 
       <div className="navbar-right">
+        <LanguagePicker />
         {isAuthenticated && user ? (
           /* ---- Logged-in: avatar button with dropdown ---- */
           <div className="navbar-avatar-wrap" ref={menuRef}>
             <button
               type="button"
               className={isOnDashboard ? 'navbar-avatar-link active' : 'navbar-avatar-link'}
-              aria-label="Account menu"
+              aria-label={t('nav.accountMenu')}
               aria-expanded={menuOpen}
               onClick={() => { setMenuOpen((v) => !v); setThemeSubOpen(false) }}
             >
               <img
                 src={avatarUrlFor(user.username, user.avatar)}
-                alt={`${user.username}'s avatar`}
+                alt={t('common.avatarOf', { name: user.username })}
                 className="navbar-avatar"
               />
             </button>
@@ -226,7 +306,7 @@ export default function Navbar({ active = 'Home' }) {
               <div className="navbar-avatar-menu" role="menu">
                 {!isOnDashboard && (
                   <Link to={dashboardPath} className="navbar-avatar-menu-item" role="menuitem">
-                    <DashboardIcon /> Dashboard
+                    <DashboardIcon /> {t('nav.dashboard')}
                   </Link>
                 )}
 
@@ -239,25 +319,25 @@ export default function Navbar({ active = 'Home' }) {
                   onClick={(e) => { e.stopPropagation(); setThemeSubOpen((v) => !v) }}
                 >
                   <PaletteIcon />
-                  <span className="navbar-theme-row-label">Theme</span>
-                  <span className="navbar-theme-badge-sm">{theme.icon} {theme.label}</span>
+                  <span className="navbar-theme-row-label">{t('nav.theme')}</span>
+                  <span className="navbar-theme-badge-sm">{theme.icon} {themeLabel(theme)}</span>
                   <ChevronIcon open={themeSubOpen} />
                 </button>
 
                 {/* Inline theme picker that slides open */}
                 {themeSubOpen && (
-                  <div className="navbar-theme-submenu" role="group" aria-label="Choose a theme">
-                    {themes.map((t) => (
+                  <div className="navbar-theme-submenu" role="group" aria-label={t('nav.chooseTheme')}>
+                    {themes.map((th) => (
                       <button
-                        key={t.id}
+                        key={th.id}
                         type="button"
-                        className={`navbar-theme-option${t.id === theme.id ? ' active' : ''}`}
-                        onClick={() => handleSelectTheme(t.id)}
-                        aria-pressed={t.id === theme.id}
+                        className={`navbar-theme-option${th.id === theme.id ? ' active' : ''}`}
+                        onClick={() => handleSelectTheme(th.id)}
+                        aria-pressed={th.id === theme.id}
                       >
-                        <span className="navbar-theme-option-icon">{t.icon}</span>
-                        <span className="navbar-theme-option-label">{t.label}</span>
-                        {t.id === theme.id && <CheckIcon />}
+                        <span className="navbar-theme-option-icon">{th.icon}</span>
+                        <span className="navbar-theme-option-label">{themeLabel(th)}</span>
+                        {th.id === theme.id && <CheckIcon />}
                       </button>
                     ))}
                   </div>
@@ -269,7 +349,7 @@ export default function Navbar({ active = 'Home' }) {
                   role="menuitem"
                   onClick={handleLogout}
                 >
-                  <LogoutIcon /> Logout
+                  <LogoutIcon /> {t('nav.logout')}
                 </button>
               </div>
             )}
@@ -283,27 +363,27 @@ export default function Navbar({ active = 'Home' }) {
                 className="btn-theme-cycle"
                 onClick={() => setThemePickerOpen((v) => !v)}
                 aria-expanded={themePickerOpen}
-                aria-label={`Theme: ${theme.label}. Click to choose`}
+                aria-label={t('nav.themeButton', { theme: themeLabel(theme) })}
               >
                 <span className="btn-theme-icon" aria-hidden="true">{theme.icon}</span>
-                <span className="btn-theme-label">{theme.label}</span>
+                <span className="btn-theme-label">{themeLabel(theme)}</span>
                 <ChevronIcon open={themePickerOpen} />
               </button>
 
               {themePickerOpen && (
-                <div className="navbar-theme-dropdown" role="listbox" aria-label="Choose a theme">
-                  {themes.map((t) => (
+                <div className="navbar-theme-dropdown" role="listbox" aria-label={t('nav.chooseTheme')}>
+                  {themes.map((th) => (
                     <button
-                      key={t.id}
+                      key={th.id}
                       type="button"
-                      className={`navbar-theme-option${t.id === theme.id ? ' active' : ''}`}
+                      className={`navbar-theme-option${th.id === theme.id ? ' active' : ''}`}
                       role="option"
-                      aria-selected={t.id === theme.id}
-                      onClick={() => handleSelectTheme(t.id)}
+                      aria-selected={th.id === theme.id}
+                      onClick={() => handleSelectTheme(th.id)}
                     >
-                      <span className="navbar-theme-option-icon">{t.icon}</span>
-                      <span className="navbar-theme-option-label">{t.label}</span>
-                      {t.id === theme.id && <CheckIcon />}
+                      <span className="navbar-theme-option-icon">{th.icon}</span>
+                      <span className="navbar-theme-option-label">{themeLabel(th)}</span>
+                      {th.id === theme.id && <CheckIcon />}
                     </button>
                   ))}
                 </div>
@@ -314,7 +394,7 @@ export default function Navbar({ active = 'Home' }) {
               to="/signin"
               className={active === 'Sign In' ? 'btn-signin active' : 'btn-signin'}
             >
-              Sign In
+              {t('nav.signIn')}
             </Link>
           </>
         )}

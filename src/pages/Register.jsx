@@ -4,6 +4,7 @@ import globeImg from '../assets/globe-register.png'
 import Navbar from '../components/Navbar.jsx'
 import { authApi } from '../lib/api.js'
 import AvatarPicker from '../components/AvatarPicker.jsx'
+import { useLanguage, richText, countryName } from '../i18n/LanguageContext.jsx'
 import { COUNTRIES } from '../data/countries.js'
 import CountryFlag from '../components/CountryFlag.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -108,6 +109,7 @@ function EyeIcon({ open }) {
 export default function Register() {
   const navigate = useNavigate()
   const { login } = useAuth()
+  const { t, locale } = useLanguage()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
@@ -137,17 +139,17 @@ export default function Register() {
     // Quick client-side checks so the user doesn't have to round-trip to the
     // server for the most obvious mistakes. The server re-validates everything.
     const clientErrors = {}
-    if (!form.fullName.trim()) clientErrors.fullName = 'Full name is required.'
-    if (!form.email.trim()) clientErrors.email = 'Email is required.'
-    if (!form.username.trim()) clientErrors.username = 'Username is required.'
-    if (!form.password) clientErrors.password = 'Password is required.'
-    if (!form.confirmPassword) clientErrors.confirmPassword = 'Please confirm your password.'
+    if (!form.fullName.trim()) clientErrors.fullName = t('auth.errors.fullNameRequired')
+    if (!form.email.trim()) clientErrors.email = t('auth.errors.emailRequired')
+    if (!form.username.trim()) clientErrors.username = t('auth.errors.usernameRequired')
+    if (!form.password) clientErrors.password = t('auth.errors.passwordRequired')
+    if (!form.confirmPassword) clientErrors.confirmPassword = t('auth.errors.confirmRequired')
     else if (form.password && form.confirmPassword !== form.password) {
-      clientErrors.confirmPassword = 'Passwords do not match.'
+      clientErrors.confirmPassword = t('auth.errors.passwordMismatch')
     }
-    if (!form.agreeTerms) clientErrors.agreeTerms = 'You must agree to the Terms of Service and Privacy Policy.'
-    if (!form.gender) clientErrors.gender = 'Please select Male or Female.'
-    if (!form.country) clientErrors.country = 'Please select your country.'
+    if (!form.agreeTerms) clientErrors.agreeTerms = t('auth.errors.termsRequired')
+    if (!form.gender) clientErrors.gender = t('auth.errors.genderRequired')
+    if (!form.country) clientErrors.country = t('auth.errors.countryRequired')
 
     if (Object.keys(clientErrors).length > 0) {
       setFieldErrors(clientErrors)
@@ -161,7 +163,7 @@ export default function Register() {
       navigate('/')
     } catch (err) {
       if (err.fieldErrors) setFieldErrors(err.fieldErrors)
-      setFormError(err.error || 'Something went wrong. Please try again.')
+      setFormError(err.error || t('common.genericError'))
     } finally {
       setSubmitting(false)
     }
@@ -177,47 +179,41 @@ export default function Register() {
 
       <div className="register-layout">
         <div className="register-visual-content">
-          <h1 className="register-welcome">
-            Join the Journey.
-            <br />
-            <span className="accent">Become an Explorer.</span>
-          </h1>
-          <p className="register-sub">
-            Create an account and start exploring history's greatest stories
-          </p>
+          <h1 className="register-welcome">{richText(t('register.welcome'), { accent: (text) => <span className="accent">{text}</span> })}</h1>
+          <p className="register-sub">{t('register.subtitle')}</p>
 
           <ul className="signin-features">
             <li>
               <span className="feature-icon"><MapIcon /></span>
-              Explore interactive maps
+              {t('auth.featureMaps')}
             </li>
             <li>
               <span className="feature-icon"><TrophyIcon /></span>
-              Test your knowledge
+              {t('auth.featureQuiz')}
             </li>
             <li>
               <span className="feature-icon"><UsersIcon /></span>
-              Compete with explorers
+              {t('auth.featureCompete')}
             </li>
           </ul>
         </div>
 
         <div className="signin-form-wrap">
           <div className="signin-card register-card">
-            <h2 className="signin-title">Create Account</h2>
-            <p className="signin-card-sub">Sign up and begin your adventure</p>
+            <h2 className="signin-title">{t('register.title')}</h2>
+            <p className="signin-card-sub">{t('register.cardSubtitle')}</p>
 
             <form onSubmit={handleSubmit} noValidate>
               {formError && <p className="form-error" role="alert">{formError}</p>}
 
                 <label className="field-label" htmlFor="fullname">
-                  Full Name<span className="required-star"> *</span>
+                  {t('register.fullNameLabel')}<span className="required-star"> *</span>
                 </label>
                 <div className={`field${fieldErrors.fullName ? ' field-invalid' : ''}`}>
                   <input
                     id="fullname"
                     type="text"
-                    placeholder="Enter your full name"
+                    placeholder={t('register.fullNamePlaceholder')}
                     autoComplete="name"
                     value={form.fullName}
                     onChange={updateField('fullName')}
@@ -228,13 +224,13 @@ export default function Register() {
                 {fieldErrors.fullName && <p className="field-error">{fieldErrors.fullName}</p>}
 
                 <label className="field-label" htmlFor="email">
-                  Email<span className="required-star"> *</span>
+                  {t('register.emailLabel')}<span className="required-star"> *</span>
                 </label>
                 <div className={`field${fieldErrors.email ? ' field-invalid' : ''}`}>
                   <input
                     id="email"
                     type="email"
-                    placeholder="Enter your email address"
+                    placeholder={t('register.emailPlaceholder')}
                     autoComplete="email"
                     value={form.email}
                     onChange={updateField('email')}
@@ -245,13 +241,13 @@ export default function Register() {
                 {fieldErrors.email && <p className="field-error">{fieldErrors.email}</p>}
 
                 <label className="field-label" htmlFor="username">
-                  Username<span className="required-star"> *</span>
+                  {t('register.usernameLabel')}<span className="required-star"> *</span>
                 </label>
                 <div className={`field${fieldErrors.username ? ' field-invalid' : ''}`}>
                   <input
                     id="username"
                     type="text"
-                    placeholder="Choose a username"
+                    placeholder={t('register.usernamePlaceholder')}
                     autoComplete="username"
                     value={form.username}
                     onChange={updateField('username')}
@@ -262,13 +258,13 @@ export default function Register() {
                 {fieldErrors.username && <p className="field-error">{fieldErrors.username}</p>}
 
                 <label className="field-label" htmlFor="password">
-                  Password<span className="required-star"> *</span>
+                  {t('auth.passwordLabel')}<span className="required-star"> *</span>
                 </label>
                 <div className={`field${fieldErrors.password ? ' field-invalid' : ''}`}>
                   <input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Create a password"
+                    placeholder={t('register.passwordPlaceholder')}
                     autoComplete="new-password"
                     value={form.password}
                     onChange={updateField('password')}
@@ -278,14 +274,14 @@ export default function Register() {
                     type="button"
                     className="field-icon field-icon-btn"
                     onClick={() => setShowPassword((v) => !v)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                   >
                     <EyeIcon open={showPassword} />
                   </button>
                 </div>
                 {fieldErrors.password && <p className="field-error">{fieldErrors.password}</p>}
 
-                <label className="field-label">Avatar</label>
+                <label className="field-label">{t('register.avatarLabel')}</label>
                 <AvatarPicker
                   value={form.avatar}
                   onChange={(id) => setForm((f) => ({ ...f, avatar: id }))}
@@ -293,7 +289,7 @@ export default function Register() {
                 />
 
                 <label className="field-label" htmlFor="gender">
-                  Gender<span className="required-star"> *</span>
+                  {t('register.genderLabel')}<span className="required-star"> *</span>
                 </label>
                 <div className="avatar-style-row">
                   <div className={`field avatar-style-field${fieldErrors.gender ? ' field-invalid' : ''}`}>
@@ -303,9 +299,9 @@ export default function Register() {
                       onChange={updateField('gender')}
                       required
                     >
-                      <option value="" disabled>Select Male or Female</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
+                      <option value="" disabled>{t('register.genderPlaceholder')}</option>
+                      <option value="male">{t('register.male')}</option>
+                      <option value="female">{t('register.female')}</option>
                     </select>
                   </div>
                 </div>
@@ -315,7 +311,7 @@ export default function Register() {
                 {fieldErrors.gender && <p className="field-error">{fieldErrors.gender}</p>}
 
                 <label className="field-label" htmlFor="country">
-                  Country<span className="required-star"> *</span>
+                  {t('register.countryLabel')}<span className="required-star"> *</span>
                 </label>
                 <div className="avatar-style-row">
                   <span className="country-flag-preview" aria-hidden="true">
@@ -328,28 +324,30 @@ export default function Register() {
                       onChange={updateField('country')}
                       required
                     >
-                      <option value="" disabled>Select your country</option>
-                      {COUNTRIES.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.name}
-                        </option>
-                      ))}
+                      <option value="" disabled>{t('register.countryPlaceholder')}</option>
+                      {COUNTRIES.map((c) => ({ ...c, label: countryName(c.code, locale, c.name) }))
+                        .sort((a, b) => a.label.localeCompare(b.label, locale))
+                        .map((c) => (
+                          <option key={c.code} value={c.code}>
+                            {c.label}
+                          </option>
+                        ))}
                     </select>
                   </div>
                 </div>
                 <p className="about-char-count" style={{ marginTop: -8, marginBottom: 14 }}>
-                  Shown on the leaderboard next to your name.
+                  {t('register.countryHint')}
                 </p>
                 {fieldErrors.country && <p className="field-error">{fieldErrors.country}</p>}
 
                 <label className="field-label" htmlFor="confirm-password">
-                  Confirm Password<span className="required-star"> *</span>
+                  {t('register.confirmLabel')}<span className="required-star"> *</span>
                 </label>
                 <div className={`field${fieldErrors.confirmPassword ? ' field-invalid' : ''}`}>
                   <input
                     id="confirm-password"
                     type={showConfirm ? 'text' : 'password'}
-                    placeholder="Confirm your password"
+                    placeholder={t('register.confirmPlaceholder')}
                     autoComplete="new-password"
                     value={form.confirmPassword}
                     onChange={updateField('confirmPassword')}
@@ -359,7 +357,7 @@ export default function Register() {
                     type="button"
                     className="field-icon field-icon-btn"
                     onClick={() => setShowConfirm((v) => !v)}
-                    aria-label={showConfirm ? 'Hide password' : 'Show password'}
+                    aria-label={showConfirm ? t('auth.hidePassword') : t('auth.showPassword')}
                   >
                     <EyeIcon open={showConfirm} />
                   </button>
@@ -374,22 +372,24 @@ export default function Register() {
                     required
                   />
                   <span>
-                    I agree to the <a href="#" onClick={noop} className="link-accent">Terms of Service</a> and{' '}
-                    <a href="#" onClick={noop} className="link-accent">Privacy Policy</a>
+                    {richText(t('register.agreeTerms'), {
+                      terms: (text) => <a href="#" onClick={noop} className="link-accent">{text}</a>,
+                      privacy: (text) => <a href="#" onClick={noop} className="link-accent">{text}</a>,
+                    })}
                     <span className="required-star"> *</span>
                   </span>
                 </label>
                 {fieldErrors.agreeTerms && <p className="field-error">{fieldErrors.agreeTerms}</p>}
 
                 <button type="submit" className="btn-login" disabled={submitting}>
-                  {submitting ? 'Signing Up…' : 'Sign Up'}
+                  {submitting ? t('register.submitting') : t('register.submit')}
                 </button>
               </form>
 
 
             <p className="signup-row">
-              Already have an account?{' '}
-              <Link to="/signin" className="link-accent">Log In</Link>
+              {t('register.haveAccount')}{' '}
+              <Link to="/signin" className="link-accent">{t('signIn.submit')}</Link>
             </p>
           </div>
         </div>
@@ -420,12 +420,12 @@ export default function Register() {
         </div>
 
         <div className="footer-links">
-          <a href="#" onClick={noop}>Privacy Policy</a>
-          <a href="#" onClick={noop}>Terms of Service</a>
-          <a href="#" onClick={noop}>Help Center</a>
+          <a href="#" onClick={noop}>{t('footer.privacy')}</a>
+          <a href="#" onClick={noop}>{t('footer.terms')}</a>
+          <a href="#" onClick={noop}>{t('footer.help')}</a>
         </div>
 
-        <p className="footer-copy">© 2024 ChronoMap. All rights reserved.</p>
+        <p className="footer-copy">© 2024 ChronoMap. {t('footer.rights')}</p>
       </footer>
     </div>
   )

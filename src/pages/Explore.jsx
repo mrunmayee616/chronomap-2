@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css'
 import Navbar from '../components/Navbar.jsx'
 import { MapHoverCard, MapStats, PlaceInfoPanel } from '../components/PlaceMapInfo.jsx'
 import { usePlaces } from '../context/PlacesContext.jsx'
+import { useLanguage } from '../i18n/LanguageContext.jsx'
 
 /* ---------- constants ---------- */
 
@@ -11,13 +12,13 @@ const MIN_YEAR = -3000 // 3000 BCE
 const MAX_YEAR = 2026  // 2026 CE
 
 const CATEGORIES = [
-  { key: 'Events', label: 'Events', Icon: CoinIcon },
-  { key: 'Battles', label: 'Battles', Icon: SwordsIcon },
-  { key: 'Kingdoms', label: 'Kingdoms', Icon: CrownIcon },
-  { key: 'Discoveries', label: 'Discoveries', Icon: CompassIcon },
-  { key: 'Revolution', label: 'Revolution', Icon: RevolutionIcon },
-  { key: 'Monuments', label: 'Monuments', Icon: MonumentIcon },
-  { key: 'Treaties', label: 'Treaties', Icon: TreatyIcon },
+  { key: 'Events', Icon: CoinIcon },
+  { key: 'Battles', Icon: SwordsIcon },
+  { key: 'Kingdoms', Icon: CrownIcon },
+  { key: 'Discoveries', Icon: CompassIcon },
+  { key: 'Revolution', Icon: RevolutionIcon },
+  { key: 'Monuments', Icon: MonumentIcon },
+  { key: 'Treaties', Icon: TreatyIcon },
 ]
 
 const ERA_PRESETS = [
@@ -143,11 +144,10 @@ function CompassRoseIcon() {
 
 /* ---------- helpers ---------- */
 
-function formatYear(y) {
+// Compact year for the timeline inputs, e.g. "3000BCE" / "3000 av. J.-C.".
+function formatYear(y, t) {
   const n = Math.round(y)
-  if (n < 0) return `${Math.abs(n)}BCE`
-  if (n === 0) return '1CE'
-  return `${n}CE`
+  return n < 0 ? t('years.bceShort', { year: -n }) : t('years.ceShort', { year: Math.max(n, 1) })
 }
 
 function pct(y) {
@@ -561,6 +561,7 @@ const CesiumGlobe3D = forwardRef(function CesiumGlobe3D({ mode, places = [], sel
 /* ---------- dual range timeline ---------- */
 
 function TimelineRange({ range, setRange }) {
+  const { t } = useLanguage()
   const [from, to] = range
   const dragging = useRef(null)
 
@@ -596,17 +597,17 @@ function TimelineRange({ range, setRange }) {
 
   return (
     <div className="timeline-bar">
-      <span className="timeline-label">Timeline</span>
+      <span className="timeline-label">{t('explore.timeline')}</span>
 
       <div className="timeline-controls">
-        <span className="timeline-caption">Show Events From</span>
+        <span className="timeline-caption">{t('explore.showFrom')}</span>
 
         <input
           className="timeline-year-input"
           type="text"
-          value={formatYear(from)}
+          value={formatYear(from, t)}
           onChange={handleFromNumber}
-          aria-label="Start year"
+          aria-label={t('explore.startYear')}
         />
 
         <div className="timeline-track-wrap">
@@ -624,7 +625,7 @@ function TimelineRange({ range, setRange }) {
             onChange={handleFromInput}
             className="timeline-thumb"
             style={{ zIndex: fromOnTop ? 3 : 2 }}
-            aria-label="Start year slider"
+            aria-label={t('explore.startYearSlider')}
           />
           <input
             type="range"
@@ -634,18 +635,18 @@ function TimelineRange({ range, setRange }) {
             onChange={handleToInput}
             className="timeline-thumb"
             style={{ zIndex: fromOnTop ? 2 : 3 }}
-            aria-label="End year slider"
+            aria-label={t('explore.endYearSlider')}
           />
         </div>
 
-        <span className="timeline-caption">to</span>
+        <span className="timeline-caption">{t('explore.to')}</span>
 
         <input
           className="timeline-year-input"
           type="text"
-          value={formatYear(to)}
+          value={formatYear(to, t)}
           onChange={handleToNumber}
-          aria-label="End year"
+          aria-label={t('explore.endYear')}
         />
       </div>
     </div>
@@ -656,6 +657,7 @@ function TimelineRange({ range, setRange }) {
 
 export default function Explore() {
   const { places: PLACES } = usePlaces()
+  const { t, tValue } = useLanguage()
   const [mode, setMode] = useState('2D')
   const [activeCategory, setActiveCategory] = useState('Events')
   const [search, setSearch] = useState('')
@@ -759,7 +761,7 @@ export default function Explore() {
           <SearchIcon />
           <input
             type="text"
-            placeholder="Search events, places or people.."
+            placeholder={t('explore.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -772,15 +774,15 @@ export default function Explore() {
             onClick={() => setFilterOpen((v) => !v)}
             aria-expanded={filterOpen}
           >
-            <FilterIcon /> Filter
+            <FilterIcon /> {t('explore.filter')}
           </button>
 
           {filterOpen && (
             <div className="filter-panel">
-              <span className="filter-panel-title">Jump to era</span>
+              <span className="filter-panel-title">{t('explore.jumpToEra')}</span>
               {ERA_PRESETS.map((p) => (
                 <button key={p.label} type="button" onClick={() => applyPreset(p)}>
-                  {p.label}
+                  {tValue('eras', p.label)}
                 </button>
               ))}
               <button
@@ -788,13 +790,13 @@ export default function Explore() {
                 className="filter-reset"
                 onClick={() => applyPreset({ range: [MIN_YEAR, MAX_YEAR] })}
               >
-                Reset range
+                {t('explore.resetRange')}
               </button>
             </div>
           )}
         </div>
 
-        <div className="view-toggle" role="tablist" aria-label="Map view">
+        <div className="view-toggle" role="tablist" aria-label={t('explore.mapView')}>
           <button
             type="button"
             role="tab"
@@ -818,16 +820,16 @@ export default function Explore() {
 
       <div className="explore-body">
         <aside className="explore-sidebar">
-          {CATEGORIES.map(({ key, label, Icon }) => (
+          {CATEGORIES.map(({ key, Icon }) => (
             <button
               key={key}
               type="button"
               className={key === activeCategory ? 'sidebar-item active' : 'sidebar-item'}
               onClick={() => setActiveCategory(key)}
-              title={label}
+              title={tValue('categories', key)}
             >
               <span className="sidebar-icon"><Icon /></span>
-              <span className="sidebar-label">{label}</span>
+              <span className="sidebar-label">{tValue('categories', key)}</span>
             </button>
           ))}
         </aside>
@@ -854,7 +856,7 @@ export default function Explore() {
 
           {filteredPlaces.length === 0 && (
             <div className="map-empty-note">
-              No places match the current filters — try widening the timeline or clearing the search.
+              {t('explore.noMatches')}
             </div>
           )}
 
@@ -870,19 +872,17 @@ export default function Explore() {
           <PlaceInfoPanel place={selectedPlace} onClose={() => setSelectedId(null)} />
 
           <div className="map-hint">
-            {mode === '2D'
-              ? 'Drag to pan · Scroll or +/- to zoom · Double-click to zoom in'
-              : 'Drag to orbit · Right-drag to tilt · Scroll or +/- to zoom'}
+            {mode === '2D' ? t('explore.hint2d') : t('explore.hint3d')}
           </div>
 
           <div className="map-zoom-controls">
-            <button type="button" onClick={() => zoomButton(1)} aria-label="Zoom in">
+            <button type="button" onClick={() => zoomButton(1)} aria-label={t('explore.zoomIn')}>
               <ZoomInIcon />
             </button>
-            <button type="button" onClick={() => zoomButton(-1)} aria-label="Zoom out">
+            <button type="button" onClick={() => zoomButton(-1)} aria-label={t('explore.zoomOut')}>
               <ZoomOutIcon />
             </button>
-            <button type="button" onClick={resetView} aria-label="Reset view" className="map-zoom-reset">
+            <button type="button" onClick={resetView} aria-label={t('explore.resetView')} className="map-zoom-reset">
               <ResetViewIcon />
             </button>
           </div>

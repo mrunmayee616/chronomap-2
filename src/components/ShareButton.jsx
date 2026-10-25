@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useT } from '../i18n/LanguageContext.jsx'
 
 /* ---------- icons ---------- */
 
@@ -121,6 +122,7 @@ async function copyToClipboard(text) {
  *   path   - on-site path to share, e.g. "/place/colosseum"
  */
 export default function ShareButton({ title, text, path }) {
+  const t = useT()
   const [open, setOpen] = useState(false)
   const [copyState, setCopyState] = useState('idle') // 'idle' | 'copied' | 'failed'
   const wrapRef = useRef(null)
@@ -167,8 +169,8 @@ export default function ShareButton({ title, text, path }) {
   // Auto-clear the "Copied!" label.
   useEffect(() => {
     if (copyState !== 'copied') return undefined
-    const t = setTimeout(() => setCopyState('idle'), 2200)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setCopyState('idle'), 2200)
+    return () => clearTimeout(timer)
   }, [copyState])
 
   async function handleCopy() {
@@ -215,7 +217,7 @@ export default function ShareButton({ title, text, path }) {
     },
     {
       key: 'email',
-      label: 'Email',
+      label: t('share.email'),
       icon: <MailIcon />,
       href: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${text}\n\n${url}`)}`,
       external: false,
@@ -228,7 +230,7 @@ export default function ShareButton({ title, text, path }) {
         ref={triggerRef}
         type="button"
         className={open ? 'place-icon-btn active' : 'place-icon-btn'}
-        aria-label="Share place"
+        aria-label={t('share.button')}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
@@ -237,8 +239,8 @@ export default function ShareButton({ title, text, path }) {
       </button>
 
       {open && (
-        <div className="share-menu" ref={menuRef} role="menu" aria-label={`Share ${title}`}>
-          <p className="share-menu-title">Share this place</p>
+        <div className="share-menu" ref={menuRef} role="menu" aria-label={t('share.menuLabel', { title })}>
+          <p className="share-menu-title">{t('share.title')}</p>
 
           <div className="share-link-row">
             <input
@@ -246,7 +248,7 @@ export default function ShareButton({ title, text, path }) {
               type="text"
               readOnly
               value={url}
-              aria-label="Link to this place"
+              aria-label={t('share.linkLabel')}
               className="share-link-input"
               onFocus={(e) => e.target.select()}
             />
@@ -256,32 +258,32 @@ export default function ShareButton({ title, text, path }) {
               onClick={handleCopy}
             >
               {copyState === 'copied' ? <CheckIcon /> : <LinkIcon />}
-              {copyState === 'copied' ? 'Copied' : 'Copy'}
+              {copyState === 'copied' ? t('share.copied') : t('share.copy')}
             </button>
           </div>
           <p className="share-status" role="status" aria-live="polite">
-            {copyState === 'copied' && 'Link copied to clipboard.'}
-            {copyState === 'failed' && 'Couldn’t copy automatically — press Ctrl/Cmd + C.'}
+            {copyState === 'copied' && t('share.copiedMessage')}
+            {copyState === 'failed' && t('share.copyFailed')}
           </p>
 
           {canNativeShare && (
             <button type="button" className="share-item" role="menuitem" onClick={handleNativeShare}>
               <span className="share-item-icon"><ShareIcon /></span>
-              Share via…
+              {t('share.via')}
             </button>
           )}
 
-          {targets.map((t) => (
+          {targets.map((target) => (
             <a
-              key={t.key}
+              key={target.key}
               className="share-item"
               role="menuitem"
-              href={t.href}
-              {...(t.external === false ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
+              href={target.href}
+              {...(target.external === false ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
               onClick={() => setOpen(false)}
             >
-              <span className="share-item-icon">{t.icon}</span>
-              {t.label}
+              <span className="share-item-icon">{target.icon}</span>
+              {target.label}
             </a>
           ))}
         </div>

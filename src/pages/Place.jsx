@@ -6,8 +6,12 @@ import { useAuth } from '../context/AuthContext.jsx'
 import FavouriteButton from '../components/FavouriteButton.jsx'
 import { progressApi } from '../lib/api.js'
 import { usePlaces } from '../context/PlacesContext.jsx'
+import { useLanguage } from '../i18n/LanguageContext.jsx'
 
 const TABS = ['Overview', 'Timeline', 'Key Figures', 'Gallery']
+const TAB_KEYS = { Overview: 'overview', Timeline: 'timeline', 'Key Figures': 'keyFigures', Gallery: 'gallery' }
+// quickFacts keys in the dataset -> dictionary keys
+const FACT_KEYS = { Date: 'date', Location: 'location', Category: 'category', Era: 'era' }
 
 function PinIcon() {
   return (
@@ -42,6 +46,7 @@ export default function Place() {
   const place = getPlaceById(placeId || 'colosseum')
   const navigate = useNavigate()
   const { isAuthenticated, token, refreshUser, user } = useAuth()
+  const { t, tValue } = useLanguage()
 
   const [activeTab, setActiveTab] = useState('Overview')
 
@@ -68,9 +73,9 @@ export default function Place() {
       <div className="page place-page">
         <Navbar active="Explore" />
         <div className="place-not-found">
-          <h2>We couldn't find that place.</h2>
-          <p>It may not be in the dataset yet.</p>
-          <Link to="/explore" className="btn-primary">Back to Explore</Link>
+          <h2>{t('place.notFoundTitle')}</h2>
+          <p>{t('place.notFoundBody')}</p>
+          <Link to="/explore" className="btn-primary">{t('place.backToExplore')}</Link>
         </div>
       </div>
     )
@@ -94,7 +99,7 @@ export default function Place() {
           <div className="place-media">
             <img src={place.image} alt={place.name} className="place-hero-img" />
 
-            <div className="place-tab-strip" role="tablist" aria-label={`${place.name} sections`}>
+            <div className="place-tab-strip" role="tablist" aria-label={t('place.sectionsLabel', { name: place.name })}>
               {TABS.map((tab) => (
                 <button
                   key={tab}
@@ -104,7 +109,7 @@ export default function Place() {
                   className={activeTab === tab ? 'place-tab active' : 'place-tab'}
                   onClick={() => setActiveTab(tab)}
                 >
-                  {tab}
+                  {t(`place.tabs.${TAB_KEYS[tab]}`)}
                 </button>
               ))}
             </div>
@@ -156,7 +161,7 @@ export default function Place() {
           <div className="place-info">
             <div className="place-info-top-row">
               <div className="place-badges">
-                <span className="place-badge place-badge-filled">{place.category}</span>
+                <span className="place-badge place-badge-filled">{tValue('categories', place.category)}</span>
                 {place.tags
                   .filter((t) => t !== place.category)
                   .map((t) => (
@@ -168,7 +173,7 @@ export default function Place() {
                 <FavouriteButton place={place} />
                 <ShareButton
                   title={place.name}
-                  text={`${place.name} (${place.location}) — explore its history on ChronoMap.`}
+                  text={t('place.shareText', { name: place.name, location: place.location })}
                   path={`/place/${place.id}`}
                 />
               </div>
@@ -185,7 +190,7 @@ export default function Place() {
             <p className="place-summary">{place.summary}</p>
 
             <div className="place-key-figures-section">
-              <p className="place-section-label">Key Figures</p>
+              <p className="place-section-label">{t('place.tabs.keyFigures')}</p>
               <div className="place-avatar-row">
                 {place.keyFigures.map((fig) => (
                   <span key={fig.id} className="place-avatar-circle" title={fig.name}>
@@ -198,14 +203,16 @@ export default function Place() {
             <div className="place-facts-card">
               {Object.entries(place.quickFacts).map(([label, value]) => (
                 <div key={label} className="place-facts-row">
-                  <span className="place-facts-label">{label}</span>
-                  <span className="place-facts-value">{value}</span>
+                  <span className="place-facts-label">{FACT_KEYS[label] ? t(`place.facts.${FACT_KEYS[label]}`) : label}</span>
+                  <span className="place-facts-value">
+                    {label === 'Category' ? tValue('categories', value) : label === 'Era' ? tValue('eras', value) : value}
+                  </span>
                 </div>
               ))}
             </div>
 
             <button type="button" className="btn-start-quiz" onClick={handleStartQuiz}>
-              Start Quiz
+              {t('place.startQuiz')}
             </button>
           </div>
         </div>

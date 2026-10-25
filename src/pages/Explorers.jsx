@@ -6,14 +6,12 @@ import CountryFlag from '../components/CountryFlag.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { usersApi } from '../lib/api.js'
 import { avatarUrlFor } from '../lib/avatar.js'
+import { useLanguage } from '../i18n/LanguageContext.jsx'
 
-const TABS = [
-  { key: 'find', label: 'Find explorers' },
-  { key: 'following', label: 'Following' },
-  { key: 'followers', label: 'Followers' },
-]
+const TABS = [{ key: 'find' }, { key: 'following' }, { key: 'followers' }]
 
 function ExplorerRow({ person, showFollow, onFollowChange }) {
+  const { t, tTitle } = useLanguage()
   return (
     <div className="explorer-row">
       <Link to={`/u/${encodeURIComponent(person.username)}`} className="explorer-row-main">
@@ -23,7 +21,7 @@ function ExplorerRow({ person, showFollow, onFollowChange }) {
           <span className="explorer-username">@{person.username}</span>
         </span>
         <span className="explorer-level">
-          Level {person.level} <span className="dot">•</span> {person.title}
+          {t('common.level', { level: person.level })} <span className="dot">•</span> {tTitle(person.title)}
         </span>
         {person.country && <CountryFlag code={person.country} size={18} className="explorer-flag" />}
       </Link>
@@ -40,8 +38,9 @@ function ExplorerRow({ person, showFollow, onFollowChange }) {
 
 export default function Explorers() {
   const { token, user } = useAuth()
+  const { t } = useLanguage()
   const [params, setParams] = useSearchParams()
-  const tab = TABS.some((t) => t.key === params.get('tab')) ? params.get('tab') : 'find'
+  const tab = TABS.some((x) => x.key === params.get('tab')) ? params.get('tab') : 'find'
 
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
@@ -78,7 +77,7 @@ export default function Explorers() {
         setResults(data.users)
         setSearched(q)
       } catch (err) {
-        if (ticket === latest.current) setError(err.error || 'Search failed. Please try again.')
+        if (ticket === latest.current) setError(err.error || t('explorers.searchError'))
       } finally {
         if (ticket === latest.current) setLoading(false)
       }
@@ -99,7 +98,7 @@ export default function Explorers() {
         setListUsers(data.users)
         setCounts({ followersCount: data.followersCount, followingCount: data.followingCount })
       })
-      .catch((err) => !cancelled && setError(err.error || 'Could not load this list.'))
+      .catch((err) => !cancelled && setError(err.error || t('explorers.listError')))
       .finally(() => !cancelled && setLoading(false))
     return () => {
       cancelled = true
@@ -128,24 +127,22 @@ export default function Explorers() {
     <div className="page explorers-page">
       <Navbar active="Explorers" />
       <div className="explorers-wrap">
-        <h1 className="explorers-title">Explorers</h1>
-        <p className="explorers-sub">
-          Find other explorers and follow the ones you want to keep an eye on. Following is optional.
-        </p>
+        <h1 className="explorers-title">{t('explorers.title')}</h1>
+        <p className="explorers-sub">{t('explorers.subtitle')}</p>
 
         <div className="leaderboard-tabs explorers-tabs" role="tablist">
-          {TABS.filter((t) => !(isAdmin && t.key !== 'find')).map((t) => (
+          {TABS.filter((x) => !(isAdmin && x.key !== 'find')).map((x) => (
             <button
-              key={t.key}
+              key={x.key}
               type="button"
               role="tab"
-              aria-selected={tab === t.key}
-              className={tab === t.key ? 'leaderboard-tab active' : 'leaderboard-tab'}
-              onClick={() => setTab(t.key)}
+              aria-selected={tab === x.key}
+              className={tab === x.key ? 'leaderboard-tab active' : 'leaderboard-tab'}
+              onClick={() => setTab(x.key)}
             >
-              {t.label}
-              {t.key === 'following' && tab !== 'find' && ` (${counts.followingCount})`}
-              {t.key === 'followers' && tab !== 'find' && ` (${counts.followersCount})`}
+              {t(`explorers.tabs.${x.key}`)}
+              {x.key === 'following' && tab !== 'find' && ` (${counts.followingCount})`}
+              {x.key === 'followers' && tab !== 'find' && ` (${counts.followersCount})`}
             </button>
           ))}
         </div>
@@ -156,8 +153,8 @@ export default function Explorers() {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by username or name…"
-              aria-label="Search explorers"
+              placeholder={t('explorers.searchPlaceholder')}
+              aria-label={t('explorers.searchLabel')}
               autoFocus
             />
           </div>
@@ -168,13 +165,13 @@ export default function Explorers() {
         <div className="explorers-list">
           {tab === 'find' && (
             <>
-              {tooShort && <p className="explorers-hint">Type at least 2 characters to search.</p>}
+              {tooShort && <p className="explorers-hint">{t('explorers.tooShort')}</p>}
               {!tooShort && query.trim().length === 0 && (
-                <p className="explorers-hint">Start typing a username or name to find other explorers.</p>
+                <p className="explorers-hint">{t('explorers.startTyping')}</p>
               )}
-              {loading && <p className="explorers-hint">Searching…</p>}
+              {loading && <p className="explorers-hint">{t('explorers.searching')}</p>}
               {!loading && searched && results.length === 0 && (
-                <p className="explorers-hint">No explorers found for “{searched}”.</p>
+                <p className="explorers-hint">{t('explorers.noResults', { query: searched })}</p>
               )}
               {results.map((p) => (
                 <ExplorerRow
@@ -189,12 +186,10 @@ export default function Explorers() {
 
           {tab !== 'find' && (
             <>
-              {loading && <p className="explorers-hint">Loading…</p>}
+              {loading && <p className="explorers-hint">{t('common.loading')}</p>}
               {!loading && !error && listUsers.length === 0 && (
                 <p className="explorers-hint">
-                  {tab === 'following'
-                    ? "You're not following anyone yet. Use “Find explorers” to get started."
-                    : 'No followers yet.'}
+                  {tab === 'following' ? t('explorers.noFollowing') : t('explorers.noFollowers')}
                 </p>
               )}
               {listUsers.map((p) => (
