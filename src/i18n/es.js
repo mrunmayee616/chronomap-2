@@ -27,6 +27,8 @@ export default {
     themeButton: 'Tema: {theme}. Haz clic para elegir',
     accountMenu: 'Menú de la cuenta',
     language: 'Idioma',
+    switchToLight: 'Cambiar al modo claro',
+    switchToDark: 'Cambiar al modo oscuro',
   },
 
   themes: {

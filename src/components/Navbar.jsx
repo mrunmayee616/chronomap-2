@@ -67,6 +67,36 @@ function GlobeIcon() {
   )
 }
 
+function SunIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="4.2" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M12 2.5v2.2M12 19.3v2.2M4.7 4.7l1.6 1.6M17.7 17.7l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.7 19.3l1.6-1.6M17.7 6.3l1.6-1.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function MoonIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+// Light/dark switch. Works with every theme -- each one has a light and a
+// dark palette in index.css. Shows the mode you'd switch *to*.
+function ModeToggle() {
+  const { mode, toggleMode } = useTheme()
+  const { t } = useLanguage()
+  const label = mode === 'dark' ? t('nav.switchToLight') : t('nav.switchToDark')
+  return (
+    <button type="button" className="btn-lang btn-mode" onClick={toggleMode} aria-label={label} title={label}>
+      {mode === 'dark' ? <SunIcon /> : <MoonIcon />}
+    </button>
+  )
+}
+
 // Globe button + menu of interface languages, shown to everyone (signed in
 // or not). Each language is listed in its own name so people can find it.
 function LanguagePicker() {
@@ -285,6 +315,7 @@ export default function Navbar({ active = 'Home' }) {
 
       <div className="navbar-right">
         <LanguagePicker />
+        <ModeToggle />
         {isAuthenticated && user ? (
           /* ---- Logged-in: avatar button with dropdown ---- */
           <div className="navbar-avatar-wrap" ref={menuRef}>

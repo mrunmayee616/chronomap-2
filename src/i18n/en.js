@@ -34,6 +34,8 @@ export default {
     themeButton: 'Theme: {theme}. Click to choose',
     accountMenu: 'Account menu',
     language: 'Language',
+    switchToLight: 'Switch to light mode',
+    switchToDark: 'Switch to dark mode',
   },
 
   themes: {
