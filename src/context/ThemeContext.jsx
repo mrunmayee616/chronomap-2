@@ -1,12 +1,14 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 
 /**
- * Available themes for ChronoMap.
+ * Available themes for ChronoMap. Each theme has a dark and a light version
+ * (see the [data-theme] / [data-mode] blocks in index.css), so the theme
+ * picks the palette and the mode picks light or dark.
  *
- * cosmos   – original deep-navy dark theme (default)
+ * cosmos   – deep navy / cool blue-white (default)
  * ancient  – warm parchment / papyrus historical theme
- * obsidian – volcanic black + amber-ember accent
- * aurora   – northern-lights teal-green on near-black
+ * obsidian – volcanic black + amber embers / warm grey
+ * aurora   – northern-lights teal-green / mint
  */
 export const THEMES = [
   { id: 'cosmos',   label: 'Cosmos',   icon: '🌌' },
@@ -15,7 +17,21 @@ export const THEMES = [
   { id: 'aurora',   label: 'Aurora',   icon: '🌌' },
 ]
 
+export const MODES = ['dark', 'light']
+
 const ThemeContext = createContext(null)
+
+// First visit: follow the operating system's light/dark preference.
+function initialMode() {
+  try {
+    const saved = localStorage.getItem('chronomap-mode')
+    if (MODES.includes(saved)) return saved
+  } catch {
+    /* storage unavailable */
+  }
+  if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: light)').matches) return 'light'
+  return 'dark'
+}
 
 export function ThemeProvider({ children }) {
   const [themeIndex, setThemeIndex] = useState(() => {
@@ -27,6 +43,7 @@ export function ThemeProvider({ children }) {
       return 0
     }
   })
+  const [mode, setModeState] = useState(initialMode)
 
   const theme = THEMES[themeIndex]
 
@@ -36,6 +53,13 @@ export function ThemeProvider({ children }) {
       localStorage.setItem('chronomap-theme', theme.id)
     } catch { /* ignore */ }
   }, [theme.id])
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-mode', mode)
+    try {
+      localStorage.setItem('chronomap-mode', mode)
+    } catch { /* ignore */ }
+  }, [mode])
 
   /** Jump directly to any theme by its id string */
   function setTheme(themeId) {
@@ -48,8 +72,16 @@ export function ThemeProvider({ children }) {
     setThemeIndex((i) => (i + 1) % THEMES.length)
   }
 
+  function setMode(next) {
+    if (MODES.includes(next)) setModeState(next)
+  }
+
+  function toggleMode() {
+    setModeState((m) => (m === 'dark' ? 'light' : 'dark'))
+  }
+
   return (
-    <ThemeContext.Provider value={{ theme, cycleTheme, setTheme, themes: THEMES }}>
+    <ThemeContext.Provider value={{ theme, cycleTheme, setTheme, themes: THEMES, mode, setMode, toggleMode }}>
       {children}
     </ThemeContext.Provider>
   )

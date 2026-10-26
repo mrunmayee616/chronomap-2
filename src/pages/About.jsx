@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import { avatarUrlFor } from '../lib/avatar.js'
+import { useT, richText } from '../i18n/LanguageContext.jsx'
 
 const TEAM = [
   {
@@ -52,63 +53,50 @@ function ArrowIcon() {
 }
 
 export default function About() {
+  const t = useT()
   return (
     <div className="page about-page">
       <Navbar active="About" />
 
       <div className="about-hero">
         <span className="about-eyebrow">
-          <CompassIcon /> About the project
+          <CompassIcon /> {t('about.eyebrow')}
         </span>
-        <h1 className="about-title">
-          History, made to be <span className="accent">explored.</span>
-        </h1>
-        <p className="about-sub">
-          ChronoMap turns world history into a living, interactive map — pin by pin,
-          era by era — so learning it feels closer to exploring than memorizing.
-        </p>
+        <h1 className="about-title">{richText(t('about.title'), { accent: (text) => <span className="accent">{text}</span> })}</h1>
+        <p className="about-sub">{t('about.subtitle')}</p>
       </div>
 
       <section className="about-section about-mission">
         <div className="about-mission-card">
           <span className="about-mission-icon"><BookIcon /></span>
           <div>
-            <h2>Why we built it</h2>
-            <p>
-              Most history lives in long paragraphs and disconnected dates. ChronoMap
-              anchors it to places instead — a city, a battlefield, a monument — so you can
-              see where something happened before learning what happened there. Timelines,
-              quizzes, and a bit of friendly competition on the leaderboard turn passive
-              reading into active exploration.
-            </p>
+            <h2>{t('about.whyTitle')}</h2>
+            <p>{t('about.whyBody')}</p>
           </div>
         </div>
       </section>
 
       <section className="about-section">
         <h2 className="about-section-title">
-          <SparkIcon /> The team
+          <SparkIcon /> {t('about.teamTitle')}
         </h2>
-        <p className="about-section-sub">
-          ChronoMap was designed and built by three developers as a software engineering
-          project at K. J. Somaiya College of Engineering, Mumbai.
-        </p>
+        <p className="about-section-sub">{t('about.teamBody')}</p>
 
         <div className="about-team-grid">
           {TEAM.map((person) => (
             <div className="about-team-card" key={person.name}>
               <img src={avatarUrlFor(person.seed)} alt="" className="about-team-avatar" />
               <p className="about-team-name">{person.name}</p>
-              <p className="about-team-role">Creator &amp; Developer</p>
+              <p className="about-team-role">{t('about.teamRole')}</p>
             </div>
           ))}
         </div>
       </section>
 
       <section className="about-section about-cta">
-        <p>Ready to see it for yourself?</p>
+        <p>{t('about.ctaQuestion')}</p>
         <Link to="/explore" className="btn-primary">
-          Start Exploring <ArrowIcon />
+          {t('common.startExploring')} <ArrowIcon />
         </Link>
       </section>
     </div>

@@ -10,6 +10,7 @@ import { COUNTRIES, countryNameFor } from '../data/countries.js'
 import CountryFlag from '../components/CountryFlag.jsx'
 import { ACHIEVEMENTS, achievementProgress } from '../lib/achievements.js'
 import { getPlaceById } from '../data/places.js'
+import { useLanguage, countryName, richText } from '../i18n/LanguageContext.jsx'
 import {
   TrophyIcon,
   ClockIcon,
@@ -42,10 +43,10 @@ const ACHIEVEMENT_ICONS = {
 
 const FILTERS = ['All', 'Unlocked', 'Locked']
 
-function formatJoinedDate(isoString) {
+function formatJoinedDate(isoString, locale) {
   if (!isoString) return ''
   const d = new Date(isoString)
-  return d.toLocaleDateString('en-GB', {
+  return d.toLocaleDateString(locale, {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -55,6 +56,7 @@ function formatJoinedDate(isoString) {
 export default function Profile() {
   const { user, token, refreshUser } = useAuth()
   const { favourites, removeFavourite } = useFavourites()
+  const { t, tTitle, locale } = useLanguage()
 
   const [loading, setLoading] = useState(true)
   const [social, setSocial] = useState(null)
@@ -78,7 +80,7 @@ export default function Profile() {
     refreshUser()
       .catch(() => {
         if (!cancelled) {
-          setError('Could not load your latest profile data.')
+          setError(t('profile.refreshError'))
         }
       })
       .finally(() => {
@@ -128,7 +130,7 @@ export default function Profile() {
       setIsEditingAbout(false)
     } catch (err) {
       setAboutError(
-        err.error || 'Could not save your changes. Please try again.'
+        err.error || t('profile.saveError')
       )
     } finally {
       setSavingAbout(false)
@@ -164,9 +166,7 @@ export default function Profile() {
         <Navbar active="Profile" />
         <div className="verify-wrap">
           <p className="verify-message">
-            {loading
-              ? 'Loading your profile…'
-              : 'We could not load your profile.'}
+            {loading ? t('profile.loading') : t('profile.loadError')}
           </p>
         </div>
       </div>
@@ -206,7 +206,7 @@ export default function Profile() {
             <div className="profile-header-row">
               <img
                 src={avatarUrlFor(user.username, user.avatar)}
-                alt={`${user.username}'s avatar`}
+                alt={t('common.avatarOf', { name: user.username })}
                 className="profile-avatar"
               />
 
@@ -215,21 +215,21 @@ export default function Profile() {
                 <p className="profile-username">@{user.username}</p>
 
                 <p className="profile-level-row">
-                  Level {user.level} <span className="dot">•</span>{' '}
-                  {user.title}
+                  {t('common.level', { level: user.level })} <span className="dot">•</span>{' '}
+                  {tTitle(user.title)}
                 </p>
 
                 {social && (
                   <p className="profile-social-row">
                     <Link to="/explorers?tab=followers">
                       <strong>{social.followers}</strong>{' '}
-                      {social.followers === 1 ? 'follower' : 'followers'}
+                      {t('userProfile.followers', { count: social.followers })}
                     </Link>
 
                     <span className="dot"> • </span>
 
                     <Link to="/explorers?tab=following">
-                      <strong>{social.following}</strong> following
+                      <strong>{social.following}</strong> {t('userProfile.following')}
                     </Link>
                   </p>
                 )}
@@ -245,8 +245,8 @@ export default function Profile() {
               </div>
 
               <p className="xp-bar-label">
-                {user.xp.toLocaleString()} /{' '}
-                {user.xpToNextLevel.toLocaleString()} XP
+                {user.xp.toLocaleString(locale)} /{' '}
+                {user.xpToNextLevel.toLocaleString(locale)} XP
               </p>
             </div>
 
@@ -255,42 +255,42 @@ export default function Profile() {
                 <p className="profile-stat-value">
                   {user.countriesExplored}
                 </p>
-                <p className="profile-stat-label">Countries Explored</p>
+                <p className="profile-stat-label">{t('stats.countriesExplored')}</p>
               </div>
 
               <div className="profile-stat">
                 <p className="profile-stat-value">
                   {user.eventsDiscovered}
                 </p>
-                <p className="profile-stat-label">Events Discovered</p>
+                <p className="profile-stat-label">{t('stats.eventsDiscovered')}</p>
               </div>
 
               <div className="profile-stat">
                 <p className="profile-stat-value">
                   {user.quizzesCompleted}
                 </p>
-                <p className="profile-stat-label">Quizzes Completed</p>
+                <p className="profile-stat-label">{t('stats.quizzesCompleted')}</p>
               </div>
 
               <div className="profile-stat">
                 <p className="profile-stat-value">
                   {user.currentStreak}
                 </p>
-                <p className="profile-stat-label">Current Streak</p>
+                <p className="profile-stat-label">{t('stats.currentStreak')}</p>
               </div>
             </div>
           </div>
 
           <div className="profile-card profile-about-card">
             <div className="profile-about-header">
-              <h3 className="profile-about-title">About Me</h3>
+              <h3 className="profile-about-title">{t('profile.aboutMe')}</h3>
 
               {!isEditingAbout && (
                 <button
                   type="button"
                   className="icon-btn"
                   onClick={startEditingAbout}
-                  aria-label="Edit About Me"
+                  aria-label={t('profile.editAboutMe')}
                 >
                   <EditIcon />
                 </button>
@@ -309,7 +309,7 @@ export default function Profile() {
                 )}
 
                 <label className="field-label" htmlFor="about-bio">
-                  Bio
+                  {t('profile.bio')}
                 </label>
 
                 <textarea
@@ -319,7 +319,7 @@ export default function Profile() {
                   onChange={(e) => setBioDraft(e.target.value)}
                   maxLength={280}
                   rows={4}
-                  placeholder="Tell other explorers about yourself…"
+                  placeholder={t('profile.bioPlaceholder')}
                 />
 
                 <p className="about-char-count">
@@ -327,7 +327,7 @@ export default function Profile() {
                 </p>
 
                 <label className="field-label" htmlFor="about-location">
-                  Location
+                  {t('place.facts.location')}
                 </label>
 
                 <div className="field">
@@ -337,14 +337,14 @@ export default function Profile() {
                     value={locationDraft}
                     onChange={(e) => setLocationDraft(e.target.value)}
                     maxLength={120}
-                    placeholder="City, Country"
+                    placeholder={t('profile.locationPlaceholder')}
                   />
                   <span className="field-icon">
                     <MapPinIcon />
                   </span>
                 </div>
 
-                <label className="field-label">Avatar</label>
+                <label className="field-label">{t('register.avatarLabel')}</label>
 
                 <AvatarPicker
                   value={avatarDraft}
@@ -353,7 +353,7 @@ export default function Profile() {
                 />
 
                 <label className="field-label" htmlFor="about-gender">
-                  Gender
+                  {t('register.genderLabel')}
                 </label>
 
                 <div className="avatar-style-row">
@@ -363,11 +363,9 @@ export default function Profile() {
                       value={genderDraft}
                       onChange={(e) => setGenderDraft(e.target.value)}
                     >
-                      <option value="unspecified">
-                        Prefer not to say
-                      </option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
+                      <option value="unspecified">{t('profile.preferNotToSay')}</option>
+                      <option value="male">{t('register.male')}</option>
+                      <option value="female">{t('register.female')}</option>
                     </select>
                   </div>
                 </div>
@@ -376,11 +374,11 @@ export default function Profile() {
                   className="about-char-count"
                   style={{ marginTop: -8, marginBottom: 14 }}
                 >
-                  Gender isn't shown publicly.
+                  {t('profile.genderHint')}
                 </p>
 
                 <label className="field-label" htmlFor="about-country">
-                  Country
+                  {t('register.countryLabel')}
                 </label>
 
                 <div className="avatar-style-row">
@@ -397,13 +395,15 @@ export default function Profile() {
                       value={countryDraft}
                       onChange={(e) => setCountryDraft(e.target.value)}
                     >
-                      <option value="">Prefer not to say</option>
+                      <option value="">{t('profile.preferNotToSay')}</option>
 
-                      {COUNTRIES.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.name}
-                        </option>
-                      ))}
+                      {COUNTRIES.map((c) => ({ ...c, label: countryName(c.code, locale, c.name) }))
+                        .sort((a, b) => a.label.localeCompare(b.label, locale))
+                        .map((c) => (
+                          <option key={c.code} value={c.code}>
+                            {c.label}
+                          </option>
+                        ))}
                     </select>
                   </div>
                 </div>
@@ -420,10 +420,10 @@ export default function Profile() {
                     type="submit"
                     className="icon-btn icon-btn-save"
                     disabled={savingAbout}
-                    aria-label="Save"
+                    aria-label={t('common.save')}
                   >
                     <CheckIcon />{' '}
-                    {savingAbout ? 'Saving…' : 'Save'}
+                    {savingAbout ? t('common.saving') : t('common.save')}
                   </button>
 
                   <button
@@ -431,9 +431,9 @@ export default function Profile() {
                     className="icon-btn icon-btn-cancel"
                     onClick={cancelEditingAbout}
                     disabled={savingAbout}
-                    aria-label="Cancel"
+                    aria-label={t('common.cancel')}
                   >
-                    <XIcon /> Cancel
+                    <XIcon /> {t('common.cancel')}
                   </button>
                 </div>
               </form>
@@ -442,7 +442,7 @@ export default function Profile() {
                 <p className="profile-about-bio">
                   {user.bio
                     ? user.bio
-                    : `I'm ${user.fullName.split(' ')[0]} and I'm an explorer.`}
+                    : t('profile.defaultBio', { name: user.fullName.split(' ')[0] })}
                 </p>
 
                 {user.location && (
@@ -455,14 +455,14 @@ export default function Profile() {
                   <p className="profile-meta-row">
                     <CountryFlag code={user.country} size={16} />
                     <span>
-                      {countryNameFor(user.country) || user.country}
+                      {countryName(user.country, locale, countryNameFor(user.country) || user.country)}
                     </span>
                   </p>
                 )}
 
                 <p className="profile-meta-row">
                   <CalendarIcon />{' '}
-                  <span>Joined on {formatJoinedDate(user.joinedAt)}</span>
+                  <span>{t('profile.joinedOn', { date: formatJoinedDate(user.joinedAt, locale) })}</span>
                 </p>
               </>
             )}
@@ -470,21 +470,21 @@ export default function Profile() {
         </div>
 
         <div className="favourites-header-row">
-          <h3 className="favourites-title">Favourites</h3>
+          <h3 className="favourites-title">{t('profile.favourites')}</h3>
 
           <p className="favourites-count">
             <span className="favourites-count-strong">
               {favouritePlaces.length}
             </span>{' '}
-            Saved Places
+            {t('profile.savedPlaces', { count: favouritePlaces.length })}
           </p>
         </div>
 
         {favouritePlaces.length === 0 ? (
           <p className="favourites-empty">
-            You haven't saved any places yet. Head to{' '}
-            <Link to="/explore">Explore</Link> and tap the heart on a place
-            to add it here.
+            {richText(t('profile.noFavourites'), {
+              explore: (text) => <Link to="/explore">{text}</Link>,
+            })}
           </p>
         ) : (
           <div className="favourites-grid">
@@ -513,7 +513,7 @@ export default function Profile() {
                 <button
                   type="button"
                   className="favourite-card-remove"
-                  aria-label={`Remove ${place.name} from favourites`}
+                  aria-label={t('profile.removeFavourite', { name: place.name })}
                   onClick={() => removeFavourite(place.id)}
                 >
                   <HeartIcon />
@@ -524,13 +524,13 @@ export default function Profile() {
         )}
 
         <div className="achievements-header-row">
-          <h3 className="achievements-title">Achievements</h3>
+          <h3 className="achievements-title">{t('profile.achievements')}</h3>
 
           <p className="achievements-count">
             <span className="achievements-count-strong">
               {unlockedCount}/{totalAchievements}
             </span>{' '}
-            Achievements Unlocked
+            {t('profile.achievementsUnlocked')}
           </p>
         </div>
 
@@ -544,7 +544,7 @@ export default function Profile() {
               }
               onClick={() => setFilter(f)}
             >
-              {f}
+              {t(`profile.filters.${f.toLowerCase()}`)}
             </button>
           ))}
         </div>
@@ -567,7 +567,7 @@ export default function Profile() {
                   '--progress': progress,
                   '--progress-color': a.color,
                 }}
-                title={`${progress}% complete`}
+                title={t('profile.percentComplete', { percent: progress })}
               >
                 <div
                   className="achievement-icon-badge"
@@ -580,9 +580,9 @@ export default function Profile() {
                   {isUnlocked ? <Icon /> : <LockIcon />}
                 </div>
 
-                <p className="achievement-title">{a.title}</p>
+                <p className="achievement-title">{t(`achievements.${a.id}.title`)}</p>
                 <p className="achievement-description">
-                  {a.description}
+                  {t(`achievements.${a.id}.description`)}
                 </p>
                 <p className="achievement-progress">{progress}%</p>
               </div>

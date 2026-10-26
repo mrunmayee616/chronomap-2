@@ -1,13 +1,15 @@
 import { AVATAR_PRESETS, avatarUrlFor } from '../lib/avatar.js'
+import { useT } from '../i18n/LanguageContext.jsx'
 
 // A grid of avatars to choose from. The first tile is the default initials
 // avatar (value ''), the rest are the presets in src/lib/avatar.js.
 // `seed` is the username/name used to draw the initials tile.
 export default function AvatarPicker({ value, onChange, seed }) {
-  const options = [{ id: '', label: 'Initials' }, ...AVATAR_PRESETS]
+  const t = useT()
+  const options = [{ id: '' }, ...AVATAR_PRESETS].map((opt) => ({ ...opt, label: t(`avatars.${opt.id || 'initials'}`) }))
 
   return (
-    <div className="avatar-picker" role="radiogroup" aria-label="Choose your avatar">
+    <div className="avatar-picker" role="radiogroup" aria-label={t('avatars.choose')}>
       {options.map((opt) => {
         const selected = (value || '') === opt.id
         return (

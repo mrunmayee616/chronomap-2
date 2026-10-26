@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useFavourites } from '../context/FavouritesContext.jsx'
+import { useT } from '../i18n/LanguageContext.jsx'
 
 export function HeartIcon({ filled }) {
   return (
@@ -26,6 +27,7 @@ export default function FavouriteButton({ place, className = '' }) {
   const navigate = useNavigate()
   const location = useLocation()
   const { isAuthenticated } = useAuth()
+  const t = useT()
   const { isFavourite, toggleFavourite } = useFavourites()
   const [showLoginNotice, setShowLoginNotice] = useState(false)
   const liked = isFavourite(place.id)
@@ -50,7 +52,7 @@ export default function FavouriteButton({ place, className = '' }) {
       <button
         type="button"
         className={`place-icon-btn${liked ? ' liked' : ''}${className ? ` ${className}` : ''}`}
-        aria-label={liked ? 'Remove from favourites' : 'Save place'}
+        aria-label={liked ? t('favourites.remove') : t('favourites.save')}
         aria-pressed={liked}
         onClick={handleToggleFavourite}
       >
@@ -66,20 +68,20 @@ export default function FavouriteButton({ place, className = '' }) {
               <HeartIcon filled={false} />
             </span>
             <div className="login-toast-body">
-              <p className="login-toast-title">Log in to save favourites</p>
-              <p className="login-toast-text">Create a free account or sign in to start saving places.</p>
+              <p className="login-toast-title">{t('favourites.loginTitle')}</p>
+              <p className="login-toast-text">{t('favourites.loginText')}</p>
             </div>
             <button
               type="button"
               className="login-toast-cta"
               onClick={() => navigate('/signin', { state: { from: { pathname: location.pathname } } })}
             >
-              Log In
+              {t('signIn.submit')}
             </button>
             <button
               type="button"
               className="login-toast-close"
-              aria-label="Dismiss"
+              aria-label={t('common.dismiss')}
               onClick={() => setShowLoginNotice(false)}
             >
               ×

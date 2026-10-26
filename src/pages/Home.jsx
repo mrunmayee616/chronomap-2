@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import globeImg from '../assets/globe.png'
 import Navbar from '../components/Navbar.jsx'
+import { useLanguage, richText } from '../i18n/LanguageContext.jsx'
 
 function ShieldIcon() {
   return (
@@ -39,6 +40,7 @@ function ArrowIcon() {
 }
 
 export default function Home() {
+  const { t, locale } = useLanguage()
   return (
     <div className="page">
       <Navbar active="Home" />
@@ -46,22 +48,17 @@ export default function Home() {
       <header className="hero">
         <div className="hero-copy">
           <h1 className="hero-title">
-            Explore <span className="accent">History.</span>
-            <br />
-            Understand the World
+            {richText(t('home.title'), { accent: (text) => <span className="accent">{text}</span> })}
           </h1>
 
-          <p className="hero-sub">
-            Discover historical events, legendary places and incredible stories
-            from across time and space
-          </p>
+          <p className="hero-sub">{t('home.subtitle')}</p>
 
           <div className="hero-actions">
             <Link to="/explore" className="btn-primary">
-              Start Exploring <ArrowIcon />
+              {t('common.startExploring')} <ArrowIcon />
             </Link>
             <Link to="/how-it-works" className="btn-secondary">
-              Learn More
+              {t('home.learnMore')}
             </Link>
           </div>
 
@@ -69,9 +66,9 @@ export default function Home() {
             <div className="stat">
               <span className="stat-icon"><ShieldIcon /></span>
               <span>
-                <span className="stat-value">50,000+</span>
+                <span className="stat-value">{(50000).toLocaleString(locale)}+</span>
                 <br />
-                <span className="stat-label">Historical Events</span>
+                <span className="stat-label">{t('home.statEvents')}</span>
               </span>
             </div>
             <div className="stat">
@@ -79,22 +76,22 @@ export default function Home() {
               <span>
                 <span className="stat-value">200+</span>
                 <br />
-                <span className="stat-label">Countries Covered</span>
+                <span className="stat-label">{t('home.statCountries')}</span>
               </span>
             </div>
             <div className="stat">
               <span className="stat-icon"><ClockIcon /></span>
               <span>
-                <span className="stat-value">3000 BCE</span>
+                <span className="stat-value">{t('home.statFromYear')}</span>
                 <br />
-                <span className="stat-label">To Present</span>
+                <span className="stat-label">{t('home.statToPresent')}</span>
               </span>
             </div>
           </div>
         </div>
 
         <div className="hero-globe">
-          <img src={globeImg} alt="Globe showing historical event locations" className="globe-img" />
+          <img src={globeImg} alt={t('home.globeAlt')} className="globe-img" />
         </div>
       </header>
     </div>

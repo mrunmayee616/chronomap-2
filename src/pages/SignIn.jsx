@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar.jsx'
 import { authApi } from '../lib/api.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import Logo from '../components/Logo.jsx'
+import { useLanguage, richText } from '../i18n/LanguageContext.jsx'
 
 function noop(e) {
   e.preventDefault()
@@ -87,6 +88,7 @@ export default function SignIn() {
   const navigate = useNavigate()
   const location = useLocation()
   const { login } = useAuth()
+  const { t, locale } = useLanguage()
   const [showPassword, setShowPassword] = useState(false)
 
   const [identifier, setIdentifier] = useState('')
@@ -101,8 +103,8 @@ export default function SignIn() {
     setFormError('')
 
     const clientErrors = {}
-    if (!identifier.trim()) clientErrors.identifier = 'Email or username is required.'
-    if (!password) clientErrors.password = 'Password is required.'
+    if (!identifier.trim()) clientErrors.identifier = t('auth.errors.identifierRequired')
+    if (!password) clientErrors.password = t('auth.errors.passwordRequired')
     if (Object.keys(clientErrors).length > 0) {
       setFieldErrors(clientErrors)
       return
@@ -121,7 +123,7 @@ export default function SignIn() {
       navigate(dest, { replace: true })
     } catch (err) {
       if (err.fieldErrors) setFieldErrors(err.fieldErrors)
-      setFormError(err.error || 'Something went wrong. Please try again.')
+      setFormError(err.error || t('common.genericError'))
     } finally {
       setSubmitting(false)
     }
@@ -133,31 +135,25 @@ export default function SignIn() {
 
       <div className="signin-layout">
         <div className="signin-visual">
-          <img src={colosseumImg} alt="The Colosseum at sunrise" className="signin-visual-img" />
+          <img src={colosseumImg} alt={t('signIn.imageAlt')} className="signin-visual-img" />
           <div className="signin-visual-fade" />
           <div className="signin-visual-content">
-            <h1 className="signin-welcome">
-              Welcome Back,
-              <br />
-              <span className="accent">Explorer.</span>
-            </h1>
+            <h1 className="signin-welcome">{richText(t('signIn.welcome'), { accent: (text) => <span className="accent">{text}</span> })}</h1>
             <span className="signin-underline" />
-            <p className="signin-sub">
-              Login to continue your journey through time and across civilizations.
-            </p>
+            <p className="signin-sub">{t('signIn.subtitle')}</p>
 
             <ul className="signin-features">
               <li>
                 <span className="feature-icon"><MapIcon /></span>
-                Explore interactive maps
+                {t('auth.featureMaps')}
               </li>
               <li>
                 <span className="feature-icon"><PinIcon /></span>
-                Test your knowledge
+                {t('auth.featureQuiz')}
               </li>
               <li>
                 <span className="feature-icon"><CrownIcon /></span>
-                Compete with explorers
+                {t('auth.featureCompete')}
               </li>
             </ul>
 
@@ -165,9 +161,9 @@ export default function SignIn() {
               <div className="stat">
                 <span className="stat-icon small"><ShieldIcon /></span>
                 <span>
-                  <span className="stat-value small">50,000+</span>
+                  <span className="stat-value small">{(50000).toLocaleString(locale)}+</span>
                   <br />
-                  <span className="stat-label">Historical Events</span>
+                  <span className="stat-label">{t('home.statEvents')}</span>
                 </span>
               </div>
               <div className="stat">
@@ -175,15 +171,15 @@ export default function SignIn() {
                 <span>
                   <span className="stat-value small">200+</span>
                   <br />
-                  <span className="stat-label">Countries Covered</span>
+                  <span className="stat-label">{t('home.statCountries')}</span>
                 </span>
               </div>
               <div className="stat">
                 <span className="stat-icon small"><HourglassIcon /></span>
                 <span>
-                  <span className="stat-value small">3,000 BCE</span>
+                  <span className="stat-value small">{t('home.statFromYear')}</span>
                   <br />
-                  <span className="stat-label">To Present Day</span>
+                  <span className="stat-label">{t('home.statToPresent')}</span>
                 </span>
               </div>
             </div>
@@ -192,20 +188,20 @@ export default function SignIn() {
 
         <div className="signin-form-wrap">
           <div className="signin-card">
-            <h2 className="signin-title">Log In</h2>
-            <p className="signin-card-sub">Welcome back! Please enter your details.</p>
+            <h2 className="signin-title">{t('signIn.title')}</h2>
+            <p className="signin-card-sub">{t('signIn.cardSubtitle')}</p>
 
             <form onSubmit={handleSubmit} noValidate>
               {formError && <p className="form-error" role="alert">{formError}</p>}
 
               <label className="field-label" htmlFor="identifier">
-                Email or Username<span className="required-star"> *</span>
+                {t('signIn.identifierLabel')}<span className="required-star"> *</span>
               </label>
               <div className={`field${fieldErrors.identifier ? ' field-invalid' : ''}`}>
                 <input
                   id="identifier"
                   type="text"
-                  placeholder="Enter your email or username"
+                  placeholder={t('signIn.identifierPlaceholder')}
                   value={identifier}
                   onChange={(e) => {
                     setIdentifier(e.target.value)
@@ -218,13 +214,13 @@ export default function SignIn() {
               {fieldErrors.identifier && <p className="field-error">{fieldErrors.identifier}</p>}
 
               <label className="field-label" htmlFor="password">
-                Password<span className="required-star"> *</span>
+                {t('auth.passwordLabel')}<span className="required-star"> *</span>
               </label>
               <div className={`field${fieldErrors.password ? ' field-invalid' : ''}`}>
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Enter your password"
+                  placeholder={t('signIn.passwordPlaceholder')}
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value)
@@ -236,7 +232,7 @@ export default function SignIn() {
                   type="button"
                   className="field-icon field-icon-btn"
                   onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                 >
                   <EyeIcon open={showPassword} />
                 </button>
@@ -244,18 +240,18 @@ export default function SignIn() {
               {fieldErrors.password && <p className="field-error">{fieldErrors.password}</p>}
 
               <div className="forgot-row">
-                <a href="#" onClick={noop} className="link-accent">Forgot Password?</a>
+                <a href="#" onClick={noop} className="link-accent">{t('signIn.forgotPassword')}</a>
               </div>
 
               <button type="submit" className="btn-login" disabled={submitting}>
-                {submitting ? 'Logging In…' : 'Log In'}
+                {submitting ? t('signIn.submitting') : t('signIn.submit')}
               </button>
             </form>
 
 
             <p className="signup-row">
-              Don't have an account?{' '}
-              <Link to="/register" className="link-accent">Sign Up</Link>
+              {t('signIn.noAccount')}{' '}
+              <Link to="/register" className="link-accent">{t('signIn.signUpLink')}</Link>
             </p>
           </div>
         </div>
@@ -286,12 +282,12 @@ export default function SignIn() {
         </div>
 
         <div className="footer-links">
-          <a href="#" onClick={noop}>Privacy Policy</a>
-          <a href="#" onClick={noop}>Terms of Service</a>
-          <a href="#" onClick={noop}>Help Center</a>
+          <a href="#" onClick={noop}>{t('footer.privacy')}</a>
+          <a href="#" onClick={noop}>{t('footer.terms')}</a>
+          <a href="#" onClick={noop}>{t('footer.help')}</a>
         </div>
 
-        <p className="footer-copy">© 2024 ChronoMap. All rights reserved.</p>
+        <p className="footer-copy">© 2024 ChronoMap. {t('footer.rights')}</p>
       </footer>
     </div>
   )

@@ -8,6 +8,25 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <script>
+      // Apply the saved theme and light/dark mode before the first paint, so
+      // light-mode visitors don't see a flash of the dark theme while React
+      // loads. ThemeContext keeps these attributes in sync afterwards.
+      (function () {
+        var root = document.documentElement
+        try {
+          var theme = localStorage.getItem('chronomap-theme')
+          var mode = localStorage.getItem('chronomap-mode')
+          if (theme) root.setAttribute('data-theme', theme)
+          if (mode !== 'light' && mode !== 'dark') {
+            mode = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+          }
+          root.setAttribute('data-mode', mode)
+        } catch (e) {
+          root.setAttribute('data-mode', 'dark')
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

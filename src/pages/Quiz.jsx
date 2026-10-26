@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { progressApi } from '../lib/api.js'
 import { usePlaces } from '../context/PlacesContext.jsx'
+import { useT } from '../i18n/LanguageContext.jsx'
 
 /* ------------------------------------------------------------------ */
 /* Icons                                                                */
@@ -155,16 +156,17 @@ function ScoreRing({ score, total }) {
 
 function QuizHub() {
   const { places: PLACES } = usePlaces()
+  const t = useT()
   return (
     <div className="page quiz-page">
       <Navbar active="Quiz" />
       <div className="quiz-hub-wrap">
         <div className="quiz-hub-header">
           <div className="quiz-hub-eyebrow">
-            <BookOpenIcon /> Knowledge Challenge
+            <BookOpenIcon /> {t('quiz.hubEyebrow')}
           </div>
-          <h1 className="quiz-hub-title">Pick a place to quiz on</h1>
-          <p className="quiz-hub-sub">Test what you've learned exploring the map. Score 80% or higher to earn XP.</p>
+          <h1 className="quiz-hub-title">{t('quiz.hubTitle')}</h1>
+          <p className="quiz-hub-sub">{t('quiz.hubSubtitle')}</p>
         </div>
 
         <div className="quiz-hub-grid">
@@ -175,7 +177,7 @@ function QuizHub() {
                 <div className="quiz-hub-card-overlay" />
                 <div className="quiz-hub-card-top-row">
                   <span className="quiz-hub-card-badge">
-                    <StarIcon /> {place.quiz.length} Qs
+                    <StarIcon /> {t('quiz.questionsShort', { count: place.quiz.length })}
                   </span>
                 </div>
                 <div className="quiz-hub-card-bottom-title">{place.name}</div>
@@ -183,8 +185,8 @@ function QuizHub() {
               <div className="quiz-hub-card-body">
                 <p className="quiz-hub-card-meta">{place.location} · {place.dateLabel}</p>
                 <div className="quiz-hub-card-footer">
-                  <span className="quiz-hub-card-count">{place.quiz.length} questions</span>
-                  <span className="quiz-hub-card-start-hint">Start Quiz →</span>
+                  <span className="quiz-hub-card-count">{t('quiz.questions', { count: place.quiz.length })}</span>
+                  <span className="quiz-hub-card-start-hint">{t('place.startQuiz')} →</span>
                 </div>
               </div>
             </Link>
@@ -201,6 +203,7 @@ function QuizHub() {
 
 function PlaceQuiz({ place }) {
   const { token, user, refreshUser } = useAuth()
+  const t = useT()
   // The admin can play any quiz, but results aren't recorded for it: no XP,
   // no completion, and so no place on the leaderboard.
   const isAdmin = Boolean(user?.isAdmin)
@@ -275,30 +278,28 @@ function PlaceQuiz({ place }) {
         <ScoreRing score={score} total={questions.length} />
 
         <h2 className="quiz-result-title">
-          {passed ? '🎉 Outstanding!' : '💪 Keep Going!'}
+          {passed ? `🎉 ${t('quiz.passedTitle')}` : `💪 ${t('quiz.failedTitle')}`}
         </h2>
         <p className="quiz-result-subtitle">
-          {passed
-            ? 'You aced this quiz. History remembers the thorough.'
-            : 'Explore the place again and give it another shot.'}
+          {passed ? t('quiz.passedSubtitle') : t('quiz.failedSubtitle')}
         </p>
         {isAdmin && (
           <p className="quiz-result-xp quiz-result-xp-muted">
-            Admin preview — scores aren't recorded and the admin isn't ranked on the leaderboard.
+            {t('quiz.adminPreview')}
           </p>
         )}
 
         {!isAdmin && xpResult && xpResult.xpGained > 0 && (
           <div className="quiz-result-xp">
             <span className="quiz-result-xp-num">+{xpResult.xpGained} XP</span>
-            {xpResult.levelsGained > 0 && <span className="quiz-result-levelup">⬆ Level Up!</span>}
+            {xpResult.levelsGained > 0 && <span className="quiz-result-levelup">⬆ {t('quiz.levelUp')}</span>}
           </div>
         )}
         {!isAdmin && xpResult && xpResult.xpGained === 0 && (
           <p className="quiz-result-xp quiz-result-xp-muted">
             {xpResult.counted === false && Math.round((score / questions.length) * 100) >= 80
-              ? 'Already completed — no additional XP for retakes.'
-              : 'Score 80% or higher to earn XP.'}
+              ? t('quiz.alreadyCompleted')
+              : t('quiz.scoreToEarn')}
           </p>
         )}
 
@@ -319,8 +320,8 @@ function PlaceQuiz({ place }) {
         </div>
 
         <div className="quiz-result-actions">
-          <button type="button" className="btn-primary" onClick={restart}>Try Again</button>
-          <Link to={`/place/${place.id}`} className="btn-secondary">Back to {place.name}</Link>
+          <button type="button" className="btn-primary" onClick={restart}>{t('quiz.tryAgain')}</button>
+          <Link to={`/place/${place.id}`} className="btn-secondary">{t('quiz.backTo', { name: place.name })}</Link>
         </div>
       </div>
     )
@@ -332,14 +333,14 @@ function PlaceQuiz({ place }) {
 
       {isAdmin && (
         <p className="quiz-admin-note">
-          Practice mode: you're signed in as admin, so this run won't earn XP or count toward the leaderboard.
+          {t('quiz.adminPractice')}
         </p>
       )}
 
       {/* ---- Progress header ---- */}
       <div className="quiz-progress-row">
-        <span className="quiz-progress-label">Question <strong>{step + 1}</strong> of {questions.length}</span>
-        <span className="quiz-score-pill">⭐ {score} pts</span>
+        <span className="quiz-progress-label">{t('quiz.questionLabel')} <strong>{step + 1}</strong> / {questions.length}</span>
+        <span className="quiz-score-pill">⭐ {t('quiz.points', { count: score })}</span>
       </div>
 
       <div className="quiz-progress-track">
@@ -350,7 +351,7 @@ function PlaceQuiz({ place }) {
       </div>
 
       {/* ---- Question navigator dots ---- */}
-      <div className="quiz-nav-dots" role="tablist" aria-label="Question navigator">
+      <div className="quiz-nav-dots" role="tablist" aria-label={t('quiz.navigator')}>
         {questions.map((_, i) => {
           const ans = answers[i]
           let dotClass = 'quiz-nav-dot'
@@ -364,7 +365,7 @@ function PlaceQuiz({ place }) {
               type="button"
               role="tab"
               aria-selected={i === step}
-              aria-label={`Question ${i + 1}${ans !== null ? (ans === questions[i].answerIndex ? ' — correct' : ' — incorrect') : ' — unanswered'}`}
+              aria-label={`${t('quiz.questionLabel')} ${i + 1} — ${ans !== null ? (ans === questions[i].answerIndex ? t('quiz.correct') : t('quiz.incorrect')) : t('quiz.unanswered')}`}
               className={dotClass}
               onClick={() => goToStep(i)}
             >
@@ -415,11 +416,11 @@ function PlaceQuiz({ place }) {
       <div className="quiz-nav-row">
         {selectedForStep !== null ? (
           <button type="button" className="btn-start-quiz quiz-next-btn" onClick={next}>
-            {step + 1 < questions.length ? 'Next Question' : 'See Results'}
+            {step + 1 < questions.length ? t('quiz.next') : t('quiz.seeResults')}
             {step + 1 < questions.length && <ChevronRightIcon />}
           </button>
         ) : (
-          <span className="quiz-nav-hint">Choose an answer to continue</span>
+          <span className="quiz-nav-hint">{t('quiz.chooseHint')}</span>
         )}
       </div>
     </div>
@@ -433,6 +434,7 @@ function PlaceQuiz({ place }) {
 export default function Quiz() {
   const { placeId } = useParams()
   const { getPlaceById } = usePlaces()
+  const t = useT()
   const place = useMemo(() => (placeId ? getPlaceById(placeId) : null), [placeId, getPlaceById])
 
   if (!placeId) return <QuizHub />
@@ -442,8 +444,8 @@ export default function Quiz() {
       <div className="page quiz-page">
         <Navbar active="Quiz" />
         <div className="place-not-found">
-          <h2>We couldn't find a quiz for that place.</h2>
-          <Link to="/quiz" className="btn-primary">Choose another place</Link>
+          <h2>{t('quiz.notFound')}</h2>
+          <Link to="/quiz" className="btn-primary">{t('quiz.chooseAnother')}</Link>
         </div>
       </div>
     )
