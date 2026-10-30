@@ -181,13 +181,13 @@ const LeafletMap2D = forwardRef(function LeafletMap2D({ mode, places = [], selec
       attributionControl: true,
     })
 
-    // Standard OpenStreetMap tiles — free, no API key required.
-    // Three sub-domains (a/b/c) are used for parallel tile loading.
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // CartoDB Voyager tiles — free, no API key, labels in English.
+    // Uses three sub-domains (a/b/c/d) for parallel tile loading.
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
-      subdomains: ['a', 'b', 'c'],
+      subdomains: ['a', 'b', 'c', 'd'],
       attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors',
+        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank" rel="noreferrer">CARTO</a>',
     }).addTo(map)
 
     markersLayerRef.current = L.layerGroup().addTo(map)
