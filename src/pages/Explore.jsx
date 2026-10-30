@@ -345,7 +345,11 @@ const CesiumGlobe3D = forwardRef(function CesiumGlobe3D({ mode, places = [], sel
     let cancelled = false
 
     ;(async () => {
-      const [Cesium] = await Promise.all([
+      // Don't name this binding `Cesium`: in production builds
+      // vite-plugin-cesium rewrites import('cesium') to the global `Cesium`,
+      // so a local `Cesium` here would shadow it and throw
+      // "Cannot access before initialization".
+      const [CesiumLib] = await Promise.all([
         import('cesium'),
         import('cesium/Build/Cesium/Widgets/widgets.css'),
       ])
@@ -358,13 +362,13 @@ const CesiumGlobe3D = forwardRef(function CesiumGlobe3D({ mode, places = [], sel
       // fromBasemapType() is async (it fetches Esri's basemap style/tiling
       // metadata first), so it's handed to ImageryLayer.fromProviderAsync
       // rather than wrapped synchronously like the old OSM provider was.
-      const viewer = new Cesium.Viewer(mountRef.current, {
-        baseLayer: Cesium.ImageryLayer.fromProviderAsync(
-          Cesium.ArcGisMapServerImageryProvider.fromBasemapType(
-            Cesium.ArcGisBaseMapType.SATELLITE
+      const viewer = new CesiumLib.Viewer(mountRef.current, {
+        baseLayer: CesiumLib.ImageryLayer.fromProviderAsync(
+          CesiumLib.ArcGisMapServerImageryProvider.fromBasemapType(
+            CesiumLib.ArcGisBaseMapType.SATELLITE
           )
         ),
-        terrainProvider: new Cesium.EllipsoidTerrainProvider(),
+        terrainProvider: new CesiumLib.EllipsoidTerrainProvider(),
         baseLayerPicker: false,
         geocoder: false,
         homeButton: false,
@@ -379,7 +383,7 @@ const CesiumGlobe3D = forwardRef(function CesiumGlobe3D({ mode, places = [], sel
 
       // Ocean-blue fallback while the satellite imagery is still loading in,
       // instead of Cesium's default light-grey globe.
-      viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#1b3a5c')
+      viewer.scene.globe.baseColor = CesiumLib.Color.fromCssColorString('#1b3a5c')
 
       // Off by default in Cesium, which means entities are never occluded
       // by the globe itself -- a pin on the far side of the earth would
@@ -389,29 +393,35 @@ const CesiumGlobe3D = forwardRef(function CesiumGlobe3D({ mode, places = [], sel
       // you rotate it.
       viewer.scene.globe.depthTestAgainstTerrain = true
 
+      // Store the viewer before the labels await below, so a cancel during
+      // that await can't orphan it (and the next run won't build a second one).
+      viewerRef.current = viewer
+      cesiumRef.current = CesiumLib
+      setReady(true)
+
       // Plain satellite imagery has no place names on it at all, so this
       // adds Esri's "World Boundaries and Places" reference layer on top --
       // country/state/city labels (in English) plus admin boundaries,
       // purpose-built to sit over a dark basemap like satellite imagery.
       try {
-        const labelsProvider = await Cesium.ArcGisMapServerImageryProvider.fromUrl(
+        const labelsProvider = await CesiumLib.ArcGisMapServerImageryProvider.fromUrl(
           'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer'
         )
-        if (cancelled) return
+        if (viewer.isDestroyed()) return
         viewer.imageryLayers.addImageryProvider(labelsProvider)
       } catch (err) {
         // Labels are a nice-to-have on top of the globe -- if the reference
         // service is unreachable, fail quietly and keep the satellite base.
         console.warn('Globe labels layer failed to load:', err)
       }
-
-      viewerRef.current = viewer
-      cesiumRef.current = Cesium
-      setReady(true)
     })()
 
     return () => {
       cancelled = true
+      // React StrictMode (dev) runs this cleanup straight after the first
+      // mount. If the viewer wasn't built yet, allow the re-run to start it,
+      // otherwise the globe would never be created.
+      if (!viewerRef.current) initStarted.current = false
     }
   }, [mode])
 
