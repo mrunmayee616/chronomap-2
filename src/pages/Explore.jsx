@@ -181,15 +181,13 @@ const LeafletMap2D = forwardRef(function LeafletMap2D({ mode, places = [], selec
       attributionControl: true,
     })
 
-    // Standard OSM tiles render place names in each region's local language,
-    // so this uses Wikimedia's "osm-intl" tile set with an explicit
-    // lang=en query param instead -- same OSM data, but every label is
-    // forced to English (falling back to a Latin-script transliteration
-    // where no English name exists in the data).
-    L.tileLayer('https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png?lang=en', {
+    // Standard OpenStreetMap tiles — free, no API key required.
+    // Three sub-domains (a/b/c) are used for parallel tile loading.
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
+      subdomains: ['a', 'b', 'c'],
       attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors | Tiles &copy; <a href="https://wikimediafoundation.org/" target="_blank" rel="noreferrer">Wikimedia</a>',
+        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors',
     }).addTo(map)
 
     markersLayerRef.current = L.layerGroup().addTo(map)
