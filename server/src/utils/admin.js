@@ -35,5 +35,6 @@ export function adminPublicUser() {
     currentStreak: 0,
     unlockedAchievements: [],
     visitedPlaces: [],
+    quizHints: {},
   }
 }

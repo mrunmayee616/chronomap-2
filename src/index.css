@@ -3370,6 +3370,51 @@ input[type='range']:focus-visible {
   color: var(--error);
 }
 
+/* answered, but right/wrong stays hidden until the result screen */
+.quiz-nav-dot.answered {
+  border-color: rgb(var(--ink) / 0.35);
+  background: rgb(var(--ink) / 0.1);
+  color: var(--text);
+}
+
+/* ---- Hints ---- */
+.quiz-hint-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: -8px 0 18px;
+  font-size: 13px;
+}
+
+.quiz-hint-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent);
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.quiz-hint-btn:not(:disabled):hover {
+  background: color-mix(in srgb, var(--gold) 18%, transparent);
+}
+
+.quiz-hint-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.quiz-hint-count { color: var(--text-dim); }
+.quiz-hint-count.none { color: var(--text-faint); font-style: italic; }
+.quiz-hint-error { color: var(--error); }
+
 /* ---- Question ---- */
 .quiz-question {
   font-size: 21px;
@@ -3452,12 +3497,54 @@ input[type='range']:focus-visible {
 .correct-indicator { color: var(--success); }
 .incorrect-indicator { color: var(--error); }
 
+.quiz-option.selected {
+  border-color: var(--violet);
+  background: #7c6bff1f;
+  color: var(--text);
+}
+
+.quiz-option.selected .quiz-option-letter {
+  background: var(--violet);
+  border-color: var(--violet);
+  color: #fff;
+  opacity: 1;
+}
+
+/* struck out by a hint */
+.quiz-option.eliminated {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.quiz-option.eliminated .quiz-option-text {
+  text-decoration: line-through;
+}
+
 /* ---- Navigation row ---- */
 .quiz-nav-row {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 12px;
+}
+
+.quiz-nav-row-end {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.quiz-prev-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.quiz-prev-btn:disabled,
+.quiz-next-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .quiz-nav-hint {
@@ -3580,6 +3667,20 @@ input[type='range']:focus-visible {
   color: var(--text);
   font-weight: 500;
 }
+
+.quiz-result-review-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.quiz-result-review-answer {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.quiz-result-review-answer strong { color: var(--text); }
+.quiz-result-review-answer.correct-answer strong { color: var(--success); }
 
 .quiz-result-actions {
   display: flex;

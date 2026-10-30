@@ -71,6 +71,15 @@ function BookOpenIcon() {
   )
 }
 
+function LightbulbIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path d="M9 18h6M10 22h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 /* ------------------------------------------------------------------ */
 /* Particle burst (result screen)                                       */
 /* ------------------------------------------------------------------ */
@@ -201,6 +210,11 @@ function QuizHub() {
 /* Place Quiz                                                           */
 /* ------------------------------------------------------------------ */
 
+const HINT_LIMIT = 3
+// A hint removes one wrong option; never remove so many that the question
+// becomes a giveaway, so at least two options always stay in play.
+const MIN_OPTIONS_LEFT = 2
+
 function PlaceQuiz({ place }) {
   const { token, user, refreshUser } = useAuth()
   const t = useT()
@@ -209,19 +223,34 @@ function PlaceQuiz({ place }) {
   const isAdmin = Boolean(user?.isAdmin)
   const questions = place.quiz
 
-  // answers[i] = chosen option index, or null if not yet answered
+  // answers[i] = chosen option index, or null if not yet answered. Answers
+  // stay changeable until the quiz is submitted, and whether they're right
+  // is only revealed on the result screen.
   const [answers, setAnswers] = useState(() => Array(questions.length).fill(null))
+  // eliminated[i] = option indexes a hint has struck out for question i
+  const [eliminated, setEliminated] = useState(() => questions.map(() => []))
   const [step, setStep] = useState(0)
   const [finished, setFinished] = useState(false)
   const [xpResult, setXpResult] = useState(null)
-  // Track which answers were just revealed (for animation)
+  // Track which answer was just picked (for animation)
   const [justAnswered, setJustAnswered] = useState(null)
+  // Hints are counted per place on the server (see /api/progress/use-hint),
+  // so this starts from the account's saved count and survives retakes,
+  // reloads and logging out. The admin's count is kept locally only.
+  const [hintsUsed, setHintsUsed] = useState(() => Math.min(user?.quizHints?.[place.id] ?? 0, HINT_LIMIT))
+  const [hintPending, setHintPending] = useState(false)
+  const [hintError, setHintError] = useState('')
   const cardRef = useRef(null)
 
   const current = questions[step]
   const selectedForStep = answers[step]
+  const eliminatedForStep = eliminated[step]
   const score = answers.filter((a, i) => a === questions[i].answerIndex).length
   const answeredCount = answers.filter((a) => a !== null).length
+  const allAnswered = answeredCount === questions.length
+  const isLastStep = step + 1 === questions.length
+  const hintsLeft = HINT_LIMIT - hintsUsed
+  const canHintThisQuestion = current.options.length - eliminatedForStep.length > MIN_OPTIONS_LEFT
 
   // Submit once quiz is fully answered and user clicks "See Results"
   useEffect(() => {
@@ -238,8 +267,7 @@ function PlaceQuiz({ place }) {
   }, [finished])
 
   function choose(i) {
-    // Don't allow changing an already-answered question
-    if (answers[step] !== null) return
+    if (eliminatedForStep.includes(i)) return
     setAnswers((prev) => {
       const next = [...prev]
       next[step] = i
@@ -250,23 +278,62 @@ function PlaceQuiz({ place }) {
   }
 
   function goToStep(s) {
+    setHintError('')
     setStep(s)
   }
 
+  function previous() {
+    if (step > 0) goToStep(step - 1)
+  }
+
   function next() {
-    if (step + 1 < questions.length) {
-      setStep((s) => s + 1)
-    } else {
-      setFinished(true)
+    if (!isLastStep) goToStep(step + 1)
+    else if (allAnswered) setFinished(true)
+  }
+
+  async function takeHint() {
+    if (hintPending || hintsLeft <= 0 || !canHintThisQuestion) return
+    setHintError('')
+    setHintPending(true)
+    const hintStep = step
+    try {
+      const data = await progressApi.useHint(token, place.id)
+      if (data.adminPreview) setHintsUsed((n) => n + 1)
+      else setHintsUsed(Math.min(data.hintsUsed, HINT_LIMIT))
+    } catch (err) {
+      if (err.status === 409) setHintsUsed(HINT_LIMIT)
+      setHintError(err.status === 409 ? t('quiz.noHintsLeft') : t('quiz.hintError'))
+      setHintPending(false)
+      return
+    }
+    setHintPending(false)
+    refreshUser()
+
+    // Strike out a random wrong option that isn't already gone, preferring
+    // one the user hasn't picked so a hint doesn't wipe out their choice.
+    const q = questions[hintStep]
+    const gone = eliminated[hintStep]
+    const candidates = q.options
+      .map((_, i) => i)
+      .filter((i) => i !== q.answerIndex && !gone.includes(i))
+    const notChosen = candidates.filter((i) => i !== answers[hintStep])
+    const pool = notChosen.length > 0 ? notChosen : candidates
+    const removed = pool[Math.floor(Math.random() * pool.length)]
+    if (removed === undefined) return
+    setEliminated((prev) => prev.map((list, i) => (i === hintStep ? [...list, removed] : list)))
+    if (answers[hintStep] === removed) {
+      setAnswers((prev) => prev.map((a, i) => (i === hintStep ? null : a)))
     }
   }
 
   function restart() {
     setAnswers(Array(questions.length).fill(null))
+    setEliminated(questions.map(() => []))
     setStep(0)
     setFinished(false)
     setXpResult(null)
     setJustAnswered(null)
+    setHintError('')
   }
 
   // ---------- Result screen ----------
@@ -303,7 +370,7 @@ function PlaceQuiz({ place }) {
           </p>
         )}
 
-        {/* Per-question review */}
+        {/* Per-question review -- the first place the answers are shown */}
         <div className="quiz-result-review">
           {questions.map((q, i) => {
             const chosen = answers[i]
@@ -313,7 +380,17 @@ function PlaceQuiz({ place }) {
                 <span className="quiz-result-review-icon">
                   {correct ? <CheckCircleIcon /> : <XCircleIcon />}
                 </span>
-                <span className="quiz-result-review-q">{q.question}</span>
+                <div className="quiz-result-review-body">
+                  <span className="quiz-result-review-q">{q.question}</span>
+                  <span className="quiz-result-review-answer">
+                    {t('quiz.yourAnswer')}: <strong>{chosen !== null ? q.options[chosen] : '—'}</strong>
+                  </span>
+                  {!correct && (
+                    <span className="quiz-result-review-answer correct-answer">
+                      {t('quiz.correctAnswer')}: <strong>{q.options[q.answerIndex]}</strong>
+                    </span>
+                  )}
+                </div>
               </div>
             )
           })}
@@ -340,7 +417,7 @@ function PlaceQuiz({ place }) {
       {/* ---- Progress header ---- */}
       <div className="quiz-progress-row">
         <span className="quiz-progress-label">{t('quiz.questionLabel')} <strong>{step + 1}</strong> / {questions.length}</span>
-        <span className="quiz-score-pill">⭐ {t('quiz.points', { count: score })}</span>
+        <span className="quiz-score-pill">{t('quiz.answeredCount', { answered: answeredCount, total: questions.length })}</span>
       </div>
 
       <div className="quiz-progress-track">
@@ -353,19 +430,17 @@ function PlaceQuiz({ place }) {
       {/* ---- Question navigator dots ---- */}
       <div className="quiz-nav-dots" role="tablist" aria-label={t('quiz.navigator')}>
         {questions.map((_, i) => {
-          const ans = answers[i]
+          const answered = answers[i] !== null
           let dotClass = 'quiz-nav-dot'
           if (i === step) dotClass += ' current'
-          else if (ans !== null) {
-            dotClass += ans === questions[i].answerIndex ? ' correct' : ' incorrect'
-          }
+          else if (answered) dotClass += ' answered'
           return (
             <button
               key={i}
               type="button"
               role="tab"
               aria-selected={i === step}
-              aria-label={`${t('quiz.questionLabel')} ${i + 1} — ${ans !== null ? (ans === questions[i].answerIndex ? t('quiz.correct') : t('quiz.incorrect')) : t('quiz.unanswered')}`}
+              aria-label={`${t('quiz.questionLabel')} ${i + 1} — ${answered ? t('quiz.answered') : t('quiz.unanswered')}`}
               className={dotClass}
               onClick={() => goToStep(i)}
             >
@@ -380,15 +455,30 @@ function PlaceQuiz({ place }) {
         {current.question}
       </h2>
 
+      {/* ---- Hint ---- */}
+      <div className="quiz-hint-row">
+        <button
+          type="button"
+          className="quiz-hint-btn"
+          onClick={takeHint}
+          disabled={hintPending || hintsLeft <= 0 || !canHintThisQuestion}
+          title={t('quiz.hintTitle')}
+        >
+          <LightbulbIcon /> {t('quiz.useHint')}
+        </button>
+        <span className={hintsLeft > 0 ? 'quiz-hint-count' : 'quiz-hint-count none'}>
+          {hintsLeft > 0 ? t('quiz.hintsLeft', { count: hintsLeft }) : t('quiz.noHintsLeft')}
+        </span>
+        {hintError && <span className="quiz-hint-error" role="alert">{hintError}</span>}
+      </div>
+
       {/* ---- Options ---- */}
       <div className="quiz-options">
         {current.options.map((opt, i) => {
-          // Only reveal correct/incorrect state after the user has answered THIS question
+          const isEliminated = eliminatedForStep.includes(i)
           let cls = 'quiz-option'
-          if (selectedForStep !== null) {
-            if (i === current.answerIndex) cls += ' correct'
-            else if (i === selectedForStep) cls += ' incorrect'
-          }
+          if (i === selectedForStep) cls += ' selected'
+          if (isEliminated) cls += ' eliminated'
           if (i === justAnswered) cls += ' just-answered'
 
           return (
@@ -397,16 +487,11 @@ function PlaceQuiz({ place }) {
               type="button"
               className={cls}
               onClick={() => choose(i)}
-              disabled={selectedForStep !== null}
+              disabled={isEliminated}
+              aria-pressed={i === selectedForStep}
             >
               <span className="quiz-option-letter">{OPTION_LETTERS[i]}</span>
               <span className="quiz-option-text">{opt}</span>
-              {selectedForStep !== null && i === current.answerIndex && (
-                <span className="quiz-option-indicator correct-indicator"><CheckCircleIcon /></span>
-              )}
-              {selectedForStep !== null && i === selectedForStep && i !== current.answerIndex && (
-                <span className="quiz-option-indicator incorrect-indicator"><XCircleIcon /></span>
-              )}
             </button>
           )
         })}
@@ -414,14 +499,28 @@ function PlaceQuiz({ place }) {
 
       {/* ---- Navigation row ---- */}
       <div className="quiz-nav-row">
-        {selectedForStep !== null ? (
-          <button type="button" className="btn-start-quiz quiz-next-btn" onClick={next}>
-            {step + 1 < questions.length ? t('quiz.next') : t('quiz.seeResults')}
-            {step + 1 < questions.length && <ChevronRightIcon />}
+        <button
+          type="button"
+          className="btn-secondary quiz-prev-btn"
+          onClick={previous}
+          disabled={step === 0}
+        >
+          <ChevronLeftIcon /> {t('quiz.previous')}
+        </button>
+        <div className="quiz-nav-row-end">
+          {isLastStep && !allAnswered && (
+            <span className="quiz-nav-hint">{t('quiz.answerAll')}</span>
+          )}
+          <button
+            type="button"
+            className="btn-start-quiz quiz-next-btn"
+            onClick={next}
+            disabled={isLastStep && !allAnswered}
+          >
+            {isLastStep ? t('quiz.seeResults') : t('quiz.next')}
+            {!isLastStep && <ChevronRightIcon />}
           </button>
-        ) : (
-          <span className="quiz-nav-hint">{t('quiz.chooseHint')}</span>
-        )}
+        </div>
       </div>
     </div>
   )

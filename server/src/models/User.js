@@ -56,6 +56,11 @@ const userSchema = new mongoose.Schema(
     exploredCountries: { type: [String], default: [] },
     completedQuizzes: { type: [String], default: [] },
 
+    // placeId -> hints used on that place's quiz (max QUIZ_HINT_LIMIT, see
+    // progress.routes.js). Stored here rather than in the browser so the
+    // limit survives logging out, retaking the quiz, or switching devices.
+    quizHints: { type: Map, of: Number, default: {} },
+
     // One entry per XP award (currently just first-time quiz passes). Kept
     // as a running log, rather than only the running `xp` total, so the
     // leaderboard can sum "XP earned in the last week/month/year" without

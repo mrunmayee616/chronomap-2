@@ -10,6 +10,7 @@ import { QUIZ_PASS_XP, applyXp } from '../utils/achievements.js'
 const router = Router()
 
 const QUIZ_PASS_THRESHOLD = 80 // percent
+const QUIZ_HINT_LIMIT = 3 // per place, for the lifetime of the account
 
 router.use(requireAuth)
 
@@ -119,6 +120,58 @@ router.post('/quiz-result', async (req, res) => {
   }
 
   return res.status(200).json({ user: publicUser(user), counted, xpGained, levelsGained })
+})
+
+// ---------------------------------------------------------------------------
+// POST /api/progress/use-hint  { placeId }  (protected)
+// Spends one of the QUIZ_HINT_LIMIT hints for a place's quiz. The count is
+// kept on the account and never resets -- not on retake, not on logging out
+// and back in -- so once a quiz's hints are gone they're gone for good. The
+// limit is enforced in the update filter itself, so two requests racing
+// each other still can't push the count past the limit.
+// ---------------------------------------------------------------------------
+router.post('/use-hint', async (req, res) => {
+  const { placeId } = req.body || {}
+  // Place ids are slugs; rejecting '.' and '$' also keeps the id safe to use
+  // as a key in the Mongo update path below.
+  if (typeof placeId !== 'string' || !placeId.trim() || /[.$]/.test(placeId)) {
+    return res.status(400).json({ error: 'A placeId is required.' })
+  }
+
+  const placeCountries = await getEffectivePlaceCountries()
+  if (!Object.prototype.hasOwnProperty.call(placeCountries, placeId)) {
+    return res.status(404).json({ error: 'Unknown place.' })
+  }
+
+  if (!mongoose.isValidObjectId(req.user.sub)) {
+    return res.status(404).json({ error: 'Account not found.' })
+  }
+
+  const field = `quizHints.${placeId}`
+  const user = await User.findOneAndUpdate(
+    {
+      _id: req.user.sub,
+      $or: [{ [field]: { $exists: false } }, { [field]: { $lt: QUIZ_HINT_LIMIT } }],
+    },
+    { $inc: { [field]: 1 } },
+    { new: true }
+  )
+
+  if (!user) {
+    const exists = await User.exists({ _id: req.user.sub })
+    if (!exists) return res.status(404).json({ error: 'Account not found.' })
+    return res.status(409).json({
+      error: 'No hints left for this quiz.',
+      hintsUsed: QUIZ_HINT_LIMIT,
+      hintLimit: QUIZ_HINT_LIMIT,
+    })
+  }
+
+  return res.status(200).json({
+    user: publicUser(user),
+    hintsUsed: user.quizHints.get(placeId),
+    hintLimit: QUIZ_HINT_LIMIT,
+  })
 })
 
 export default router

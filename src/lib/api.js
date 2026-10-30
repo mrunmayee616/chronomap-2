@@ -52,6 +52,10 @@ export const progressApi = {
   // reattempts never increment it again.
   submitQuizResult: (token, placeId, scorePercent) =>
     request('/api/progress/quiz-result', { method: 'POST', body: { placeId, scorePercent }, token }),
+  // Spends one of the place's 3 quiz hints. The server keeps the count on
+  // the account, so it never resets; a 409 means none are left.
+  useHint: (token, placeId) =>
+    request('/api/progress/use-hint', { method: 'POST', body: { placeId }, token }),
 }
 
 export const leaderboardApi = {

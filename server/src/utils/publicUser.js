@@ -25,5 +25,6 @@ export function publicUser(user) {
     currentStreak: user.currentStreak,
     unlockedAchievements: user.unlockedAchievements || [],
     visitedPlaces: user.visitedPlaces || [],
+    quizHints: user.quizHints ? Object.fromEntries(user.quizHints) : {},
   }
 }
