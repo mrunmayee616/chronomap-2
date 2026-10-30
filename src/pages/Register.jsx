@@ -5,7 +5,7 @@ import Navbar from '../components/Navbar.jsx'
 import { authApi } from '../lib/api.js'
 import AvatarPicker from '../components/AvatarPicker.jsx'
 import { useLanguage, richText, countryName } from '../i18n/LanguageContext.jsx'
-import { COUNTRIES } from '../data/countries.js'
+import { COUNTRIES, COUNTRY_LANGUAGE_MAP } from '../data/countries.js'
 import CountryFlag from '../components/CountryFlag.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import Logo from '../components/Logo.jsx'
@@ -109,7 +109,7 @@ function EyeIcon({ open }) {
 export default function Register() {
   const navigate = useNavigate()
   const { login } = useAuth()
-  const { t, locale } = useLanguage()
+  const { t, locale, setLanguage } = useLanguage()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
@@ -122,6 +122,12 @@ export default function Register() {
     return (e) => {
       const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
       setForm((f) => ({ ...f, [key]: value }))
+      // When the user picks a country, automatically switch the UI language to
+      // the most-used language of that country (if we support it).
+      if (key === 'country' && value) {
+        const lang = COUNTRY_LANGUAGE_MAP[value]
+        if (lang) setLanguage(lang)
+      }
       // Clear this field's error as soon as the user edits it.
       setFieldErrors((errs) => {
         if (!errs[key]) return errs

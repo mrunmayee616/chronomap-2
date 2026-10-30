@@ -97,6 +97,110 @@ export const COUNTRIES = [
 
 export const COUNTRY_CODES = COUNTRIES.map((c) => c.code)
 
+/**
+ * Maps each country's ISO 3166-1 alpha-2 code to the interface language
+ * that best matches its most-spoken / official language.
+ * Only the four languages the app supports (en, fr, es, de) are used;
+ * countries whose primary language is not among those fall back to 'en'.
+ *
+ * Rules applied:
+ *  - If a country has more than one official/widely-spoken language, the
+ *    most-used one is chosen.
+ *  - No language code is stored more than once per country.
+ */
+export const COUNTRY_LANGUAGE_MAP = {
+  AF: 'en', // Dari/Pashto → en fallback
+  AL: 'en', // Albanian → en fallback
+  DZ: 'ar', // Arabic (primary spoken language)
+  AR: 'es', // Spanish
+  AM: 'en', // Armenian → en fallback
+  AU: 'en', // English
+  AT: 'de', // German
+  AZ: 'ru', // Russian widely used alongside Azerbaijani
+  BD: 'en', // Bengali → en fallback
+  BE: 'fr', // French (largest community; also Dutch/German)
+  BR: 'pt', // Portuguese
+  BG: 'en', // Bulgarian → en fallback
+  KH: 'en', // Khmer → en fallback
+  CA: 'en', // English (most spoken; also French)
+  CL: 'es', // Spanish
+  CN: 'zh', // Mandarin Chinese
+  CO: 'es', // Spanish
+  CR: 'es', // Spanish
+  HR: 'en', // Croatian → en fallback
+  CU: 'es', // Spanish
+  CZ: 'en', // Czech → en fallback
+  DK: 'sv', // Nordic — Swedish is the closest supported language
+  EG: 'ar', // Arabic
+  EE: 'en', // Estonian → en fallback
+  ET: 'en', // Amharic → en fallback
+  FI: 'sv', // Swedish is an official language; Finnish unsupported
+  FR: 'fr', // French
+  GE: 'en', // Georgian → en fallback
+  DE: 'de', // German
+  GH: 'en', // English
+  GR: 'el', // Greek
+  HK: 'zh', // Cantonese / Mandarin Chinese
+  HU: 'en', // Hungarian → en fallback
+  IS: 'sv', // Nordic — Swedish closest supported
+  IN: 'hi', // Hindi (most spoken)
+  ID: 'id', // Indonesian
+  IR: 'en', // Persian → en fallback
+  IQ: 'ar', // Arabic
+  IE: 'en', // English
+  IL: 'en', // Hebrew → en fallback
+  IT: 'it', // Italian
+  JM: 'en', // English
+  JP: 'ja', // Japanese
+  JO: 'ar', // Arabic
+  KZ: 'ru', // Russian widely used alongside Kazakh
+  KE: 'en', // Swahili/English → en
+  KR: 'ko', // Korean
+  KW: 'ar', // Arabic
+  LV: 'en', // Latvian → en fallback
+  LB: 'ar', // Arabic (primary); French also common
+  LT: 'en', // Lithuanian → en fallback
+  MY: 'id', // Malay — Indonesian is closely related and supported
+  MX: 'es', // Spanish
+  MA: 'ar', // Arabic (primary spoken language)
+  MM: 'en', // Burmese → en fallback
+  NP: 'en', // Nepali → en fallback
+  NL: 'nl', // Dutch
+  NZ: 'en', // English
+  NG: 'en', // English
+  NO: 'sv', // Norwegian — Swedish closely related and supported
+  PK: 'en', // Urdu/English → en
+  PA: 'es', // Spanish
+  PE: 'es', // Spanish
+  PH: 'en', // Filipino/English → en
+  PL: 'pl', // Polish
+  PT: 'pt', // Portuguese
+  QA: 'ar', // Arabic
+  RO: 'ro', // Romanian
+  RU: 'ru', // Russian
+  SA: 'ar', // Arabic
+  RS: 'en', // Serbian → en fallback
+  SG: 'zh', // Mandarin Chinese (largest linguistic community)
+  SK: 'en', // Slovak → en fallback
+  SI: 'en', // Slovenian → en fallback
+  ZA: 'en', // English (most used of 11 official languages)
+  ES: 'es', // Spanish
+  LK: 'en', // Sinhala/Tamil → en fallback
+  SE: 'sv', // Swedish
+  CH: 'de', // German (most spoken; also French/Italian)
+  TW: 'zh', // Mandarin Chinese
+  TH: 'en', // Thai → en fallback
+  TR: 'tr', // Turkish
+  UA: 'uk', // Ukrainian
+  AE: 'ar', // Arabic (official); English widely used
+  GB: 'en', // English
+  US: 'en', // English
+  UY: 'es', // Spanish
+  UZ: 'ru', // Russian widely used alongside Uzbek
+  VE: 'es', // Spanish
+  VN: 'en', // Vietnamese → en fallback
+}
+
 const COUNTRY_BY_CODE = new Map(COUNTRIES.map((c) => [c.code, c]))
 
 export function countryNameFor(code) {

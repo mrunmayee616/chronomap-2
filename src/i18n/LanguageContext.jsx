@@ -3,19 +3,52 @@ import en from './en.js'
 import fr from './fr.js'
 import es from './es.js'
 import de from './de.js'
+import pt from './pt.js'
+import ru from './ru.js'
+import ar from './ar.js'
+import it from './it.js'
+import nl from './nl.js'
+import ja from './ja.js'
+import ko from './ko.js'
+import zh from './zh.js'
+import hi from './hi.js'
+import tr from './tr.js'
+import pl from './pl.js'
+import id from './id.js'
+import sv from './sv.js'
+import el from './el.js'
+import uk from './uk.js'
+import ro from './ro.js'
 
 /**
  * Interface languages. `native` is how each language names itself, which is
  * what the picker shows so people can always find their own language.
+ * Sorted alphabetically by native name so the picker is easy to scan.
  */
 export const LANGUAGES = [
-  { id: 'en', native: 'English', locale: 'en-GB' },
-  { id: 'fr', native: 'Français', locale: 'fr-FR' },
-  { id: 'es', native: 'Español', locale: 'es-ES' },
-  { id: 'de', native: 'Deutsch', locale: 'de-DE' },
+  { id: 'en', native: 'English',     locale: 'en-GB' },
+  { id: 'ar', native: 'العربية',     locale: 'ar-SA' },
+  { id: 'zh', native: '中文',         locale: 'zh-CN' },
+  { id: 'de', native: 'Deutsch',     locale: 'de-DE' },
+  { id: 'el', native: 'Ελληνικά',    locale: 'el-GR' },
+  { id: 'es', native: 'Español',     locale: 'es-ES' },
+  { id: 'fr', native: 'Français',    locale: 'fr-FR' },
+  { id: 'hi', native: 'हिन्दी',      locale: 'hi-IN' },
+  { id: 'id', native: 'Indonesia',   locale: 'id-ID' },
+  { id: 'it', native: 'Italiano',    locale: 'it-IT' },
+  { id: 'ja', native: '日本語',       locale: 'ja-JP' },
+  { id: 'ko', native: '한국어',       locale: 'ko-KR' },
+  { id: 'nl', native: 'Nederlands',  locale: 'nl-NL' },
+  { id: 'pl', native: 'Polski',      locale: 'pl-PL' },
+  { id: 'pt', native: 'Português',   locale: 'pt-BR' },
+  { id: 'ro', native: 'Română',      locale: 'ro-RO' },
+  { id: 'ru', native: 'Русский',     locale: 'ru-RU' },
+  { id: 'sv', native: 'Svenska',     locale: 'sv-SE' },
+  { id: 'tr', native: 'Türkçe',      locale: 'tr-TR' },
+  { id: 'uk', native: 'Українська',  locale: 'uk-UA' },
 ]
 
-const DICTIONARIES = { en, fr, es, de }
+const DICTIONARIES = { en, fr, es, de, pt, ru, ar, it, nl, ja, ko, zh, hi, tr, pl, id, sv, el, uk, ro }
 const STORAGE_KEY = 'chronomap-language'
 
 // First visit: use the browser's language if we support it, else English.
