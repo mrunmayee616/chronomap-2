@@ -74,7 +74,9 @@ app.use(async (_req, res, next) => {
   }
 })
 
-// Basic brute-force protection on auth endpoints.
+// Basic brute-force protection on the password endpoints only. Not on
+// GET/PATCH /api/auth/me: the app calls /me after every quiz and hint, so
+// limiting it would throttle (and used to log out) normal players.
 // (In-memory, so on serverless it is per-instance and only a soft limit.)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -83,7 +85,8 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many requests. Please try again later.' },
 })
-app.use('/api/auth', authLimiter, authRoutes)
+app.use(['/api/auth/login', '/api/auth/register'], authLimiter)
+app.use('/api/auth', authRoutes)
 app.use('/api/progress', progressRoutes)
 app.use('/api/leaderboard', leaderboardRoutes)
 app.use('/api/users', usersRoutes)

@@ -1,7 +1,9 @@
 // The dashboard mascot: a little owl in a mortarboard and round glasses,
 // clutching a history book. Purely decorative. The tassel and book cover
 // pick up the site theme's accent colour.
-export default function ProfessorOwl({ size = 96, className = '' }) {
+// With `pointer`, he holds a teacher's stick up and to his left, tapping it
+// as if pointing at a blackboard.
+export default function ProfessorOwl({ size = 96, className = '', pointer = false }) {
   return (
     <svg
       className={`professor-owl ${className}`}
@@ -21,9 +23,20 @@ export default function ProfessorOwl({ size = 96, className = '' }) {
       <path d="M45 88 q4 5 8 0 q4 5 8 0 q4 5 8 0 M41 99 q4 5 8 0 q4 5 8 0 q4 5 8 0 q4 5 8 0 M47 110 q4 5 8 0 q4 5 8 0 q4 5 8 0"
         fill="none" stroke="#c9a46e" strokeWidth="2" strokeLinecap="round" />
 
+      {/* teacher's pointer, gripped by the left wing */}
+      {pointer && (
+        <g className="professor-owl-pointer">
+          <path d="M30 96 L-58 8" stroke="#5a3a1a" strokeWidth="5" strokeLinecap="round" />
+          <path d="M30 96 L-58 8" stroke="#8a5d2e" strokeWidth="2.5" strokeLinecap="round" />
+          <circle cx="-58" cy="8" r="5" fill="var(--yellow)" stroke="#5a3a1a" strokeWidth="1.5" />
+        </g>
+      )}
+
       {/* wings */}
       <path d="M24 78 q-10 22 4 40 q10 -16 6 -38 z" fill="#6e4420" />
       <path d="M96 78 q10 22 -4 40 q-10 -16 -6 -38 z" fill="#6e4420" />
+      {/* the wing tip wrapped round the stick */}
+      {pointer && <ellipse cx="30" cy="95" rx="7" ry="6" fill="#6e4420" />}
 
       {/* history book held in front */}
       <g transform="rotate(-8 60 112)">

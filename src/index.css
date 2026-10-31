@@ -4312,138 +4312,80 @@ input[type='range']:focus-visible {
   width: auto;
 }
 
-/* ---- Result screen ---- */
-.quiz-result {
-  text-align: center;
+/* ==================== Quiz results ==================== */
+
+.quiz-results {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 36px 40px 40px;
+  gap: 22px;
 }
 
-.quiz-result-subtitle {
-  color: var(--text-dim);
-  font-size: 14px;
-  margin: 0 0 20px;
-  max-width: 380px;
-}
-
-.quiz-result-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 999px;
-  background: var(--yellow-dim);
-  color: var(--accent-ink);
+/* ---- Hero: the place's photo behind the score ---- */
+.quiz-results-hero {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-bottom: 18px;
+  gap: 32px;
+  padding: 34px 36px;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  isolation: isolate;
+  animation: quiz-results-rise 0.5s ease-out both;
 }
 
-.quiz-result-title {
-  font-size: 26px;
-  font-weight: 800;
-  margin: 0 0 10px;
-  color: var(--text);
+.quiz-results-hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-size: cover;
+  background-position: center;
+  transform: scale(1.06);
+  animation: quiz-results-pan 18s ease-in-out infinite alternate;
 }
 
-.quiz-result-score {
-  color: var(--text-dim);
-  font-size: 15px;
-  margin: 0 0 26px;
+/* theme-tinted veil so text stays readable over any photo */
+.quiz-results-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(100deg, rgb(var(--shade) / 0.94) 0%, rgb(var(--shade) / 0.82) 45%, rgb(var(--shade) / 0.45) 100%),
+    radial-gradient(circle at 15% 50%, color-mix(in srgb, var(--error) 22%, transparent), transparent 55%);
 }
 
-.quiz-result-score strong { color: var(--text); }
-
-.quiz-result-xp {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 24px;
-  padding: 5px 14px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--gold);
-  background: color-mix(in srgb, var(--gold) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--gold) 25%, transparent);
+.quiz-results-hero.passed::before {
+  background:
+    linear-gradient(100deg, rgb(var(--shade) / 0.94) 0%, rgb(var(--shade) / 0.82) 45%, rgb(var(--shade) / 0.45) 100%),
+    radial-gradient(circle at 15% 50%, color-mix(in srgb, var(--success) 26%, transparent), transparent 55%);
 }
 
-.quiz-result-xp-num { font-size: 15px; font-weight: 800; }
-.quiz-result-levelup { font-size: 12px; }
-
-.quiz-result-xp-muted {
-  color: var(--text-faint);
-  background: rgb(var(--ink) / 0.04);
-  border-color: rgb(var(--ink) / 0.12);
-  font-weight: 500;
+@keyframes quiz-results-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
 }
 
-/* ---- Per-question review ---- */
-.quiz-result-review {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin: 8px 0 28px;
-  text-align: left;
+@keyframes quiz-results-pan {
+  from { transform: scale(1.06) translateX(-1.5%); }
+  to { transform: scale(1.12) translateX(1.5%); }
 }
 
-.quiz-result-review-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1px solid transparent;
-  font-size: 14px;
-  line-height: 1.45;
-}
-
-.quiz-result-review-item.correct {
-  background: color-mix(in srgb, var(--success) 7%, transparent);
-  border-color: color-mix(in srgb, var(--success) 16%, transparent);
-}
-
-.quiz-result-review-item.incorrect {
-  background: color-mix(in srgb, var(--error) 7%, transparent);
-  border-color: color-mix(in srgb, var(--error) 16%, transparent);
-}
-
-.quiz-result-review-icon { flex-shrink: 0; margin-top: 1px; }
-.quiz-result-review-item.correct .quiz-result-review-icon { color: var(--success); }
-.quiz-result-review-item.incorrect .quiz-result-review-icon { color: var(--error); }
-
-.quiz-result-review-q {
-  color: var(--text);
-  font-weight: 500;
-}
-
-.quiz-result-review-body {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.quiz-result-review-answer {
-  font-size: 13px;
-  color: var(--text-dim);
-}
-
-.quiz-result-review-answer strong { color: var(--text); }
-.quiz-result-review-answer.correct-answer strong { color: var(--success); }
-
-.quiz-result-actions {
-  display: flex;
-  gap: 12px;
-}
-
-/* ---- Score ring ---- */
 .quiz-score-ring-wrap {
   position: relative;
-  width: 140px;
-  height: 140px;
-  margin-bottom: 18px;
+  flex-shrink: 0;
+  width: 164px;
+  height: 164px;
+  margin: 0;
+  filter: drop-shadow(0 6px 18px rgb(0 0 0 / 0.35));
+}
+
+.quiz-score-ring-fill {
+  animation: quiz-ring-fill 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
+}
+
+@keyframes quiz-ring-fill {
+  from { stroke-dashoffset: var(--ring-from); }
 }
 
 .quiz-score-ring-label {
@@ -4453,28 +4395,1085 @@ input[type='range']:focus-visible {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 4px;
 }
 
 .quiz-score-ring-num {
-  font-size: 22px;
+  font-family: 'Sora', sans-serif;
+  font-size: 30px;
   font-weight: 800;
   line-height: 1;
 }
 
 .quiz-score-ring-pct {
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--text-dim);
+}
+
+.quiz-results-hero-text {
+  min-width: 0;
+}
+
+.quiz-results-place {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-ink);
+  background: color-mix(in srgb, var(--yellow) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--yellow) 35%, transparent);
+}
+
+.quiz-results-title {
+  margin: 10px 0 6px;
+  font-family: 'Sora', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.quiz-results-subtitle {
+  margin: 0 0 16px;
+  font-size: 15px;
+  color: var(--text-dim);
+}
+
+.quiz-results-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quiz-stat {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  background: rgb(var(--ink) / 0.08);
+  border: 1px solid rgb(var(--ink) / 0.12);
+  backdrop-filter: blur(6px);
+}
+
+.quiz-stat.good { border-color: color-mix(in srgb, var(--success) 45%, transparent); }
+.quiz-stat.bad { border-color: color-mix(in srgb, var(--error) 45%, transparent); }
+
+.quiz-results-xp {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2a1f00;
+  background: linear-gradient(90deg, #f7c740, #ffdf7e);
+  box-shadow: 0 4px 14px rgb(247 199 64 / 0.35);
+  animation: quiz-xp-pop 0.6s cubic-bezier(0.2, 1.4, 0.4, 1) 0.6s both;
+}
+
+.quiz-results-xp.muted {
+  color: var(--text-dim);
+  background: rgb(var(--ink) / 0.08);
+  box-shadow: none;
   font-weight: 600;
+}
+
+.quiz-results-xp-num { font-size: 16px; font-weight: 800; }
+
+@keyframes quiz-xp-pop {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---- The drifting history bubble ---- */
+.history-bubble-tip {
+  margin: -6px 0 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.history-bubble {
+  position: fixed;
+  z-index: 60;
+  width: 96px;
+  height: 96px;
+  margin: -48px 0 0 -48px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition:
+    left var(--drift-ms) ease-in-out,
+    top var(--drift-ms) ease-in-out;
+}
+
+.history-bubble-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px solid rgb(255 255 255 / 0.45);
+  color: var(--text);
+  /* soap bubble, tinted with the theme's accents */
+  background:
+    radial-gradient(circle at 30% 24%, rgb(255 255 255 / 0.9) 0 7%, transparent 18%),
+    radial-gradient(circle at 72% 80%, rgb(255 255 255 / 0.3), transparent 28%),
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--violet) 14%, transparent) 50%, color-mix(in srgb, var(--violet) 60%, transparent) 100%);
+  box-shadow:
+    inset 0 0 22px color-mix(in srgb, var(--violet) 50%, transparent),
+    inset -6px -8px 18px color-mix(in srgb, var(--yellow) 30%, transparent),
+    0 12px 30px rgb(0 0 0 / 0.25);
+  animation: history-bubble-wobble 2.4s ease-in-out infinite;
+}
+
+.history-bubble:hover .history-bubble-inner {
+  filter: brightness(1.15) saturate(1.2);
+}
+
+.history-bubble:focus-visible .history-bubble-inner {
+  outline: 3px solid var(--yellow);
+  outline-offset: 4px;
+}
+
+.history-bubble-emoji {
+  font-size: 32px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.3));
+}
+
+.history-bubble-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgb(var(--shade) / 0.7);
+}
+
+.history-bubble.popping .history-bubble-inner {
+  animation: history-bubble-pop 0.22s ease-in forwards;
+}
+
+@keyframes history-bubble-wobble {
+  0%, 100% { transform: scale(1, 1) rotate(0deg); }
+  25% { transform: scale(1.05, 0.95) rotate(4deg); }
+  50% { transform: scale(0.96, 1.04) rotate(-3deg); }
+  75% { transform: scale(1.03, 0.97) rotate(2deg); }
+}
+
+@keyframes history-bubble-pop {
+  to { transform: scale(1.7); opacity: 0; }
+}
+
+/* ---- The splash ---- */
+.history-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgb(var(--shade) / 0.55);
+  backdrop-filter: blur(3px);
+  animation: history-splash-fade 0.3s ease-out both;
+  overflow: hidden;
+}
+
+@keyframes history-splash-fade {
+  from { opacity: 0; }
+}
+
+/* droplets + rings at the spot where the bubble burst */
+.history-splash-pop {
+  position: absolute;
+  width: 0;
+  height: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.history-splash-ring {
+  position: absolute;
+  left: -70px;
+  top: -70px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 5px solid var(--yellow);
+  animation: history-splash-ring 0.9s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+.history-splash-ring.r2 {
+  border-color: var(--violet);
+  animation-delay: 0.1s;
+}
+
+@keyframes history-splash-ring {
+  from { transform: scale(0.2); opacity: 1; }
+  to { transform: scale(9); opacity: 0; }
+}
+
+.history-splash-drop {
+  position: absolute;
+  left: calc(var(--s) / -2);
+  top: calc(var(--s) / -2);
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50% 50% 50% 0;
+  background: var(--violet);
+  box-shadow: 0 0 10px var(--violet);
+  animation: history-splash-drop 0.9s cubic-bezier(0.15, 0.7, 0.35, 1) both;
+}
+
+.history-splash-drop:nth-child(odd) {
+  background: var(--yellow);
+  box-shadow: 0 0 10px var(--yellow);
+}
+
+@keyframes history-splash-drop {
+  0% { transform: rotate(var(--a)) translateX(0) scale(1.5); opacity: 1; }
+  75% { opacity: 1; }
+  100% { transform: rotate(var(--a)) translateX(var(--d)) translateY(40px) scale(0.3); opacity: 0; }
+}
+
+.history-splash-decor {
+  position: absolute;
+  font-size: clamp(30px, 4vw, 52px);
+  line-height: 1;
+  filter: drop-shadow(0 4px 6px rgb(0 0 0 / 0.35));
+  animation:
+    history-decor-in 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both,
+    history-decor-bob 4s ease-in-out infinite;
+}
+
+@keyframes history-decor-in {
+  from { transform: scale(0) rotate(-40deg); opacity: 0; }
+}
+
+@keyframes history-decor-bob {
+  0%, 100% { translate: 0 0; rotate: -6deg; }
+  50% { translate: 0 -10px; rotate: 6deg; }
+}
+
+/* the fact, written on a parchment scroll in the middle of the splash */
+.history-splash-scroll {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: min(560px, 86vw);
+  max-height: 64vh;
+  overflow-y: auto;
+  padding: 30px 32px 22px;
+  translate: -50% -50%;
+  rotate: -1.5deg;
+  border-radius: 6px;
+  color: var(--text);
+  background:
+    radial-gradient(ellipse at 15% 0%, rgb(var(--ink) / 0.06), transparent 55%),
+    radial-gradient(ellipse at 100% 100%, rgb(var(--shade) / 0.25), transparent 55%),
+    linear-gradient(160deg,
+      color-mix(in srgb, var(--yellow) 16%, var(--bg-elev)),
+      color-mix(in srgb, var(--yellow) 6%, var(--bg)));
+  border: 1px solid color-mix(in srgb, var(--accent-ink) 55%, transparent);
+  box-shadow:
+    0 24px 50px rgb(0 0 0 / 0.4),
+    inset 0 0 40px color-mix(in srgb, var(--yellow) 14%, transparent);
+  animation: history-scroll-unroll 0.55s cubic-bezier(0.2, 1.1, 0.4, 1) 0.3s both;
+}
+
+/* wooden scroll rods along the top and bottom edges */
+.history-splash-scroll::before,
+.history-splash-scroll::after {
+  content: '';
+  position: absolute;
+  left: -14px;
+  right: -14px;
+  height: 14px;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #9b6a35, #5c3a17);
+  box-shadow: 0 3px 6px rgb(0 0 0 / 0.35);
+}
+
+.history-splash-scroll::before { top: -7px; }
+.history-splash-scroll::after { bottom: -7px; }
+
+@keyframes history-scroll-unroll {
+  from { clip-path: inset(48% 0 48% 0); opacity: 0; }
+  to { clip-path: inset(-120px); opacity: 1; }
+}
+
+/* × styled as a wax seal in the theme's accent */
+.history-splash-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 48% 52% 46% 54% / 52% 46% 54% 48%;
+  background: radial-gradient(circle at 35% 30%,
+    color-mix(in srgb, var(--violet-strong) 70%, #fff),
+    var(--violet-strong) 62%,
+    color-mix(in srgb, var(--violet-strong) 65%, #000));
+  color: #fff;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 3px 6px rgb(0 0 0 / 0.4), inset 0 -3px 4px rgb(0 0 0 / 0.25);
+  transition: transform 0.15s ease;
+}
+
+.history-splash-close:hover { transform: rotate(-12deg) scale(1.1); }
+
+.history-splash-close:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 3px;
+}
+
+.history-splash-kicker {
+  margin: 0 46px 10px 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.history-splash-kind {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  background: color-mix(in srgb, var(--yellow) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--yellow) 40%, transparent);
+}
+
+.history-splash-title {
+  margin: 12px 0 10px;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.history-splash-text {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--text);
+}
+
+.history-splash-foot {
+  margin: 18px 0 0;
+  padding-top: 12px;
+  border-top: 1px dashed color-mix(in srgb, var(--accent-ink) 40%, transparent);
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/* Professor Owl, bottom right, tapping his pointer at the scroll */
+.history-splash-owl {
+  position: absolute;
+  right: 3vw;
+  bottom: 1vh;
+  z-index: 3;
+  filter: drop-shadow(0 10px 18px rgb(0 0 0 / 0.4));
+  animation: history-owl-in 0.6s cubic-bezier(0.2, 1.3, 0.4, 1) 0.45s both;
+}
+
+@keyframes history-owl-in {
+  from { transform: translateY(120%); }
+}
+
+.professor-owl-pointer {
+  transform-origin: 30px 96px;
+  animation: owl-pointer-tap 1.6s ease-in-out infinite;
+}
+
+@keyframes owl-pointer-tap {
+  0%, 100% { transform: rotate(0deg); }
+  40% { transform: rotate(7deg); }
+  55% { transform: rotate(-2deg); }
+}
+
+@media (max-width: 700px) {
+  .history-splash-scroll { padding: 26px 20px 18px; top: 42%; }
+  .history-splash-title { font-size: 20px; }
+  .history-splash-text { font-size: 15px; }
+  .history-splash-owl .professor-owl { width: 104px; height: auto; }
+  .history-bubble { width: 80px; height: 80px; margin: -40px 0 0 -40px; }
+}
+
+/* ---- Extra splashiness ---- */
+
+/* a quick bright flash radiating from the burst point */
+.history-splash-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(circle at var(--ox) var(--oy),
+    rgb(255 255 255 / 0.55),
+    color-mix(in srgb, var(--yellow) 30%, transparent) 18%,
+    transparent 45%);
+  animation: history-flash 0.55s ease-out both;
+}
+
+@keyframes history-flash {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.history-splash-ring.r3 {
+  border-width: 3px;
+  border-color: rgb(255 255 255 / 0.8);
+  animation-delay: 0.2s;
+}
+
+/* spray: tiny droplets thrown up that fall back down under gravity */
+.history-splash-spray {
+  position: absolute;
+  left: calc(var(--s) / -2);
+  top: calc(var(--s) / -2);
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--violet) 60%, #fff);
+  animation: history-spray 1.1s cubic-bezier(0.2, 0.6, 0.4, 1) both;
+}
+
+.history-splash-spray:nth-child(3n) { background: var(--yellow); }
+
+@keyframes history-spray {
+  0% { transform: translate(0, 0) scale(1.4); opacity: 1; }
+  45% { transform: translate(calc(var(--dx) * 0.65), calc(var(--dy) * 0.65 - 70px)) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), calc(var(--dy) + 120px)) scale(0.4); opacity: 0; }
+}
+
+/* the decorations float above the astrolabe, the scroll above them */
+.history-splash-decor { z-index: 2; }
+
+.history-splash-scroll {
+  z-index: 3;
+  width: min(640px, 88vw);
+  max-height: none;
+  /* only the chronicle scrolls, so the rods, title and × stay put */
+  overflow: visible;
+  /* an inked double outline, like a manuscript border */
+  outline: 3px double color-mix(in srgb, var(--accent-ink) 55%, transparent);
+  outline-offset: -10px;
+}
+
+/* the chronicle: every fact written out in turn */
+.history-chronicle {
+  display: flex;
+  flex-direction: column;
+  max-height: 48vh;
+  overflow-y: auto;
+  mask-image: linear-gradient(180deg, #000 calc(100% - 36px), transparent);
+  padding-bottom: 24px;
+  padding-right: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--accent-ink) 50%, transparent) transparent;
+}
+
+.history-chronicle-entry {
+  padding: 14px 0 12px;
+  border-top: 1px dashed color-mix(in srgb, var(--accent-ink) 35%, transparent);
+  animation: history-chronicle-in 0.45s ease-out both;
+}
+
+.history-chronicle-entry:first-child {
+  border-top: none;
+  padding-top: 4px;
+}
+
+@keyframes history-chronicle-in {
+  from { opacity: 0; transform: translateY(8px); }
+}
+
+.history-chronicle-heading {
+  margin: 8px 0 6px;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.history-chronicle .history-splash-text {
+  font-size: 15.5px;
+}
+
+/* closing */
+.history-splash.closing {
+  animation: history-splash-out 0.42s ease-in both;
+}
+
+.history-splash.closing .history-splash-scroll,
+.history-splash.closing .history-splash-decor {
+  transition: opacity 0.25s ease, scale 0.3s ease;
+  opacity: 0;
+  scale: 0.85;
+}
+
+.history-splash.closing .history-splash-owl {
+  animation: history-owl-out 0.3s ease-in both;
+}
+
+@keyframes history-splash-out {
+  70% { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes history-owl-out {
+  to { transform: translateY(120%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .history-splash-spray { animation: none; }
+  .history-splash-spray { display: none; }
+}
+
+/* ---- The chronicle takes centre stage ---- */
+
+/* darker veil so the scroll stands out */
+.history-splash {
+  background: rgb(var(--shade) / 0.72);
+}
+
+/* the history symbols stay soft so they never compete with the text */
+.history-splash-decor {
+  opacity: 0.5;
+}
+
+/* the scroll: bigger and calmer, unrolls once the astrolabe is in place */
+.history-splash-scroll {
+  top: 50%;
+  width: min(720px, 90vw);
+  padding: 30px 34px 20px;
+  rotate: 0deg;
+  animation: history-scroll-unroll 0.6s cubic-bezier(0.2, 1.1, 0.4, 1) 0.55s both;
+}
+
+.history-chronicle-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 44px 16px 0;
+  margin-bottom: 6px;
+  border-bottom: 2px solid color-mix(in srgb, var(--accent-ink) 35%, transparent);
+}
+
+.history-chronicle-seal {
+  flex-shrink: 0;
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 30px;
+  background: radial-gradient(circle at 35% 30%,
+    color-mix(in srgb, var(--yellow) 45%, var(--bg-elev)),
+    color-mix(in srgb, var(--yellow) 18%, var(--bg-elev)));
+  border: 2px solid color-mix(in srgb, var(--accent-ink) 60%, transparent);
+  box-shadow: 0 4px 10px rgb(0 0 0 / 0.2);
+}
+
+.history-chronicle-header .history-splash-kicker {
+  margin: 0 0 2px;
+}
+
+.history-chronicle-header .history-splash-title {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.2;
+}
+
+.history-chronicle-meta {
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+/* timeline rail down the left of the facts */
+.history-chronicle {
+  position: relative;
+  max-height: 52vh;
+  padding: 10px 10px 24px 0;
+}
+
+.history-chronicle-entry {
+  position: relative;
+  padding: 12px 0 14px 54px;
+  border-top: none;
+}
+
+.history-chronicle-entry:first-child {
+  padding-top: 12px;
+}
+
+/* the rail line, drawn per entry so it scrolls with the content */
+.history-chronicle-entry::before {
+  content: '';
+  position: absolute;
+  left: 19px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: color-mix(in srgb, var(--accent-ink) 35%, transparent);
+}
+
+.history-chronicle-entry:first-child::before { top: 30px; }
+.history-chronicle-entry:last-child::before { bottom: calc(100% - 30px); }
+
+.history-chronicle-dot {
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 19px;
+  background: var(--bg-elev);
+  border: 2px solid color-mix(in srgb, var(--accent-ink) 55%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--yellow) 12%, transparent);
+}
+
+.history-chronicle-kind {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+}
+
+.history-chronicle-heading {
+  margin: 3px 0 6px;
+  font-size: 18px;
+}
+
+.history-chronicle .history-splash-text {
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.history-splash-foot {
+  margin-top: 6px;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .history-splash-scroll { padding: 24px 18px 16px; }
+  .history-chronicle-seal { width: 46px; height: 46px; font-size: 24px; }
+  .history-chronicle-header .history-splash-title { font-size: 20px; }
+  .history-chronicle-entry { padding-left: 46px; }
+  .history-chronicle-dot { width: 34px; height: 34px; font-size: 16px; }
+  .history-chronicle-entry::before { left: 16px; }
+  /* keep the owl clear of the scroll on phones */
+  .history-splash-scroll { top: 46%; }
+  .history-chronicle { max-height: 46vh; }
+  .history-splash-owl .professor-owl { width: 72px; height: auto; }
+  .history-splash-owl { right: 2vw; bottom: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .history-splash-decor { animation: none; }
+}
+
+/* ---- Behind the chronicle: glow, astrolabe and dust ---- */
+
+/* a soft theme-coloured glow that breathes behind the scroll */
+.chronicle-aura {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%,
+      color-mix(in srgb, var(--yellow) 26%, transparent) 0%,
+      color-mix(in srgb, var(--violet) 20%, transparent) 28%,
+      transparent 62%);
+  animation:
+    chronicle-aura-in 0.9s ease-out 0.1s both,
+    chronicle-aura-breathe 6s ease-in-out 1s infinite;
+}
+
+@keyframes chronicle-aura-in {
+  from { opacity: 0; transform: scale(0.4); }
+}
+
+@keyframes chronicle-aura-breathe {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.75; transform: scale(1.06); }
+}
+
+/* the astrolabe spins into place, then turns very slowly */
+.chronicle-astrolabe {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: min(1050px, 125vmin);
+  height: min(1050px, 125vmin);
+  translate: -50% -50%;
+  overflow: visible;
+  pointer-events: none;
+  color: var(--accent-ink);
+  opacity: 0.42;
+  filter: drop-shadow(0 0 12px color-mix(in srgb, var(--yellow) 45%, transparent));
+  animation: chronicle-astrolabe-in 1.1s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+@keyframes chronicle-astrolabe-in {
+  from { opacity: 0; scale: 0.3; rotate: -120deg; }
+}
+
+.chronicle-astrolabe circle,
+.chronicle-astrolabe ellipse,
+.chronicle-astrolabe line,
+.chronicle-astrolabe polygon {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.1;
+}
+
+.chronicle-astrolabe text {
+  fill: currentColor;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 13px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.chronicle-astrolabe-dial {
+  animation: chronicle-turn 140s linear infinite;
+}
+
+.chronicle-astrolabe-rete {
+  animation: chronicle-turn 90s linear infinite reverse;
+}
+
+.chronicle-astrolabe-star {
+  fill: color-mix(in srgb, currentColor 10%, transparent) !important;
+}
+
+.chronicle-astrolabe-star.bright {
+  fill: color-mix(in srgb, currentColor 25%, transparent) !important;
+}
+
+.chronicle-astrolabe-hub {
+  fill: currentColor !important;
+}
+
+@keyframes chronicle-turn {
+  to { transform: rotate(360deg); }
+}
+
+/* golden dust motes drifting up through the light */
+.chronicle-motes {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.chronicle-motes span {
+  position: absolute;
+  bottom: -10px;
+  border-radius: 50%;
+  background: var(--yellow);
+  box-shadow: 0 0 8px var(--yellow), 0 0 2px #fff;
+  opacity: 0;
+  animation-name: chronicle-mote;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes chronicle-mote {
+  0% { transform: translate(0, 0); opacity: 0; }
+  10% { opacity: 0.8; }
+  50% { transform: translate(var(--drift), -55vh); opacity: 0.6; }
+  90% { opacity: 0.4; }
+  100% { transform: translate(calc(var(--drift) * -0.5), -110vh); opacity: 0; }
+}
+
+/* closing: the astrolabe spins away, the glow and dust fade */
+.history-splash.closing .chronicle-astrolabe {
+  animation: chronicle-astrolabe-out 0.42s ease-in both;
+}
+
+.history-splash.closing .chronicle-aura,
+.history-splash.closing .chronicle-motes {
+  transition: opacity 0.3s ease;
+  opacity: 0;
+}
+
+@keyframes chronicle-astrolabe-out {
+  to { opacity: 0; scale: 1.4; rotate: 90deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chronicle-aura,
+  .chronicle-astrolabe,
+  .chronicle-astrolabe-dial,
+  .chronicle-astrolabe-rete { animation: none; }
+  .chronicle-motes { display: none; }
+}
+
+/* ---- Suggested next place ---- */
+.quiz-next-place {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--bg-elev);
+  border: 2px solid rgb(247 199 64 / 0.6);
+  box-shadow: 0 10px 30px rgb(247 199 64 / 0.15);
+  animation: quiz-card-reveal 0.6s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+}
+
+.quiz-next-place-media {
+  position: relative;
+  min-height: 200px;
+}
+
+.quiz-next-place-media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.quiz-next-place-badge {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #2a1f00;
+  background: #f7c740;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.25);
+}
+
+.quiz-next-place-body {
+  padding: 18px 20px;
+}
+
+.quiz-next-place-name {
+  margin: 0;
+  font-family: 'Sora', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.quiz-next-place-meta {
+  margin: 4px 0 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.quiz-next-place-summary {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.quiz-next-place-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.quiz-next-place-why {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.quiz-next-place-reason {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-ink);
+  background: color-mix(in srgb, var(--yellow) 14%, transparent);
+}
+
+.quiz-next-place-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.quiz-next-place-actions a {
+  text-decoration: none;
+}
+
+/* ---- Answer review (folds away) ---- */
+.quiz-review {
+  border-radius: 18px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  overflow: hidden;
+  animation: quiz-results-rise 0.5s ease-out 0.3s both;
+}
+
+.quiz-review-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 18px 22px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.quiz-review-score {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.quiz-review-chevron {
+  transition: transform 0.2s ease;
+}
+
+.quiz-review.open .quiz-review-chevron {
+  transform: rotate(180deg);
+}
+
+.quiz-review-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.quiz-review-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+
+.quiz-review-item.correct {
+  background: color-mix(in srgb, var(--success) 8%, transparent);
+  border-color: color-mix(in srgb, var(--success) 22%, transparent);
+}
+
+.quiz-review-item.incorrect {
+  background: color-mix(in srgb, var(--error) 8%, transparent);
+  border-color: color-mix(in srgb, var(--error) 22%, transparent);
+}
+
+.quiz-review-num {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.quiz-review-item.correct .quiz-review-num { background: var(--success); }
+.quiz-review-item.incorrect .quiz-review-num { background: var(--error); }
+
+.quiz-review-q {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.quiz-review-index { color: var(--text-faint); }
+
+.quiz-review-answer {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.quiz-review-answer strong { color: var(--text); }
+.quiz-review-answer.right strong { color: var(--success); }
+
+.quiz-results-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.quiz-results-actions a {
+  text-decoration: none;
+}
+
+@media (max-width: 700px) {
+  .quiz-results-hero {
+    flex-direction: column;
+    text-align: center;
+    padding: 26px 20px;
+    gap: 18px;
+  }
+  .quiz-results-stats { justify-content: center; }
+  .quiz-results-title { font-size: 26px; }
+  .quiz-next-place { grid-template-columns: 1fr; }
+  .quiz-next-place-media { min-height: 160px; }
+  .quiz-results-actions { flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quiz-results-hero-bg,
+  .history-bubble-inner,
+  .history-splash-decor,
+  .professor-owl-pointer { animation: none; }
+  .history-bubble { transition: none; }
 }
 
 /* ---- Particle burst ---- */
 .quiz-particles {
   position: absolute;
   inset: 0;
+  z-index: 0;
   pointer-events: none;
   overflow: hidden;
-  border-radius: 20px;
+  border-radius: inherit;
 }
 
 .quiz-particle {
@@ -4566,7 +5565,6 @@ input[type='range']:focus-visible {
   .quiz-nav-dots { gap: 6px; }
   .quiz-nav-dot { width: 28px; height: 28px; font-size: 11px; }
 }
-
 
 /* ---------- Leaderboard ---------- */
 
@@ -4879,7 +5877,6 @@ input[type='range']:focus-visible {
     width: 96px;
   }
 }
-
 
 /* ==================== Admin dashboard ==================== */
 

@@ -28,11 +28,15 @@ export function AuthProvider({ children }) {
       setUser(data.user)
       localStorage.setItem('chronomap_user', JSON.stringify(data.user))
       return data.user
-    } catch {
-      // Token expired/invalid - log the user out locally.
-      clearSession()
-      setToken(null)
-      setUser(null)
+    } catch (err) {
+      // Only a rejected session (expired/invalid token, or the account is
+      // gone) logs the user out. Network blips, rate limits and server
+      // errors keep them signed in with the profile they already have.
+      if (err.status === 401 || err.status === 404) {
+        clearSession()
+        setToken(null)
+        setUser(null)
+      }
       return null
     }
   }, [])

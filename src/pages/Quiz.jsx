@@ -6,6 +6,7 @@ import { progressApi } from '../lib/api.js'
 import { usePlaces } from '../context/PlacesContext.jsx'
 import { useT } from '../i18n/LanguageContext.jsx'
 import { firstLetterFor, hintFor, questionKey } from '../lib/quizHint.js'
+import QuizResults from '../components/QuizResults.jsx'
 
 /* ------------------------------------------------------------------ */
 /* Icons                                                                */
@@ -25,24 +26,6 @@ function StarIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-    </svg>
-  )
-}
-
-function CheckCircleIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.8" />
-      <polyline points="8 12 11 15 16 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-function XCircleIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   )
 }
@@ -81,84 +64,7 @@ function LightbulbIcon() {
   )
 }
 
-/* ------------------------------------------------------------------ */
-/* Particle burst (result screen)                                       */
-/* ------------------------------------------------------------------ */
-
-const PARTICLE_COLORS = ['#f7c740', '#8b7ef8', '#3fcf8e', '#f25a76', '#00bfff', '#ff8c00']
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E']
-
-function Particles() {
-  const particles = useMemo(() =>
-    Array.from({ length: 30 }, (_, i) => ({
-      id: i,
-      color: PARTICLE_COLORS[i % PARTICLE_COLORS.length],
-      x: Math.random() * 100,
-      delay: Math.random() * 0.8,
-      duration: 0.9 + Math.random() * 0.8,
-      size: 6 + Math.random() * 8,
-      drift: (Math.random() - 0.5) * 120,
-    })), [])
-
-  return (
-    <div className="quiz-particles" aria-hidden="true">
-      {particles.map((p) => (
-        <span
-          key={p.id}
-          className="quiz-particle"
-          style={{
-            left: `${p.x}%`,
-            background: p.color,
-            width: p.size,
-            height: p.size,
-            animationDelay: `${p.delay}s`,
-            animationDuration: `${p.duration}s`,
-            '--drift': `${p.drift}px`,
-          }}
-        />
-      ))}
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/* Score ring (SVG donut)                                              */
-/* ------------------------------------------------------------------ */
-
-function ScoreRing({ score, total }) {
-  const pct = total > 0 ? score / total : 0
-  const radius = 54
-  const circ = 2 * Math.PI * radius
-  const offset = circ * (1 - pct)
-  const passed = pct >= 0.8
-
-  return (
-    <div className="quiz-score-ring-wrap">
-      <svg width="140" height="140" viewBox="0 0 140 140">
-        {/* track */}
-        <circle cx="70" cy="70" r={radius} fill="none" stroke="var(--card-border)" strokeWidth="10" />
-        {/* fill */}
-        <circle
-          cx="70" cy="70" r={radius}
-          fill="none"
-          stroke={passed ? '#3fcf8e' : '#f25a76'}
-          strokeWidth="10"
-          strokeLinecap="round"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          transform="rotate(-90 70 70)"
-          style={{ transition: 'stroke-dashoffset 1s cubic-bezier(.4,0,.2,1)' }}
-        />
-      </svg>
-      <div className="quiz-score-ring-label">
-        <span className="quiz-score-ring-num" style={{ color: passed ? '#3fcf8e' : '#f25a76' }}>
-          {score}/{total}
-        </span>
-        <span className="quiz-score-ring-pct">{Math.round(pct * 100)}%</span>
-      </div>
-    </div>
-  )
-}
 
 /* ------------------------------------------------------------------ */
 /* Quiz Hub — pick a place                                             */
@@ -344,69 +250,17 @@ function PlaceQuiz({ place }) {
 
   // ---------- Result screen ----------
   if (finished) {
-    const passed = score / questions.length >= 0.8
     return (
-      <div className="quiz-card quiz-result">
-        <Particles />
-        <ScoreRing score={score} total={questions.length} />
-
-        <h2 className="quiz-result-title">
-          {passed ? `🎉 ${t('quiz.passedTitle')}` : `💪 ${t('quiz.failedTitle')}`}
-        </h2>
-        <p className="quiz-result-subtitle">
-          {passed ? t('quiz.passedSubtitle') : t('quiz.failedSubtitle')}
-        </p>
-        {isAdmin && (
-          <p className="quiz-result-xp quiz-result-xp-muted">
-            {t('quiz.adminPreview')}
-          </p>
-        )}
-
-        {!isAdmin && xpResult && xpResult.xpGained > 0 && (
-          <div className="quiz-result-xp">
-            <span className="quiz-result-xp-num">+{xpResult.xpGained} XP</span>
-            {xpResult.levelsGained > 0 && <span className="quiz-result-levelup">⬆ {t('quiz.levelUp')}</span>}
-          </div>
-        )}
-        {!isAdmin && xpResult && xpResult.xpGained === 0 && (
-          <p className="quiz-result-xp quiz-result-xp-muted">
-            {xpResult.counted === false && Math.round((score / questions.length) * 100) >= 80
-              ? t('quiz.alreadyCompleted')
-              : t('quiz.scoreToEarn')}
-          </p>
-        )}
-
-        {/* Per-question review -- the first place the answers are shown */}
-        <div className="quiz-result-review">
-          {questions.map((q, i) => {
-            const chosen = answers[i]
-            const correct = chosen === q.answerIndex
-            return (
-              <div key={i} className={`quiz-result-review-item ${correct ? 'correct' : 'incorrect'}`}>
-                <span className="quiz-result-review-icon">
-                  {correct ? <CheckCircleIcon /> : <XCircleIcon />}
-                </span>
-                <div className="quiz-result-review-body">
-                  <span className="quiz-result-review-q">{q.question}</span>
-                  <span className="quiz-result-review-answer">
-                    {t('quiz.yourAnswer')}: <strong>{chosen !== null ? q.options[chosen] : '—'}</strong>
-                  </span>
-                  {!correct && (
-                    <span className="quiz-result-review-answer correct-answer">
-                      {t('quiz.correctAnswer')}: <strong>{q.options[q.answerIndex]}</strong>
-                    </span>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        <div className="quiz-result-actions">
-          <button type="button" className="btn-primary" onClick={restart}>{t('quiz.tryAgain')}</button>
-          <Link to={`/place/${place.id}`} className="btn-secondary">{t('quiz.backTo', { name: place.name })}</Link>
-        </div>
-      </div>
+      <QuizResults
+        place={place}
+        questions={questions}
+        answers={answers}
+        hintsUsed={hinted.length}
+        xpResult={xpResult}
+        isAdmin={isAdmin}
+        visitedIds={user?.visitedPlaces}
+        onRestart={restart}
+      />
     )
   }
 
