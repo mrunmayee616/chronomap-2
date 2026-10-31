@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { progressApi } from '../lib/api.js'
 import { usePlaces } from '../context/PlacesContext.jsx'
 import { useT } from '../i18n/LanguageContext.jsx'
+import { firstLetterFor, hintFor, questionKey } from '../lib/quizHint.js'
 
 /* ------------------------------------------------------------------ */
 /* Icons                                                                */
@@ -211,9 +212,6 @@ function QuizHub() {
 /* ------------------------------------------------------------------ */
 
 const HINT_LIMIT = 3
-// A hint removes one wrong option; never remove so many that the question
-// becomes a giveaway, so at least two options always stay in play.
-const MIN_OPTIONS_LEFT = 2
 
 function PlaceQuiz({ place }) {
   const { token, user, refreshUser } = useAuth()
@@ -227,30 +225,33 @@ function PlaceQuiz({ place }) {
   // stay changeable until the quiz is submitted, and whether they're right
   // is only revealed on the result screen.
   const [answers, setAnswers] = useState(() => Array(questions.length).fill(null))
-  // eliminated[i] = option indexes a hint has struck out for question i
-  const [eliminated, setEliminated] = useState(() => questions.map(() => []))
   const [step, setStep] = useState(0)
   const [finished, setFinished] = useState(false)
   const [xpResult, setXpResult] = useState(null)
   // Track which answer was just picked (for animation)
   const [justAnswered, setJustAnswered] = useState(null)
-  // Hints are counted per place on the server (see /api/progress/use-hint),
-  // so this starts from the account's saved count and survives retakes,
-  // reloads and logging out. The admin's count is kept locally only.
-  const [hintsUsed, setHintsUsed] = useState(() => Math.min(user?.quizHints?.[place.id] ?? 0, HINT_LIMIT))
+  // Keys of the questions a hint was spent on. Kept per place on the server
+  // (see /api/progress/use-hint), so it starts from the account's record and
+  // survives retakes, reloads and logging out; the admin's is local only.
+  const [hinted, setHinted] = useState(() => {
+    const saved = user?.quizHints?.[place.id]
+    return Array.isArray(saved) ? saved : []
+  })
+  // The open hint box: { step, text }, or null once the user closes it.
+  const [openHint, setOpenHint] = useState(null)
   const [hintPending, setHintPending] = useState(false)
   const [hintError, setHintError] = useState('')
   const cardRef = useRef(null)
 
   const current = questions[step]
   const selectedForStep = answers[step]
-  const eliminatedForStep = eliminated[step]
   const score = answers.filter((a, i) => a === questions[i].answerIndex).length
   const answeredCount = answers.filter((a) => a !== null).length
   const allAnswered = answeredCount === questions.length
   const isLastStep = step + 1 === questions.length
-  const hintsLeft = HINT_LIMIT - hintsUsed
-  const canHintThisQuestion = current.options.length - eliminatedForStep.length > MIN_OPTIONS_LEFT
+  const hintsLeft = Math.max(0, HINT_LIMIT - hinted.length)
+  const currentHinted = hinted.includes(questionKey(current))
+  const canHint = currentHinted || hintsLeft > 0
 
   // Submit once quiz is fully answered and user clicks "See Results"
   useEffect(() => {
@@ -267,7 +268,6 @@ function PlaceQuiz({ place }) {
   }, [finished])
 
   function choose(i) {
-    if (eliminatedForStep.includes(i)) return
     setAnswers((prev) => {
       const next = [...prev]
       next[step] = i
@@ -292,47 +292,53 @@ function PlaceQuiz({ place }) {
   }
 
   async function takeHint() {
-    if (hintPending || hintsLeft <= 0 || !canHintThisQuestion) return
-    setHintError('')
-    setHintPending(true)
+    if (hintPending || !canHint) return
     const hintStep = step
+    const key = questionKey(current)
+    const show = () =>
+      setOpenHint({
+        step: hintStep,
+        text: hintFor(questions[hintStep]),
+        letter: firstLetterFor(questions[hintStep]),
+      })
+    setHintError('')
+
+    // Same question again: show the same hint, no request, no hint spent.
+    if (currentHinted) {
+      show()
+      return
+    }
+
+    setHintPending(true)
     try {
-      const data = await progressApi.useHint(token, place.id)
-      if (data.adminPreview) setHintsUsed((n) => n + 1)
-      else setHintsUsed(Math.min(data.hintsUsed, HINT_LIMIT))
+      const data = await progressApi.useHint(token, place.id, key)
+      if (data.adminPreview) setHinted((prev) => [...prev, key])
+      else setHinted(data.hinted)
     } catch (err) {
-      if (err.status === 409) setHintsUsed(HINT_LIMIT)
-      setHintError(err.status === 409 ? t('quiz.noHintsLeft') : t('quiz.hintError'))
+      setHintError(
+        err.status === 409 ? t('quiz.noHintsLeft') : err.networkError ? t('quiz.hintOffline') : t('quiz.hintError')
+      )
       setHintPending(false)
+      // 409 = hints were used up elsewhere (e.g. another tab): resync.
+      if (err.status === 409) {
+        const fresh = await refreshUser()
+        const saved = fresh?.quizHints?.[place.id]
+        if (Array.isArray(saved)) setHinted(saved)
+      }
       return
     }
     setHintPending(false)
+    show()
     refreshUser()
-
-    // Strike out a random wrong option that isn't already gone, preferring
-    // one the user hasn't picked so a hint doesn't wipe out their choice.
-    const q = questions[hintStep]
-    const gone = eliminated[hintStep]
-    const candidates = q.options
-      .map((_, i) => i)
-      .filter((i) => i !== q.answerIndex && !gone.includes(i))
-    const notChosen = candidates.filter((i) => i !== answers[hintStep])
-    const pool = notChosen.length > 0 ? notChosen : candidates
-    const removed = pool[Math.floor(Math.random() * pool.length)]
-    if (removed === undefined) return
-    setEliminated((prev) => prev.map((list, i) => (i === hintStep ? [...list, removed] : list)))
-    if (answers[hintStep] === removed) {
-      setAnswers((prev) => prev.map((a, i) => (i === hintStep ? null : a)))
-    }
   }
 
   function restart() {
     setAnswers(Array(questions.length).fill(null))
-    setEliminated(questions.map(() => []))
     setStep(0)
     setFinished(false)
     setXpResult(null)
     setJustAnswered(null)
+    setOpenHint(null)
     setHintError('')
   }
 
@@ -461,10 +467,10 @@ function PlaceQuiz({ place }) {
           type="button"
           className="quiz-hint-btn"
           onClick={takeHint}
-          disabled={hintPending || hintsLeft <= 0 || !canHintThisQuestion}
+          disabled={hintPending || !canHint}
           title={t('quiz.hintTitle')}
         >
-          <LightbulbIcon /> {t('quiz.useHint')}
+          <LightbulbIcon /> {currentHinted ? t('quiz.showHint') : t('quiz.useHint')}
         </button>
         <span className={hintsLeft > 0 ? 'quiz-hint-count' : 'quiz-hint-count none'}>
           {hintsLeft > 0 ? t('quiz.hintsLeft', { count: hintsLeft }) : t('quiz.noHintsLeft')}
@@ -475,10 +481,8 @@ function PlaceQuiz({ place }) {
       {/* ---- Options ---- */}
       <div className="quiz-options">
         {current.options.map((opt, i) => {
-          const isEliminated = eliminatedForStep.includes(i)
           let cls = 'quiz-option'
           if (i === selectedForStep) cls += ' selected'
-          if (isEliminated) cls += ' eliminated'
           if (i === justAnswered) cls += ' just-answered'
 
           return (
@@ -487,7 +491,6 @@ function PlaceQuiz({ place }) {
               type="button"
               className={cls}
               onClick={() => choose(i)}
-              disabled={isEliminated}
               aria-pressed={i === selectedForStep}
             >
               <span className="quiz-option-letter">{OPTION_LETTERS[i]}</span>
@@ -522,6 +525,50 @@ function PlaceQuiz({ place }) {
           </button>
         </div>
       </div>
+
+      {/* ---- Hint box: pinned bottom-right until the user closes it ---- */}
+      {openHint && (
+        <div className="quiz-hint-box" role="status" aria-live="polite">
+          <div className="quiz-hint-box-head">
+            <span className="quiz-hint-box-title">
+              <span className="quiz-hint-box-title-icon" aria-hidden="true">📜</span>
+              {t('quiz.hintFor', { number: openHint.step + 1 })}
+            </span>
+            <button
+              type="button"
+              className="quiz-hint-box-close"
+              onClick={() => setOpenHint(null)}
+              aria-label={t('quiz.closeHint')}
+            >
+              ×
+            </button>
+          </div>
+          <p className="quiz-hint-box-text">{openHint.text}</p>
+          {openHint.letter && (
+            <div className="quiz-hint-letter">
+              <p className="quiz-hint-letter-lead">
+                <span className="quiz-hint-letter-icon" aria-hidden="true">{openHint.letter.icon}</span>
+                <span>{openHint.letter.lead}</span>
+              </p>
+              <div className="quiz-hint-riddles">
+                {openHint.letter.parts.map((part, i) => (
+                  <span key={i} className={part.text ? 'quiz-hint-riddle is-text' : 'quiz-hint-riddle'}>
+                    {openHint.letter.parts.length > 1 && (
+                      <span className="quiz-hint-riddle-num">{i + 1}</span>
+                    )}
+                    {part.emojis ? part.emojis.join(' ') : part.text}
+                  </span>
+                ))}
+              </div>
+              {openHint.letter.skipped && (
+                <p className="quiz-hint-letter-note">
+                  {t('quiz.hintSkipped', { words: openHint.letter.skipped })}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

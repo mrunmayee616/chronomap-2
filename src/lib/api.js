@@ -50,12 +50,21 @@ export const progressApi = {
   // Records a quiz attempt's score. The server only counts it toward
   // quizzesCompleted the first time this place's quiz is passed (>= 80%);
   // reattempts never increment it again.
+  // Every attempt is also logged for the dashboard; tzOffset lets the
+  // server count streak days in the player's own time zone.
   submitQuizResult: (token, placeId, scorePercent) =>
-    request('/api/progress/quiz-result', { method: 'POST', body: { placeId, scorePercent }, token }),
-  // Spends one of the place's 3 quiz hints. The server keeps the count on
-  // the account, so it never resets; a 409 means none are left.
-  useHint: (token, placeId) =>
-    request('/api/progress/use-hint', { method: 'POST', body: { placeId }, token }),
+    request('/api/progress/quiz-result', {
+      method: 'POST',
+      body: { placeId, scorePercent, tzOffset: new Date().getTimezoneOffset() },
+      token,
+    }),
+  // { attempts: [{ placeId, scorePercent, passed, at }], currentStreak, maxStreak }
+  activity: (token) => request('/api/progress/activity', { token }),
+  // Spends one of the place's 3 quiz hints on a question (free if that
+  // question was already hinted). The server keeps the record on the
+  // account, so it never resets; a 409 means none are left.
+  useHint: (token, placeId, questionKey) =>
+    request('/api/progress/use-hint', { method: 'POST', body: { placeId, questionKey }, token }),
 }
 
 export const leaderboardApi = {

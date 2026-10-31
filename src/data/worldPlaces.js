@@ -1,4 +1,5 @@
 import { WORLD_EVENTS } from './worldEvents.js'
+import { COUNTRY_HINTS, CONTINENT_HINTS, TYPE_HINTS, CENTURY_HINTS } from './quizHints/templates.js'
 
 // Builds full place objects from the raw rows in worldEvents.js, in exactly
 // the shape of the entries in places.js (which appends these to PLACES), so
@@ -121,6 +122,28 @@ function nearbyCenturies(index) {
   return out
 }
 
+/* ---------- quiz hints ---------- */
+
+// Fun clues for the generated questions, built from the same data as the
+// answer but never naming it (see src/data/quizHints/templates.js).
+function withHint(q, hint) {
+  if (q && hint) q.hint = hint
+  return q
+}
+
+function whenInCentury(year) {
+  const y = Math.abs(year) % 100
+  if (y === 0 || y > 66) return 'late in that era'
+  if (y > 33) return 'around the middle of that era'
+  return 'early in that era'
+}
+
+function eventHint(e) {
+  const type = TYPE_HINTS[e.type]
+  const era = CENTURY_HINTS[centuryIndex(e.year)]
+  return [type, era && `🕰️ Era clue: ${era}`].filter(Boolean).join(' ')
+}
+
 /* ---------- build ---------- */
 
 function buildPlace(entry, ctx) {
@@ -146,28 +169,51 @@ function buildPlace(entry, ctx) {
   const typePool = Object.keys(TYPE_CATEGORY).filter((t) => TYPE_CATEGORY[t] !== primary.category)
   const datePool = otherEvents.filter((e) => Math.abs(e.year - primary.year) >= 30).map((e) => e.date)
 
+  const primaryEra = CENTURY_HINTS[centuryIndex(primary.year)]
+
   const quiz = [
-    question(`In which country is ${entry.name} located?`, entry.country, countryPool.map((c) => c.name), rand),
+    withHint(
+      question(`In which country is ${entry.name} located?`, entry.country, countryPool.map((c) => c.name), rand),
+      COUNTRY_HINTS[entry.country]
+    ),
     ...(entry.questions || []).map((q) => {
       const options = shuffle([q.a, ...q.wrong], rand)
       return { question: q.q, options, answerIndex: options.indexOf(q.a) }
     }),
-    question(`On which continent is ${entry.name}?`, entry.continent, CONTINENTS, rand),
-    question(`When did “${primary.name}” take place?`, primary.date, datePool, rand),
-    question(
-      `In which century did “${primary.name}” ${primary.end !== primary.year ? 'begin' : 'take place'}?`,
-      centuryLabel(centuryIndex(primary.year)),
-      nearbyCenturies(centuryIndex(primary.year)),
-      rand
+    withHint(
+      question(`On which continent is ${entry.name}?`, entry.continent, CONTINENTS, rand),
+      CONTINENT_HINTS[entry.continent]
     ),
-    question(`What type of historical event was “${primary.name}”?`, primary.type, typePool, rand),
-    question(`Which historical event is most associated with ${entry.name}?`, primary.name, otherEvents.map((e) => e.name), rand),
-    ...events.slice(1).map((e) =>
+    withHint(
+      question(`When did “${primary.name}” take place?`, primary.date, datePool, rand),
+      primaryEra && `🕰️ ${primaryEra} It happened ${whenInCentury(primary.year)}.`
+    ),
+    withHint(
       question(
-        `Besides “${primary.name}”, which other event is recorded at ${entry.name}?`,
-        e.name,
-        otherEvents.map((o) => o.name),
+        `In which century did “${primary.name}” ${primary.end !== primary.year ? 'begin' : 'take place'}?`,
+        centuryLabel(centuryIndex(primary.year)),
+        nearbyCenturies(centuryIndex(primary.year)),
         rand
+      ),
+      primaryEra && `🕰️ ${primaryEra}`
+    ),
+    withHint(
+      question(`What type of historical event was “${primary.name}”?`, primary.type, typePool, rand),
+      TYPE_HINTS[primary.type]
+    ),
+    withHint(
+      question(`Which historical event is most associated with ${entry.name}?`, primary.name, otherEvents.map((e) => e.name), rand),
+      eventHint(primary)
+    ),
+    ...events.slice(1).map((e) =>
+      withHint(
+        question(
+          `Besides “${primary.name}”, which other event is recorded at ${entry.name}?`,
+          e.name,
+          otherEvents.map((o) => o.name),
+          rand
+        ),
+        eventHint(e)
       )
     ),
   ].filter(Boolean)

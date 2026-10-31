@@ -1816,6 +1816,516 @@ input[type='range']:focus-visible {
   opacity: 0.8;
 }
 
+/* ==================== Dashboard: greeting, activity, attempts ==================== */
+
+/* "Hello Karan!" with the owl and a speech bubble about the streak */
+.dashboard-greeting {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 22px;
+  margin-bottom: 22px;
+}
+
+.dashboard-greeting-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+}
+
+.dashboard-greeting-mascot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-greeting-owl {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--yellow) 22%, var(--bg-elev));
+  border: 2px solid color-mix(in srgb, var(--yellow) 55%, transparent);
+  overflow: hidden;
+}
+
+.dashboard-greeting-owl .professor-owl {
+  margin-top: 6px;
+}
+
+.dashboard-greeting-bubble {
+  position: relative;
+  margin: 0;
+  padding: 10px 16px;
+  max-width: 360px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--yellow) 16%, var(--bg-elev));
+  border: 1px solid color-mix(in srgb, var(--yellow) 40%, transparent);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+/* little tail pointing back at the owl */
+.dashboard-greeting-bubble::before {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  background: inherit;
+  border-left: 1px solid color-mix(in srgb, var(--yellow) 40%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--yellow) 40%, transparent);
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.dashboard-greeting-bubble strong {
+  color: var(--accent-ink);
+}
+
+/* professor owl idle animations */
+.professor-owl {
+  display: block;
+  overflow: visible;
+}
+
+.professor-owl-eyes {
+  transform-origin: 60px 54px;
+  animation: owl-blink 5s infinite;
+}
+
+.professor-owl-tassel {
+  transform-origin: 60px 18px;
+  animation: owl-tassel 3s ease-in-out infinite;
+}
+
+@keyframes owl-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
+}
+
+@keyframes owl-tassel {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(4deg); }
+}
+
+/* calendar + attempted quizzes side by side */
+.dashboard-activity-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 1fr) 1.4fr;
+  gap: 20px;
+  align-items: stretch;
+  margin: 8px 0 36px;
+}
+
+/* ---- Monthly activity calendar ---- */
+.activity-card {
+  position: relative;
+  overflow: hidden;
+  padding-top: 22px;
+}
+
+.activity-card > :not(.activity-card-owl) {
+  position: relative;
+  z-index: 1;
+}
+
+/* the professor peeks up from the bottom of the calendar: full card width,
+   cut off at the waist (only the top half shows) and faded right back so
+   the days stay readable over him */
+.activity-card-owl {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  aspect-ratio: 120 / 96;
+  overflow: hidden;
+  opacity: 0.16;
+  pointer-events: none;
+}
+
+.activity-card-owl .professor-owl {
+  width: 100%;
+  height: auto;
+}
+
+.activity-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.activity-card-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.activity-card-title svg {
+  color: var(--accent-ink);
+}
+
+.activity-month-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--yellow) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--yellow) 35%, transparent);
+}
+
+.activity-month-nav button {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.activity-month-nav button:hover:not(:disabled) {
+  background: rgb(var(--ink) / 0.1);
+}
+
+.activity-month-nav button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.activity-month-label {
+  min-width: 108px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-ink);
+}
+
+.activity-streak-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.activity-streak-flame {
+  font-size: 22px;
+  align-self: center;
+}
+
+.activity-streak-num {
+  font-family: 'Sora', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.activity-streak-label {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  text-align: center;
+}
+
+.activity-weekday {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  padding-bottom: 2px;
+}
+
+.activity-day {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: rgb(var(--ink) / 0.04);
+}
+
+.activity-day.blank {
+  background: none;
+}
+
+.activity-day.future {
+  opacity: 0.4;
+}
+
+.activity-day.attempted {
+  background: var(--yellow);
+  color: #1a1408;
+  font-weight: 800;
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--yellow) 55%, #000);
+}
+
+.activity-day.today {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+  color: var(--text);
+}
+
+.activity-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.activity-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.activity-legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+}
+
+.activity-legend-dot.attempted {
+  background: var(--yellow);
+}
+
+.activity-legend-dot.today {
+  border: 2px solid var(--violet);
+}
+
+.activity-legend-max {
+  margin-left: auto;
+}
+
+.activity-legend-max strong {
+  color: var(--accent-ink);
+}
+
+/* ---- Attempted quizzes ---- */
+.attempted-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.attempted-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.attempted-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.attempted-count {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.attempted-empty {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.attempted-empty a {
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+
+.attempted-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.attempted-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgb(var(--ink) / 0.03);
+  border: 1px solid var(--border);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.attempted-row:hover {
+  border-color: color-mix(in srgb, var(--yellow) 40%, transparent);
+  background: rgb(var(--ink) / 0.05);
+}
+
+.attempted-thumb {
+  flex-shrink: 0;
+  width: 58px;
+  height: 58px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgb(var(--ink) / 0.06);
+}
+
+.attempted-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.attempted-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.attempted-name {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attempted-name:hover {
+  color: var(--accent-ink);
+}
+
+.attempted-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.attempted-side {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.attempted-score {
+  font-family: 'Sora', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-dim);
+}
+
+.attempted-score.passed {
+  color: var(--success);
+}
+
+.attempted-status {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--error);
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+}
+
+.attempted-status.passed {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+}
+
+.attempted-retry {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-ink);
+  text-decoration: none;
+}
+
+.attempted-retry:hover {
+  text-decoration: underline;
+}
+
+.attempted-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.attempted-pager button {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--yellow) 40%, transparent);
+  background: color-mix(in srgb, var(--yellow) 12%, transparent);
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.attempted-pager button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--yellow) 24%, transparent);
+}
+
+.attempted-pager button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.attempted-pager-label {
+  min-width: 48px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+@media (max-width: 900px) {
+  .dashboard-activity-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-greeting-title { font-size: 24px; }
+  .activity-card-head { flex-wrap: wrap; }
+  .activity-legend-max { margin-left: 0; }
+}
+
 .favourites-header-row {
   display: flex;
   align-items: baseline;
@@ -3510,14 +4020,255 @@ input[type='range']:focus-visible {
   opacity: 1;
 }
 
-/* struck out by a hint */
-.quiz-option.eliminated {
-  opacity: 0.4;
-  cursor: not-allowed;
+/* Hint box -- an old parchment scroll that floats bottom-right until
+   closed. The design (map frame, compass rose, wax seals) is fixed, but
+   every colour is mixed from the active site theme's variables, so it
+   follows cosmos / ancient / obsidian / aurora in both light and dark mode. */
+.quiz-hint-box {
+  /* paper: the theme's surface, warmed with a touch of its accent */
+  --parch-1: color-mix(in srgb, var(--yellow) 14%, var(--bg-elev));
+  --parch-2: color-mix(in srgb, var(--yellow) 5%, var(--bg));
+  --parch-ink: var(--text);
+  --parch-ink-dim: var(--text-dim);
+  /* engraved accents and the map frame */
+  --parch-sepia: var(--accent-ink);
+  --parch-frame: color-mix(in srgb, var(--accent-ink) 65%, var(--bg-elev));
+  --parch-chip: color-mix(in srgb, var(--yellow) 7%, var(--bg-elev));
+  --parch-panel: color-mix(in srgb, var(--yellow) 8%, transparent);
+  /* wax seals use the theme's strong accent fill (white text on it) */
+  --parch-seal: var(--violet-strong);
+
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 50;
+  width: min(460px, calc(100vw - 32px));
+  padding: 16px 22px 18px;
+  border-radius: 14px;
+  color: var(--parch-ink);
+  background:
+    radial-gradient(ellipse at 15% 0%, rgb(var(--ink) / 0.07), transparent 55%),
+    radial-gradient(ellipse at 100% 100%, rgb(var(--shade) / 0.28), transparent 55%),
+    radial-gradient(ellipse at 0% 100%, rgb(var(--shade) / 0.14), transparent 45%),
+    linear-gradient(160deg, var(--parch-1), var(--parch-2));
+  border: 1px solid var(--parch-frame);
+  box-shadow:
+    0 18px 40px rgb(0 0 0 / 0.35),
+    inset 0 0 40px color-mix(in srgb, var(--yellow) 12%, transparent);
+  overflow: hidden;
+  animation: quiz-hint-in 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
 
-.quiz-option.eliminated .quiz-option-text {
-  text-decoration: line-through;
+/* inner double frame, like the border of an old map */
+.quiz-hint-box::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 3px double var(--parch-frame);
+  border-radius: 10px;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* faded compass rose in the corner */
+.quiz-hint-box::after {
+  content: '';
+  position: absolute;
+  right: -28px;
+  bottom: -28px;
+  width: 150px;
+  height: 150px;
+  opacity: 0.1;
+  pointer-events: none;
+  background: var(--parch-sepia);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='%238a6a35' stroke-width='1.6'%3E%3Ccircle cx='50' cy='50' r='44'/%3E%3Ccircle cx='50' cy='50' r='36'/%3E%3Cpath d='M50 4 L57 43 L96 50 L57 57 L50 96 L43 57 L4 50 L43 43 Z' fill='%238a6a35' fill-opacity='0.35'/%3E%3Cpath d='M50 20 L54 46 L80 50 L54 54 L50 80 L46 54 L20 50 L46 46 Z' transform='rotate(45 50 50)'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='%238a6a35' stroke-width='1.6'%3E%3Ccircle cx='50' cy='50' r='44'/%3E%3Ccircle cx='50' cy='50' r='36'/%3E%3Cpath d='M50 4 L57 43 L96 50 L57 57 L50 96 L43 57 L4 50 L43 43 Z' fill='%238a6a35' fill-opacity='0.35'/%3E%3Cpath d='M50 20 L54 46 L80 50 L54 54 L50 80 L46 54 L20 50 L46 46 Z' transform='rotate(45 50 50)'/%3E%3C/svg%3E") center / contain no-repeat;
+  animation: quiz-hint-compass 40s linear infinite;
+}
+
+@keyframes quiz-hint-compass {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes quiz-hint-in {
+  from { opacity: 0; transform: translateY(14px) rotate(-1.5deg) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+.quiz-hint-box > * {
+  position: relative;
+  z-index: 1;
+}
+
+.quiz-hint-box-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+/* ornamental divider: a sepia rule with a diamond in the middle */
+.quiz-hint-box-head::after {
+  content: '✦';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -7px;
+  font-size: 11px;
+  line-height: 1;
+  text-align: center;
+  color: var(--parch-sepia);
+  background: linear-gradient(90deg, transparent, var(--parch-frame) 20%, transparent 46%, transparent 54%, var(--parch-frame) 80%, transparent)
+    center / 100% 1px no-repeat;
+}
+
+.quiz-hint-box-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--parch-sepia);
+  letter-spacing: 0.08em;
+}
+
+.quiz-hint-box-title-icon {
+  font-size: 20px;
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.2));
+}
+
+/* close button styled as a red wax seal */
+.quiz-hint-box-close {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 48% 52% 46% 54% / 52% 46% 54% 48%;
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--parch-seal) 70%, #fff), var(--parch-seal) 62%, color-mix(in srgb, var(--parch-seal) 65%, #000));
+  color: #fff;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow:
+    0 2px 4px rgb(0 0 0 / 0.4),
+    inset 0 0 0 3px rgb(255 255 255 / 0.08),
+    inset 0 -3px 4px rgb(0 0 0 / 0.25);
+  transition: transform 0.15s ease;
+}
+
+.quiz-hint-box-close:hover {
+  transform: rotate(-12deg) scale(1.08);
+}
+
+.quiz-hint-box-text {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--parch-ink);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* first-letter riddle under the clue */
+.quiz-hint-letter {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--parch-panel);
+  border: 1.5px dashed color-mix(in srgb, var(--parch-sepia) 55%, transparent);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--parch-ink-dim);
+}
+
+.quiz-hint-letter-lead {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+}
+
+.quiz-hint-letter-icon {
+  font-size: 20px;
+  line-height: 1.2;
+  font-style: normal;
+}
+
+/* one chip per riddle: three emojis (or a counting clue for digits) */
+.quiz-hint-riddles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.quiz-hint-riddle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px;
+  border-radius: 12px;
+  background: var(--parch-chip);
+  border: 1px solid var(--parch-frame);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--parch-frame) 60%, transparent);
+  font-size: 32px;
+  line-height: 1.25;
+  letter-spacing: 4px;
+  color: var(--parch-ink);
+  animation: quiz-hint-riddle-pop 0.45s ease-out both;
+}
+
+/* digit riddles are words, so keep them at reading size */
+.quiz-hint-riddle.is-text {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 15px;
+  letter-spacing: normal;
+  padding: 8px 14px;
+}
+
+/* numbered like a wax seal, matching the close button */
+.quiz-hint-riddle-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--parch-seal) 70%, #fff), var(--parch-seal) 65%);
+  color: #fff;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: normal;
+}
+
+.quiz-hint-riddle:nth-child(2) { animation-delay: 0.12s; }
+.quiz-hint-riddle:nth-child(3) { animation-delay: 0.24s; }
+
+@keyframes quiz-hint-riddle-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  70% { transform: scale(1.08); opacity: 1; }
+  100% { transform: none; }
+}
+
+.quiz-hint-letter-note {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--parch-ink-dim);
+}
+
+@media (max-width: 600px) {
+  .quiz-hint-box { right: 16px; bottom: 16px; padding: 14px 16px 16px; }
+  .quiz-hint-riddle { font-size: 28px; padding: 5px 12px; }
 }
 
 /* ---- Navigation row ---- */

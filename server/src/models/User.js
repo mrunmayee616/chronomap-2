@@ -56,10 +56,29 @@ const userSchema = new mongoose.Schema(
     exploredCountries: { type: [String], default: [] },
     completedQuizzes: { type: [String], default: [] },
 
-    // placeId -> hints used on that place's quiz (max QUIZ_HINT_LIMIT, see
-    // progress.routes.js). Stored here rather than in the browser so the
-    // limit survives logging out, retaking the quiz, or switching devices.
-    quizHints: { type: Map, of: Number, default: {} },
+    // Every quiz attempt, passed or not (newest last, capped -- see
+    // progress.routes.js). Drives the dashboard's attempted-quizzes list,
+    // activity calendar and streaks.
+    quizAttempts: {
+      type: [
+        {
+          placeId: { type: String, required: true },
+          scorePercent: { type: Number, required: true },
+          passed: { type: Boolean, required: true },
+          at: { type: Date, default: Date.now },
+        },
+      ],
+      default: [],
+    },
+    // The player's UTC offset in minutes (as JS getTimezoneOffset() reports
+    // it), so "a day" for streaks means their local day, not UTC's.
+    streakTzOffset: { type: Number, default: 0 },
+
+    // placeId -> keys of the questions a hint was spent on in that place's
+    // quiz (max QUIZ_HINT_LIMIT, see progress.routes.js). Stored here rather
+    // than in the browser so the limit survives logging out, retaking the
+    // quiz, or switching devices; re-asking for a listed question is free.
+    quizHints: { type: Map, of: [String], default: {} },
 
     // One entry per XP award (currently just first-time quiz passes). Kept
     // as a running log, rather than only the running `xp` total, so the

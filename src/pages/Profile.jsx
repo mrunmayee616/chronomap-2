@@ -3,7 +3,13 @@ import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useFavourites } from '../context/FavouritesContext.jsx'
-import { authApi, usersApi } from '../lib/api.js'
+import { authApi, progressApi, usersApi } from '../lib/api.js'
+import {
+  ActivityCalendar,
+  AttemptedQuizzes,
+  DashboardGreeting,
+  computeStreaks,
+} from '../components/DashboardActivity.jsx'
 import { avatarUrlFor } from '../lib/avatar.js'
 import AvatarPicker from '../components/AvatarPicker.jsx'
 import { COUNTRIES, countryNameFor } from '../data/countries.js'
@@ -71,6 +77,8 @@ export default function Profile() {
   const [countryDraft, setCountryDraft] = useState('')
   const [aboutError, setAboutError] = useState('')
   const [savingAbout, setSavingAbout] = useState(false)
+  // Quiz attempts for the greeting, calendar and attempted-quizzes list.
+  const [attempts, setAttempts] = useState([])
 
   useEffect(() => {
     let cancelled = false
@@ -137,6 +145,18 @@ export default function Profile() {
     }
   }
 
+  useEffect(() => {
+    if (!token || user?.isAdmin) return undefined
+    let cancelled = false
+    progressApi
+      .activity(token)
+      .then((data) => !cancelled && setAttempts(data.attempts || []))
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [token, user?.isAdmin])
+
   // Follower / following counts for the header (the admin has none).
   useEffect(() => {
     if (!user || user.isAdmin) return
@@ -194,12 +214,16 @@ export default function Profile() {
     .map((id) => getPlaceById(id))
     .filter(Boolean)
 
+  const streak = computeStreaks(attempts)
+
   return (
     <div className="page profile-page">
       <Navbar active="Profile" />
 
       <div className="profile-wrap">
         {error && <p className="form-error">{error}</p>}
+
+        {!user.isAdmin && <DashboardGreeting name={user.fullName} streak={streak} />}
 
         <div className="profile-top-grid">
           <div className="profile-card profile-summary-card">
@@ -468,6 +492,13 @@ export default function Profile() {
             )}
           </div>
         </div>
+
+        {!user.isAdmin && (
+          <div className="dashboard-activity-grid">
+            <ActivityCalendar attempts={attempts} streak={streak} />
+            <AttemptedQuizzes attempts={attempts} />
+          </div>
+        )}
 
         <div className="favourites-header-row">
           <h3 className="favourites-title">{t('profile.favourites')}</h3>

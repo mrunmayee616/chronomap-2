@@ -4,6 +4,7 @@ import User from '../models/User.js'
 import Follow from '../models/Follow.js'
 import { requireAuth } from '../middleware/auth.js'
 import { titleForLevel, xpToNextLevel } from '../utils/achievements.js'
+import { streaksFor } from '../utils/streak.js'
 
 const router = Router()
 router.use(requireAuth)
@@ -113,7 +114,7 @@ router.get('/:username', loadTarget, async (req, res) => {
       countriesExplored: u.countriesExplored,
       eventsDiscovered: u.eventsDiscovered,
       quizzesCompleted: u.quizzesCompleted,
-      currentStreak: u.currentStreak,
+      currentStreak: streaksFor(u).current,
       ...counts,
       isFollowing,
       isSelf,

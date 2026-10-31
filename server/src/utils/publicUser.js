@@ -1,4 +1,5 @@
 import { titleForLevel, xpToNextLevel } from './achievements.js'
+import { streaksFor } from './streak.js'
 
 // Shapes a Mongoose User document into what the client is allowed to see.
 // Shared by every route that returns a user object, so auth and progress
@@ -22,7 +23,9 @@ export function publicUser(user) {
     countriesExplored: user.countriesExplored,
     eventsDiscovered: user.eventsDiscovered,
     quizzesCompleted: user.quizzesCompleted,
-    currentStreak: user.currentStreak,
+    // Worked out live, so a streak that lapsed yesterday reads 0 today
+    // even though nothing was saved since.
+    currentStreak: streaksFor(user).current,
     unlockedAchievements: user.unlockedAchievements || [],
     visitedPlaces: user.visitedPlaces || [],
     quizHints: user.quizHints ? Object.fromEntries(user.quizHints) : {},

@@ -6,11 +6,13 @@ import { publicUser } from '../utils/publicUser.js'
 import { adminPublicUser } from '../utils/admin.js'
 import { getEffectivePlaceCountries, groupByCountry } from '../utils/placeOverrides.js'
 import { QUIZ_PASS_XP, applyXp } from '../utils/achievements.js'
+import { activityEntries, streaksFor } from '../utils/streak.js'
 
 const router = Router()
 
 const QUIZ_PASS_THRESHOLD = 80 // percent
 const QUIZ_HINT_LIMIT = 3 // per place, for the lifetime of the account
+const MAX_QUIZ_ATTEMPTS = 1000 // most recent attempts kept per user
 
 router.use(requireAuth)
 
@@ -92,7 +94,7 @@ router.post('/visit-place', async (req, res) => {
 // re-attempts (higher or lower) don't change anything that counts.
 // ---------------------------------------------------------------------------
 router.post('/quiz-result', async (req, res) => {
-  const { placeId, scorePercent } = req.body || {}
+  const { placeId, scorePercent, tzOffset } = req.body || {}
   if (typeof placeId !== 'string' || !placeId.trim()) {
     return res.status(400).json({ error: 'A placeId is required.' })
   }
@@ -116,26 +118,71 @@ router.post('/quiz-result', async (req, res) => {
     xpGained = QUIZ_PASS_XP
     levelsGained = applyXp(user, xpGained)
     user.xpHistory.push({ amount: xpGained, placeId, at: new Date() })
-    await user.save()
   }
+
+  // Every attempt is logged (passed or not) for the dashboard's history,
+  // calendar and streaks -- keeping only the most recent ones.
+  user.quizAttempts.push({
+    placeId,
+    scorePercent: Math.max(0, Math.min(100, Math.round(scorePercent))),
+    passed,
+    at: new Date(),
+  })
+  if (user.quizAttempts.length > MAX_QUIZ_ATTEMPTS) {
+    user.quizAttempts.splice(0, user.quizAttempts.length - MAX_QUIZ_ATTEMPTS)
+  }
+  // Real UTC offsets run from -14h to +12h.
+  if (Number.isInteger(tzOffset) && tzOffset >= -840 && tzOffset <= 720) {
+    user.streakTzOffset = tzOffset
+  }
+  user.currentStreak = streaksFor(user).current
+  await user.save()
 
   return res.status(200).json({ user: publicUser(user), counted, xpGained, levelsGained })
 })
 
 // ---------------------------------------------------------------------------
-// POST /api/progress/use-hint  { placeId }  (protected)
-// Spends one of the QUIZ_HINT_LIMIT hints for a place's quiz. The count is
-// kept on the account and never resets -- not on retake, not on logging out
-// and back in -- so once a quiz's hints are gone they're gone for good. The
-// limit is enforced in the update filter itself, so two requests racing
-// each other still can't push the count past the limit.
+// GET /api/progress/activity  (protected)
+// The signed-in user's quiz attempts, newest first, plus their streaks.
+// Older quiz passes recorded only as XP are included too (score unknown).
 // ---------------------------------------------------------------------------
-router.post('/use-hint', async (req, res) => {
-  const { placeId } = req.body || {}
+router.get('/activity', async (req, res, next) => {
+  try {
+    const user = await loadUser(req, res)
+    if (!user) return undefined
+    const { current, max } = streaksFor(user)
+    return res.status(200).json({
+      attempts: activityEntries(user),
+      currentStreak: current,
+      maxStreak: max,
+    })
+  } catch (err) {
+    return next(err)
+  }
+})
+
+// ---------------------------------------------------------------------------
+// POST /api/progress/use-hint  { placeId, questionKey }  (protected)
+// Spends one of the QUIZ_HINT_LIMIT hints for a place's quiz on one
+// question. Asking again for a question already hinted is free and always
+// allowed. The record is kept on the account and never resets -- not on
+// retake, not on logging out and back in -- so once a quiz's hints are gone
+// they're gone for good. The limit is enforced in the update filter itself,
+// so two requests racing each other still can't go past it.
+// ---------------------------------------------------------------------------
+// Express 4 doesn't catch errors thrown by async handlers -- an uncaught one
+// crashes the whole Node process -- so route them to the error handler.
+router.post('/use-hint', (req, res, next) => useHint(req, res).catch(next))
+
+async function useHint(req, res) {
+  const { placeId, questionKey } = req.body || {}
   // Place ids are slugs; rejecting '.' and '$' also keeps the id safe to use
   // as a key in the Mongo update path below.
   if (typeof placeId !== 'string' || !placeId.trim() || /[.$]/.test(placeId)) {
     return res.status(400).json({ error: 'A placeId is required.' })
+  }
+  if (typeof questionKey !== 'string' || !questionKey.trim() || questionKey.length > 200) {
+    return res.status(400).json({ error: 'A questionKey is required.' })
   }
 
   const placeCountries = await getEffectivePlaceCountries()
@@ -151,9 +198,14 @@ router.post('/use-hint', async (req, res) => {
   const user = await User.findOneAndUpdate(
     {
       _id: req.user.sub,
-      $or: [{ [field]: { $exists: false } }, { [field]: { $lt: QUIZ_HINT_LIMIT } }],
+      $or: [
+        // Already hinted: matches, and $addToSet below leaves it unchanged.
+        { [field]: questionKey },
+        // Fewer than QUIZ_HINT_LIMIT questions hinted so far.
+        { [`${field}.${QUIZ_HINT_LIMIT - 1}`]: { $exists: false } },
+      ],
     },
-    { $inc: { [field]: 1 } },
+    { $addToSet: { [field]: questionKey } },
     { new: true }
   )
 
@@ -167,11 +219,13 @@ router.post('/use-hint', async (req, res) => {
     })
   }
 
+  const hinted = user.quizHints.get(placeId) || []
   return res.status(200).json({
     user: publicUser(user),
-    hintsUsed: user.quizHints.get(placeId),
+    hinted,
+    hintsUsed: hinted.length,
     hintLimit: QUIZ_HINT_LIMIT,
   })
-})
+}
 
 export default router

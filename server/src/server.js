@@ -12,6 +12,7 @@ import placesRoutes from './routes/places.routes.js'
 import adminRoutes from './routes/admin.routes.js'
 import usersRoutes from './routes/users.routes.js'
 import { connectDB } from './db/index.js'
+import { migrateQuizHints } from './db/migrateQuizHints.js'
 import { syncPlaceImages } from './utils/placeImageSync.js'
 
 const app = express()
@@ -50,10 +51,16 @@ app.use(express.json({ limit: '15mb' }))
 let dbPromise = null
 function ensureDB() {
   if (!dbPromise) {
-    dbPromise = connectDB().catch((err) => {
-      dbPromise = null // allow a retry on the next request
-      throw err
-    })
+    dbPromise = connectDB()
+      .then(async (conn) => {
+        // Data fix-ups; a failure here shouldn't take the API down.
+        await migrateQuizHints().catch((err) => console.error('Quiz hint migration failed:', err.message))
+        return conn
+      })
+      .catch((err) => {
+        dbPromise = null // allow a retry on the next request
+        throw err
+      })
   }
   return dbPromise
 }
