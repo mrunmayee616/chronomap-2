@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
 import globeImg from '../assets/globe.png'
 import Navbar from '../components/Navbar.jsx'
+import CountUp from '../components/CountUp.jsx'
+import OwlGuide from '../components/OwlGuide.jsx'
 import { useLanguage, richText } from '../i18n/LanguageContext.jsx'
 
 function ShieldIcon() {
@@ -66,7 +68,7 @@ export default function Home() {
             <div className="stat">
               <span className="stat-icon"><ShieldIcon /></span>
               <span>
-                <span className="stat-value">{(50000).toLocaleString(locale)}+</span>
+                <span className="stat-value"><CountUp to={50000} locale={locale} suffix="+" /></span>
                 <br />
                 <span className="stat-label">{t('home.statEvents')}</span>
               </span>
@@ -74,7 +76,7 @@ export default function Home() {
             <div className="stat">
               <span className="stat-icon"><PinIcon /></span>
               <span>
-                <span className="stat-value">200+</span>
+                <span className="stat-value"><CountUp to={200} locale={locale} suffix="+" /></span>
                 <br />
                 <span className="stat-label">{t('home.statCountries')}</span>
               </span>
@@ -91,8 +93,13 @@ export default function Home() {
         </div>
 
         <div className="hero-globe">
+          {/* a soft glow and a dashed orbit ring behind the floating globe */}
+          <span className="hero-globe-glow" aria-hidden="true" />
+          <span className="hero-globe-orbit" aria-hidden="true" />
           <img src={globeImg} alt={t('home.globeAlt')} className="globe-img" />
         </div>
+
+        <OwlGuide />
       </header>
     </div>
   )

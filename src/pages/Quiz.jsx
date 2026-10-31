@@ -7,6 +7,7 @@ import { usePlaces } from '../context/PlacesContext.jsx'
 import { useT } from '../i18n/LanguageContext.jsx'
 import { firstLetterFor, hintFor, questionKey } from '../lib/quizHint.js'
 import QuizResults from '../components/QuizResults.jsx'
+import ProfessorOwl from '../components/ProfessorOwl.jsx'
 
 /* ------------------------------------------------------------------ */
 /* Icons                                                                */
@@ -78,11 +79,16 @@ function QuizHub() {
       <Navbar active="Quiz" />
       <div className="quiz-hub-wrap">
         <div className="quiz-hub-header">
-          <div className="quiz-hub-eyebrow">
-            <BookOpenIcon /> {t('quiz.hubEyebrow')}
+          <div className="quiz-hub-header-text">
+            <div className="quiz-hub-eyebrow">
+              <BookOpenIcon /> {t('quiz.hubEyebrow')}
+            </div>
+            <h1 className="quiz-hub-title">{t('quiz.hubTitle')}</h1>
+            <p className="quiz-hub-sub">{t('quiz.hubSubtitle')}</p>
           </div>
-          <h1 className="quiz-hub-title">{t('quiz.hubTitle')}</h1>
-          <p className="quiz-hub-sub">{t('quiz.hubSubtitle')}</p>
+          <span className="quiz-hub-owl" aria-hidden="true">
+            <ProfessorOwl size={110} pointer />
+          </span>
         </div>
 
         <div className="quiz-hub-grid">

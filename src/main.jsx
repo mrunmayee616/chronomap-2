@@ -7,6 +7,7 @@ import { PlacesProvider } from './context/PlacesContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { LanguageProvider } from './i18n/LanguageContext.jsx'
 import RequireAuth from './components/RequireAuth.jsx'
+import InteractionLayer from './components/InteractionLayer.jsx'
 import RequireAdmin from './components/RequireAdmin.jsx'
 import Home from './pages/Home.jsx'
 import SignIn from './pages/SignIn.jsx'
@@ -96,6 +97,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                     }
                   />
                 </Routes>
+                <InteractionLayer />
               </BrowserRouter>
             </PlacesProvider>
           </FavouritesProvider>

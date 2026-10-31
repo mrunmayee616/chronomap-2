@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ProfessorOwl from './ProfessorOwl.jsx'
+import OwlNote from './OwlNote.jsx'
 import { CalendarIcon, MapPinIcon } from './Icons.jsx'
 import { usePlaces } from '../context/PlacesContext.jsx'
 import { useLanguage, richText } from '../i18n/LanguageContext.jsx'
@@ -208,9 +209,9 @@ export function AttemptedQuizzes({ attempts }) {
       </div>
 
       {rows.length === 0 ? (
-        <p className="attempted-empty">
+        <OwlNote className="attempted-empty">
           {richText(t('dashboard.noAttempts'), { quiz: (text) => <Link to="/quiz">{text}</Link> })}
-        </p>
+        </OwlNote>
       ) : (
         <ul className="attempted-list">
           {visible.map((row) => (

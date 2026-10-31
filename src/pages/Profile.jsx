@@ -12,6 +12,7 @@ import {
 } from '../components/DashboardActivity.jsx'
 import { avatarUrlFor } from '../lib/avatar.js'
 import AvatarPicker from '../components/AvatarPicker.jsx'
+import OwlNote from '../components/OwlNote.jsx'
 import { COUNTRIES, countryNameFor } from '../data/countries.js'
 import CountryFlag from '../components/CountryFlag.jsx'
 import { ACHIEVEMENTS, achievementProgress } from '../lib/achievements.js'
@@ -512,11 +513,11 @@ export default function Profile() {
         </div>
 
         {favouritePlaces.length === 0 ? (
-          <p className="favourites-empty">
+          <OwlNote className="favourites-empty">
             {richText(t('profile.noFavourites'), {
               explore: (text) => <Link to="/explore">{text}</Link>,
             })}
-          </p>
+          </OwlNote>
         ) : (
           <div className="favourites-grid">
             {favouritePlaces.map((place) => (

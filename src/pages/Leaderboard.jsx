@@ -7,6 +7,7 @@ import { avatarUrlFor } from '../lib/avatar.js'
 import { countryNameFor } from '../data/countries.js'
 import { useLanguage, countryName } from '../i18n/LanguageContext.jsx'
 import CountryFlag from '../components/CountryFlag.jsx'
+import OwlNote from '../components/OwlNote.jsx'
 import { CrownIcon, TrophyIcon } from '../components/Icons.jsx'
 
 const PERIODS = ['week', 'month', 'year']
@@ -124,10 +125,10 @@ export default function Leaderboard() {
         {loading ? (
           <p className="leaderboard-status">{t('leaderboard.loading')}</p>
         ) : leaderboard.length === 0 ? (
-          <p className="leaderboard-status">
+          <OwlNote className="leaderboard-empty">
             {t(`leaderboard.empty.${period}`)}
             {isAdmin ? '' : ` ${t('leaderboard.emptyCta')}`}
-          </p>
+          </OwlNote>
         ) : (
           <div className="leaderboard-grid">
             <div className="leaderboard-podium-wrap">
