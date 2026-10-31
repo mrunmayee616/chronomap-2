@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useParams } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { progressApi } from '../lib/api.js'
 import { usePlaces } from '../context/PlacesContext.jsx'
-import { useT } from '../i18n/LanguageContext.jsx'
+import { useLanguage, useT } from '../i18n/LanguageContext.jsx'
+import { localizeQuestion } from '../i18n/quiz/index.js'
 import { firstLetterFor, hintFor, questionKey } from '../lib/quizHint.js'
 import QuizResults from '../components/QuizResults.jsx'
 import ProfessorOwl from '../components/ProfessorOwl.jsx'
@@ -128,6 +130,7 @@ const HINT_LIMIT = 3
 function PlaceQuiz({ place }) {
   const { token, user, refreshUser } = useAuth()
   const t = useT()
+  const { language, locale } = useLanguage()
   // The admin can play any quiz, but results aren't recorded for it: no XP,
   // no completion, and so no place on the leaderboard.
   const isAdmin = Boolean(user?.isAdmin)
@@ -156,6 +159,9 @@ function PlaceQuiz({ place }) {
   const cardRef = useRef(null)
 
   const current = questions[step]
+  // Display copy in the interface language; `current` itself stays English
+  // because hint keys and answer checking are based on it.
+  const shown = localizeQuestion(current, language, locale)
   const selectedForStep = answers[step]
   const score = answers.filter((a, i) => a === questions[i].answerIndex).length
   const answeredCount = answers.filter((a) => a !== null).length
@@ -318,7 +324,7 @@ function PlaceQuiz({ place }) {
 
       {/* ---- Question text ---- */}
       <h2 className="quiz-question" key={step}>
-        {current.question}
+        {shown.question}
       </h2>
 
       {/* ---- Hint ---- */}
@@ -354,7 +360,7 @@ function PlaceQuiz({ place }) {
               aria-pressed={i === selectedForStep}
             >
               <span className="quiz-option-letter">{OPTION_LETTERS[i]}</span>
-              <span className="quiz-option-text">{opt}</span>
+              <span className="quiz-option-text">{shown.options[i]}</span>
             </button>
           )
         })}
@@ -387,7 +393,10 @@ function PlaceQuiz({ place }) {
       </div>
 
       {/* ---- Hint box: pinned bottom-right until the user closes it ---- */}
-      {openHint && (
+      {/* Portalled to <body>: the page's fade-in animation leaves a translate
+          on the quiz section, which would otherwise make this fixed box sit
+          against the content column instead of the screen's right edge. */}
+      {openHint && createPortal(
         <div className="quiz-hint-box" role="status" aria-live="polite">
           <div className="quiz-hint-box-head">
             <span className="quiz-hint-box-title">
@@ -427,7 +436,8 @@ function PlaceQuiz({ place }) {
               )}
             </div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

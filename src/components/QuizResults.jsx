@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import ProfessorOwl from './ProfessorOwl.jsx'
 import { usePlaces } from '../context/PlacesContext.jsx'
-import { useT } from '../i18n/LanguageContext.jsx'
+import { useLanguage, useT } from '../i18n/LanguageContext.jsx'
+import { localizeQuestion } from '../i18n/quiz/index.js'
 import { buildDiscoveries, suggestNextPlace } from '../lib/placeDiscovery.js'
 
 // The quiz results screen: a hero banner with the score, a single bubble
@@ -421,6 +422,7 @@ function HistoryDiscovery({ place }) {
 
 function AnswerReview({ questions, answers, score }) {
   const t = useT()
+  const { language, locale } = useLanguage()
   const [open, setOpen] = useState(false)
   return (
     <section className={open ? 'quiz-review open' : 'quiz-review'}>
@@ -431,9 +433,10 @@ function AnswerReview({ questions, answers, score }) {
       </button>
       {open && (
         <ol className="quiz-review-list">
-          {questions.map((q, i) => {
+          {questions.map((original, i) => {
             const chosen = answers[i]
-            const correct = chosen === q.answerIndex
+            const correct = chosen === original.answerIndex
+            const q = localizeQuestion(original, language, locale)
             return (
               <li key={i} className={correct ? 'quiz-review-item correct' : 'quiz-review-item incorrect'}>
                 <span className="quiz-review-num">{correct ? '✓' : '✗'}</span>
