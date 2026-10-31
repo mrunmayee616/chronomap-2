@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useParams } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -392,7 +393,10 @@ function PlaceQuiz({ place }) {
       </div>
 
       {/* ---- Hint box: pinned bottom-right until the user closes it ---- */}
-      {openHint && (
+      {/* Portalled to <body>: the page's fade-in animation leaves a translate
+          on the quiz section, which would otherwise make this fixed box sit
+          against the content column instead of the screen's right edge. */}
+      {openHint && createPortal(
         <div className="quiz-hint-box" role="status" aria-live="polite">
           <div className="quiz-hint-box-head">
             <span className="quiz-hint-box-title">
@@ -432,7 +436,8 @@ function PlaceQuiz({ place }) {
               )}
             </div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
